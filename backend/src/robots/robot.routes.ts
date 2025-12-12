@@ -6,7 +6,7 @@ import {
   getRobot,
   editRobot,
   deleteRobot
-} from "./robot.service.ts";
+} from "./robot.service";
 
 export async function robotRoutes(app: FastifyInstance) {
 
@@ -58,23 +58,20 @@ app.patch("/api/robots/:id", { preHandler: [app.auth] }, async (req, reply) => {
 });
 
 // Delete robot (admin only)
-app.delete("/api/robots/:id", { preHandler: [app.auth] }, async (req, reply) => {
+app.delete<{ Params: { id: string } }>(
+  "/api/robots/:id",
+  async (req, reply) => {
+    const { id } = req.params;
 
-  if (req.user.role !== "admin") {
-    return reply.code(403).send({ error: "Forbidden" });
+    if (req.user.role !== "admin")
+      return reply.status(403).send({ error: "Forbidden" });
+
+    await deleteRobot(id);
+
+    return reply.send({ success: true });
   }
+);
 
-  const robotId = req.params.id;
-
-  try {
-   // await prisma.robot.delete({ where: { robotId } });
-    deleteRobot(robotId);
-    return { success: true };
-  } catch (err) {
-    //return reply.code(404).send({ error: `Robot not found ${robotId}`  });
-    return reply.code(404).send({ error: `err: ${err}`});
-  }
-});
 
 
 

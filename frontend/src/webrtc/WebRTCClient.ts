@@ -1,0 +1,166 @@
+import type { AyameAddStreamEvent, Connection } from "@open-ayame/ayame-web-sdk";
+import { createConnection, defaultOptions } from "@open-ayame/ayame-web-sdk";
+
+export class WebRTCClient {
+    private videoElement: HTMLVideoElement | null = null;
+
+    private signalingUrl = "wss://andrii.razoom-print.com/signaling";
+    private roomIdPrefix = "ukrandruha@";
+    private roomName = "";
+    private signalingKey = "ULFkmZABRVve9QbejPrC_wnjKkyeJDtmN69OkYGnxe1vO1Rx";
+
+    private clientId = crypto.randomUUID();
+    private debug = true;
+
+    private dataChannel: RTCDataChannel | null = null;
+    private connA: Connection | null = null;
+    private connB: Connection | null = null;
+
+    // ================= OPTIONS ======================
+    private options = (() => {
+        const opt = { ...defaultOptions };
+
+        opt.clientId = this.clientId;
+        opt.signalingKey = this.signalingKey;
+
+        opt.video = opt.video ?? {};
+        opt.video.codecMimeType = "video/H264";
+
+        opt.iceServers = [
+            { urls: "stun:stun.l.google.com:19302" },
+            {
+                urls: "turn:andrii.razoom-print.com:3478?transport=udp",
+                username: "webrtc",
+                credential: "password123"
+            }
+        ];
+
+        return opt;
+    })();
+    // =================================================
+
+    constructor(private robotId: string) {
+        this.roomName = robotId;
+    }
+
+    setVideoElement(video: HTMLVideoElement) {
+        this.videoElement = video;
+    }
+
+    // =================================================
+    // MAIN START
+    // =================================================
+    async start() {
+        console.log(`[WebRTC] Starting for robot ${this.robotId}`);
+
+        await this.connectA();
+        await this.connectB();
+
+        console.log("[WebRTC] Both connections established");
+    }
+
+    // =================================================
+    // CONNECTION A — DataChannel
+    // =================================================
+    private connectA = async () => {
+        const roomId = `${this.roomIdPrefix}${this.roomName}-Data`;
+
+        this.connA = createConnection(
+            this.signalingUrl,
+            roomId,
+            this.options,
+            this.debug
+        );
+
+        this.connA.on("open", async () => {
+            if (!this.connA) return;
+
+            const pc = this.connA.peerConnection;
+            if (pc) {
+                pc.onconnectionstatechange = () => {
+                    console.log("[A] state:", pc.connectionState);
+                };
+            }
+
+            // Create DataChannel
+            this.dataChannel = await this.connA.createDataChannel("robot-control", {
+                ordered: false,
+                maxRetransmits: 0,
+            });
+
+            if (this.dataChannel) {
+                console.log("[A] DataChannel created");
+
+                this.dataChannel.onopen = () => {
+                    console.log("[A] DataChannel open");
+                };
+
+                this.dataChannel.onmessage = (msg) => {
+                    console.log("[A] Message:", msg.data);
+                };
+            }
+        });
+
+        this.connA.on("disconnect", () => {
+            console.warn("[A] Disconnected");
+            this.connA?.connect(null);
+            this.connA = null;
+        });
+        this.connA.connect(null);
+    };
+
+    // =================================================
+    // CONNECTION B — Video Stream
+    // =================================================
+    private connectB = async () => {
+        const roomId = `${this.roomIdPrefix}${this.roomName}-VideoA`;
+
+        this.connB = createConnection(
+            this.signalingUrl,
+            roomId,
+            this.options,
+            this.debug
+        );
+
+        this.connB.on("addstream", (event: AyameAddStreamEvent) => {
+            if (this.videoElement) {
+                this.videoElement.srcObject = event.stream;
+            }
+        });
+
+        this.connB.on("open", () => {
+            const pc = this.connB?.peerConnection;
+            if (pc) {
+                pc.onconnectionstatechange = () => {
+                    console.log("[B] state:", pc.connectionState);
+                };
+            }
+        });
+
+        this.connB.on("disconnect", () => {
+            console.warn("[B] Disconnected");
+
+            if (this.videoElement) {
+                this.videoElement.srcObject = null;
+            }
+
+            this.connB?.connect(null);
+            this.connB = null;
+        });
+        this.connB.connect(null);
+    };
+
+    // =================================================
+    // STOP
+    // =================================================
+    async stop() {
+        console.log("[WebRTC] Stopping...");
+
+        if (this.connA) await this.connA.disconnect();
+        if (this.connB) await this.connB.disconnect();
+
+        this.connA = null;
+        this.connB = null;
+        this.dataChannel = null;
+    }
+}

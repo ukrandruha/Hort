@@ -17,7 +17,7 @@ export async function authRoutes(app: FastifyInstance) {
   // Login
   app.post<{
     Body: { email: string; password: string };
-  }>("/api/login", async (req, reply) => {
+  }>("/login", async (req, reply) => {
     const { email, password } = req.body;
 
     const user = await validateUser(email, password);

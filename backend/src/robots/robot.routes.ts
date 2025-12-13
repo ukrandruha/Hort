@@ -6,7 +6,7 @@ import {
   getRobot,
   editRobot,
   deleteRobot
-} from "./robot.service.js";
+} from "./robot.service";
 
 
 export async function robotRoutes(app: FastifyInstance) {

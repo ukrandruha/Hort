@@ -3,8 +3,9 @@ import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import { PrismaClient } from "@prisma/client";
 
-import { authRoutes } from "./auth/auth.routes.js";
-import { robotRoutes } from "./robots/robot.routes.js";
+
+import { robotRoutes } from "./robots/robot.routes";
+import { authRoutes } from "./auth/auth.routes";
 
 const prisma = new PrismaClient();
 const app = Fastify({
@@ -18,9 +19,9 @@ const app = Fastify({
    app.decorate("auth", async (req: any, reply: any) => {
       await req.jwtVerify();
    });
-   
-   await app.register(authRoutes, { prefix: "/api/auth" });
-   await app.register(robotRoutes, { prefix: "/api/robots" });
+
+   await app.register(authRoutes);
+   await app.register(robotRoutes);
 
    app.listen({ port: 3000 }, () => console.log("Backend started"));
 })();

@@ -1,25 +1,29 @@
-datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-}
-
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../database.sqlite"
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
   password String
-  role     String  // admin | viewer
+  role     String
 }
 
 model Robot {
-  robotId  String   @id
-  name     String
-  cpu      Int?
-  memory   Int?
-  disk     Int?
-  cloud    Boolean? @default(true)
-  lastSeen DateTime @updatedAt
+  robotId     String @id
+  name        String?
+  status      String?
+  battery     Int?
+  cpu         Int?
+  memory      Int?
+  temperature Int?
+  lat         Float?
+  lng         Float?
+  updatedAt   DateTime @default(now())
 }

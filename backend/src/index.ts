@@ -7,7 +7,9 @@ import { authRoutes } from "./auth/auth.routes.js";
 import { robotRoutes } from "./robots/robot.routes.js";
 
 const prisma = new PrismaClient();
-const app = Fastify();
+const app = Fastify({
+  logger: true
+});
 
 (async () => {
    await app.register(cors, { origin: "*" });
@@ -16,6 +18,7 @@ const app = Fastify();
    app.decorate("auth", async (req: any, reply: any) => {
       await req.jwtVerify();
    });
+   
    await app.register(authRoutes, { prefix: "/api/auth" });
    await app.register(robotRoutes, { prefix: "/api/robots" });
 

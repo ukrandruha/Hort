@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance , RouteShorthandOptions } from "fastify";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
@@ -6,7 +6,25 @@ const prisma = new PrismaClient();
 
 export async function authRoutes(fastify: FastifyInstance) {
 
-  console.log("Auth routes loaded");
+const opts: RouteShorthandOptions = {
+  schema: {
+    response: {
+      200: {
+        type: 'object',
+        properties: {
+          pong: {
+            type: 'string'
+          }
+        }
+      }
+    }
+  }
+}
+
+  fastify.get('/ping', opts, async (request, reply) => {
+  return { pong: 'it worked!' }
+})
+
   // --------------------------
   // POST /api/auth/login
   // --------------------------

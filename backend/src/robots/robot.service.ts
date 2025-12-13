@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // Get all robots
 export function getAllRobots() {
   return prisma.robot.findMany({
-    orderBy: { lastSeen: "desc" }
+    orderBy: { updatedAt: "desc" }
   });
 }
 

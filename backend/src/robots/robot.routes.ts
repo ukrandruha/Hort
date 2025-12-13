@@ -1,5 +1,4 @@
 import type { FastifyInstance } from "fastify";
-//import { updateRobotStatus, getAllRobots, getRobot } from "./robot.service.ts";
 import { 
   updateRobotStatus, 
   getAllRobots, 

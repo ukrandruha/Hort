@@ -18,7 +18,7 @@ const app = Fastify();
    });
 
    await app.register(authRoutes);
-   await app.register(robotRoutes, { prefix: "/api" });
+   await app.register(robotRoutes);
 
    app.listen({ port: 3000 }, () => console.log("Backend started"));
 })();

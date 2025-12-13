@@ -4,8 +4,8 @@ import jwt from "@fastify/jwt";
 import { PrismaClient } from "@prisma/client";
 
 
-import { robotRoutes } from "./robots/robot.routes";
-import { authRoutes } from "./auth/auth.routes";
+import { robotRoutes } from "./robots/robot.routes.js";
+import { authRoutes } from "./auth/auth.routes.js";
 
 const prisma = new PrismaClient();
 const app = Fastify({

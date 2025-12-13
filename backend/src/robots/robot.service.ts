@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import {RobotUpdateData} from "../types/robot.types";
+import {RobotUpdateData} from "../types/robot.types.js";
 //import { RobotUpdateData } from "./robot.types";
 
 

@@ -1,12 +1,12 @@
 import type { FastifyInstance } from "fastify";
-import {RobotUpdateData} from "../types/robot.types";
+import {RobotUpdateData} from "../types/robot.types.js";
 import { 
   updateRobotStatus, 
   getAllRobots, 
   getRobot,
   editRobot,
   deleteRobot
-} from "./robot.service";
+} from "./robot.service.js";
 
 
 export async function robotRoutes(app: FastifyInstance) {

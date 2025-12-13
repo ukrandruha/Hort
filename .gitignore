@@ -1,3 +1,4 @@
 backend/database.sqlite
+backend/database.sqlite-journal
 dist/
 node_modules/

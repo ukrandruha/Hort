@@ -38,7 +38,7 @@ export async function deleteRobot(id: string) {
   return prisma.robot.delete({ where: { robotId: id } });
 }
 
-export async function editRobot(id: string, data: Partial<RobotUpdateData>) {
+export async function editRobot(id: string, data) {
   return prisma.robot.update({
     where: { robotId: id },
     data,

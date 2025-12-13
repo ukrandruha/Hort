@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import bcrypt from "bcryptjs";
-import { registerUser, validateUser } from "./auth.service";
+import { registerUser, validateUser } from "./auth.service.js";
 
 export async function authRoutes(app: FastifyInstance) {
   // Register

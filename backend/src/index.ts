@@ -16,9 +16,6 @@ const app = Fastify();
    app.decorate("auth", async (req: any, reply: any) => {
       await req.jwtVerify();
    });
-
-   //await app.register(authRoutes);
-   //await app.register(robotRoutes);
    await app.register(authRoutes, { prefix: "/api/auth" });
    await app.register(robotRoutes, { prefix: "/api/robots" });
 

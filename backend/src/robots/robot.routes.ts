@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import {RobotUpdateData} from "../types/robot.types";
 import { 
   updateRobotStatus, 
   getAllRobots, 
@@ -7,12 +8,13 @@ import {
   deleteRobot
 } from "./robot.service.js";
 
+
 export async function robotRoutes(app: FastifyInstance) {
 
   // Raspberry update (open endpoint)
   app.post("/api/robots/update", async (req, reply) => {
     try {
-      const robot = await updateRobotStatus(req.body);
+      const robot = await updateRobotStatus(req.body as RobotUpdateData);
       return { success: true, robot };
     } catch (err) {
       reply.code(400).send({ error: "Update failed" });
@@ -45,10 +47,11 @@ app.patch<{ Params: { id: string } }>("/api/robots/:id", { preHandler: [app.auth
   //}
 
   const robotId = req.params.id;
-  const data = req.body;
+  const data:RobotUpdateData = req.body as RobotUpdateData;
 
   try {
     //const updated = await prisma.robot.update({where: { robotId },data});
+  
     const updated = editRobot(robotId,data);
     return updated;
   } catch (err) {
@@ -70,8 +73,6 @@ app.delete<{ Params: { id: string } }>(
     return reply.send({ success: true });
   }
 );
-
-
 
 
 }

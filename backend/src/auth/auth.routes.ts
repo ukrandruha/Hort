@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function authRoutes(fastify: FastifyInstance,_opts) {
+export async function authRoutes(fastify: FastifyInstance) {
 
   console.log("Auth routes loaded");
   // --------------------------

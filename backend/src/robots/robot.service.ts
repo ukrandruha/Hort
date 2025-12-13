@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
+import {RobotUpdateData} from "../types/robot.types";
 //import { RobotUpdateData } from "./robot.types";
+
 
 const prisma = new PrismaClient();
 
@@ -16,7 +18,7 @@ export function getRobot(robotId: string) {
   return prisma.robot.findUnique({ where: { robotId } });
 }
 
-export async function updateRobotStatus(data) {
+export async function updateRobotStatus(data:RobotUpdateData) {
   return prisma.robot.upsert({
     where: { robotId: data.robotId },
     update: {
@@ -47,7 +49,7 @@ export async function deleteRobot(id: string) {
   return prisma.robot.delete({ where: { robotId: id } });
 }
 
-export async function editRobot(id: string, data) {
+export async function editRobot(id: string, data:RobotUpdateData) {
   return prisma.robot.update({
     where: { robotId: id },
     data,

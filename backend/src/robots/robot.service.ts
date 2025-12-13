@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { RobotUpdateData } from "./robot.types";
+//import { RobotUpdateData } from "./robot.types";
 
 const prisma = new PrismaClient();
 
@@ -7,7 +7,7 @@ export async function getRobots() {
   return prisma.robot.findMany();
 }
 
-export async function updateRobotStatus(data: RobotUpdateData) {
+export async function updateRobotStatus(data) {
   return prisma.robot.upsert({
     where: { robotId: data.robotId },
     update: {

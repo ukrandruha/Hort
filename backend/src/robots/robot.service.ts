@@ -3,8 +3,17 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function getRobots() {
-  return prisma.robot.findMany();
+
+// Get all robots
+export function getAllRobots() {
+  return prisma.robot.findMany({
+    orderBy: { lastSeen: "desc" }
+  });
+}
+
+// Get robot by ID
+export function getRobot(robotId: string) {
+  return prisma.robot.findUnique({ where: { robotId } });
 }
 
 export async function updateRobotStatus(data) {

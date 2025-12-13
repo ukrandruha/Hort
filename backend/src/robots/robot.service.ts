@@ -1,43 +1,46 @@
 import { PrismaClient } from "@prisma/client";
+import { RobotUpdateData } from "./robot.types";
 
 const prisma = new PrismaClient();
 
-// Raspberry Pi update or auto-register
-export async function updateRobotStatus(data) {
-  const { robotId, name, cpu, memory, disk, cloud } = data;
+export async function getRobots() {
+  return prisma.robot.findMany();
+}
 
+export async function updateRobotStatus(data: RobotUpdateData) {
   return prisma.robot.upsert({
-    where: { robotId },
-    update: { name, cpu, memory, disk, cloud },
-    create: { robotId, name, cpu, memory, disk, cloud }
+    where: { robotId: data.robotId },
+    update: {
+      name: data.name ?? undefined,
+      status: data.status ?? undefined,
+      battery: data.battery ?? undefined,
+      cpu: data.cpu ?? undefined,
+      memory: data.memory ?? undefined,
+      temperature: data.temperature ?? undefined,
+      lat: data.position?.lat,
+      lng: data.position?.lng,
+    },
+    create: {
+      robotId: data.robotId,
+      name: data.name,
+      status: data.status,
+      battery: data.battery,
+      cpu: data.cpu,
+      memory: data.memory,
+      temperature: data.temperature,
+      lat: data.position?.lat,
+      lng: data.position?.lng,
+    },
   });
 }
 
-// Get all robots
-export function getAllRobots() {
-  return prisma.robot.findMany({
-    orderBy: { lastSeen: "desc" }
-  });
+export async function deleteRobot(id: string) {
+  return prisma.robot.delete({ where: { robotId: id } });
 }
 
-// Get single robot
-export function getRobot(robotId: string) {
-  return prisma.robot.findUnique({
-    where: { robotId }
-  });
-}
-
-// Update robot (admin edit)
-export function editRobot(robotId: string, data: any) {
+export async function editRobot(id: string, data: Partial<RobotUpdateData>) {
   return prisma.robot.update({
-    where: { robotId },
-    data
-  });
-}
-
-// Delete robot
-export function deleteRobot(robotId: string) {
-  return prisma.robot.delete({
-    where: { robotId }
+    where: { robotId: id },
+    data,
   });
 }

@@ -17,8 +17,10 @@ const app = Fastify();
       await req.jwtVerify();
    });
 
-   await app.register(authRoutes);
-   await app.register(robotRoutes);
+   //await app.register(authRoutes);
+   //await app.register(robotRoutes);
+   await app.register(authRoutes, { prefix: "/api/auth" });
+   await app.register(robotRoutes, { prefix: "/api/robots" });
 
    app.listen({ port: 3000 }, () => console.log("Backend started"));
 })();

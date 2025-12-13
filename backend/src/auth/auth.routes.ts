@@ -6,7 +6,7 @@ export async function authRoutes(app: FastifyInstance) {
   // Register
   app.post<{
     Body: { email: string; password: string; role?: string };
-  }>("/api/register", async (req, reply) => {
+  }>("/register", async (req, reply) => {
     const { email, password, role } = req.body;
 
     const user = await registerUser(email, password, role ?? "user");

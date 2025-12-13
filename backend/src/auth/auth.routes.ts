@@ -4,12 +4,13 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function authRoutes(app: FastifyInstance) {
+export async function authRoutes(fastify: FastifyInstance,_opts) {
 
+  console.log("Auth routes loaded");
   // --------------------------
   // POST /api/auth/login
   // --------------------------
-  app.post("/login", async (req, reply) => {
+  fastify.post("/login", async (req, reply) => {
     const { email, password } = req.body as {
       email: string;
       password: string;
@@ -29,7 +30,7 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: "Invalid credentials" });
     }
 
-    const token = app.jwt.sign({ id: user.id, role: user.role });
+    const token = fastify.jwt.sign({ id: user.id, role: user.role });
 
     return reply.send({ token });
   });
@@ -37,7 +38,7 @@ export async function authRoutes(app: FastifyInstance) {
   // --------------------------
   // POST /api/auth/register
   // --------------------------
-  app.post("/register", async (req, reply) => {
+  fastify.post("/register", async (req, reply) => {
     const { email, password, role } = req.body as {
       email: string;
       password: string;
@@ -69,7 +70,7 @@ export async function authRoutes(app: FastifyInstance) {
   // --------------------------
   // GET /api/auth/check
   // --------------------------
-  app.get("/check", async (req, reply) => {
+  fastify.get("/check", async (req, reply) => {
     try {
       await req.jwtVerify();
       return reply.send({ ok: true });

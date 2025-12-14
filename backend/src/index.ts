@@ -21,8 +21,8 @@ const start = async () => {
       await req.jwtVerify();
     });
 
-    await app.register(authRoutes);
-    await app.register(robotRoutes);
+    await app.register(authRoutes,{ prefix: 'api/auth' });
+    await app.register(robotRoutes,{ prefix: 'api/robots' });
 
     await app.listen({
       port: 3001,

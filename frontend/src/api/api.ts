@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "https://andrii.razoom-print.com"
+  baseURL: "http://localhost:3001"
 });
 
 api.interceptors.request.use((config) => {

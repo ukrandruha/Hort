@@ -148,7 +148,7 @@ function closeVideo() {
                  {r.disk ?? "-"}%
               </td>
               <td className={`py-2 px-4 ${getStatusColor(r.temperature)}`}>
-                 {r.temperature ?? "-"}%
+                 {r.temperature ?? "-"}°
               </td>
   
 

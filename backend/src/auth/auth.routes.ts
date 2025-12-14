@@ -21,14 +21,14 @@ const opts: RouteShorthandOptions = {
   }
 }
 
-  fastify.get('/ping', opts, async (request, reply) => {
+  fastify.get('/api/auth/ping', opts, async (request, reply) => {
   return { pong: 'it worked!' }
 })
 
   // --------------------------
   // POST /api/auth/login
   // --------------------------
-  fastify.post("/login", async (req, reply) => {
+  fastify.post("/api/auth/login", async (req, reply) => {
     const { email, password } = req.body as {
       email: string;
       password: string;
@@ -56,7 +56,7 @@ const opts: RouteShorthandOptions = {
   // --------------------------
   // POST /api/auth/register
   // --------------------------
-  fastify.post("/register", async (req, reply) => {
+  fastify.post("/api/auth/register", async (req, reply) => {
     const { email, password, role } = req.body as {
       email: string;
       password: string;
@@ -88,7 +88,7 @@ const opts: RouteShorthandOptions = {
   // --------------------------
   // GET /api/auth/check
   // --------------------------
-  fastify.get("/check", async (req, reply) => {
+  fastify.get("/api/auth/check", async (req, reply) => {
     try {
       await req.jwtVerify();
       return reply.send({ ok: true });

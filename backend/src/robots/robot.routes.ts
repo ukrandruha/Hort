@@ -17,7 +17,7 @@ export async function robotRoutes(app: FastifyInstance) {
       const robot = await updateRobotStatus(req.body as RobotUpdateData);
       return { success: true, robot };
     } catch (err) {
-      reply.code(400).send({ error: "Update failed" });
+      reply.code(400).send({ error: "Update failed:"+err });
     }
   });
 

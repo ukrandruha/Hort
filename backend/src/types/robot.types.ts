@@ -6,6 +6,7 @@
   battery?: number;
   cpu?: number;
   memory?: number;
+  disk?: number;
   temperature?: number;
   position?: {
     lat: number;

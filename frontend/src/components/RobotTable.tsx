@@ -110,7 +110,7 @@ function closeVideo() {
             <th className="py-3 px-4">Name</th>
             <th className="py-3 px-4">RobotId</th>
             <th className="py-3 px-4">Status</th>
-            <th className="py-3 px-4">Batterey</th>
+            <th className="py-3 px-4">Battery</th>
             <th className="py-3 px-4">CPU</th>
             <th className="py-3 px-4">Memory</th>
             <th className="py-3 px-4">Disk</th>
@@ -134,7 +134,7 @@ function closeVideo() {
               <td className={`py-2 px-4 ${cloudColor}`}>
                   ● {isOffline ? "Offline" : "Online"}
                 </td>
-              <td className="py-2 px-4">{r.Batterey}</td>
+              <td className="py-2 px-4">{r.Battery}</td>
 
               <td className={`py-2 px-4 ${getStatusColor(r.cpu)}`}>
                 {r.cpu ?? "-"}%

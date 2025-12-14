@@ -22,7 +22,7 @@ export default function RobotTable() {
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 3000);
+    const interval = setInterval(load, 3001);
     return () => clearInterval(interval);
   }, []);
 

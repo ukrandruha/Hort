@@ -12,7 +12,7 @@ import {
 export async function robotRoutes(app: FastifyInstance) {
 
   // Raspberry update (open endpoint)
-  app.post("/update", async (req, reply) => {
+  app.post("/api/robots/update", async (req, reply) => {
     try {
       const robot = await updateRobotStatus(req.body as RobotUpdateData);
       return { success: true, robot };
@@ -22,12 +22,12 @@ export async function robotRoutes(app: FastifyInstance) {
   });
 
   // List robots (JWT)
-  app.get("/robots", { preHandler: [app.auth] }, async () => {
+  app.get("/api/robots/", { preHandler: [app.auth] }, async () => {
     return getAllRobots();
   });
 
-  // Single robot (JWT)
-  app.get<{ Params: { id: string } }>("/robots/:id", { preHandler: [app.auth] }, async (req, reply) => {
+  // Single robot (JWT) 
+  app.get<{ Params: { id: string } }>("/api/robots/:id", { preHandler: [app.auth] }, async (req, reply) => {
     const id = req.params.id;
     const robot = await getRobot(id);
 
@@ -40,7 +40,7 @@ export async function robotRoutes(app: FastifyInstance) {
 
 
   // Update robot (admin only)
-app.patch<{ Params: { id: string } }>("/robots/:id", { preHandler: [app.auth] }, async (req, reply) => {
+app.patch<{ Params: { id: string } }>("/api/robots/:id", { preHandler: [app.auth] }, async (req, reply) => {
 
   //if (req.user.role !== "admin") {
   //  return reply.code(403).send({ error: "Forbidden" });
@@ -61,7 +61,7 @@ app.patch<{ Params: { id: string } }>("/robots/:id", { preHandler: [app.auth] },
 
 // Delete robot (admin only)
 app.delete<{ Params: { id: string } }>(
-  "/robots/:id",
+  "/api/robots/:id",
   async (req, reply) => {
     const { id } = req.params;
 

@@ -22,6 +22,7 @@ model Robot {
   battery     Int?
   cpu         Int?
   memory      Int?
+  disk        Int?
   temperature Int?
   lat         Float?
   lng         Float?

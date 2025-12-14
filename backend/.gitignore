@@ -4,3 +4,4 @@ dist/
 database.sqlite
 database.sqlite-journal
 .prisma/
+.node_modules/

@@ -40,12 +40,12 @@ const opts: RouteShorthandOptions = {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return reply.status(401).send({ error: "Invalid credentials" });
+      return reply.status(401).send({ error: "Invalid email" });
     }
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      return reply.status(401).send({ error: "Invalid credentials" });
+      return reply.status(401).send({ error: "Invalid password" });
     }
 
     const token = fastify.jwt.sign({ id: user.id, role: user.role });

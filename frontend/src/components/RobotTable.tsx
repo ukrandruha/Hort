@@ -109,10 +109,12 @@ function closeVideo() {
           <tr>
             <th className="py-3 px-4">Name</th>
             <th className="py-3 px-4">RobotId</th>
+            <th className="py-3 px-4">Status</th>
+            <th className="py-3 px-4">Batterey</th>
             <th className="py-3 px-4">CPU</th>
             <th className="py-3 px-4">Memory</th>
             <th className="py-3 px-4">Disk</th>
-            <th className="py-3 px-4">Cloud</th>
+            <th className="py-3 px-4">Temp</th>
             <th className="py-3 px-4">Last Seen</th>
             <th className="py-3 px-4">Actions</th>
           </tr>
@@ -120,7 +122,7 @@ function closeVideo() {
 
         <tbody>
           {robots.map((r) => {
-            const lastSeenDate = new Date(r.lastSeen);
+            const lastSeenDate = new Date(r.updatedAt);
             const isOffline = Date.now() - lastSeenDate.getTime() > 10000;
             const cloudColor = isOffline ? "text-red-500" : "text-green-400";
 
@@ -128,6 +130,7 @@ function closeVideo() {
             <tr key={r.robotId} className="border-b border-gray-700">
               <td className="py-2 px-4">{r.name}</td>
               <td className="py-2 px-4">{r.robotId}</td>
+              <td className="py-2 px-4">{r.Batterey}</td>
 
               <td className={`py-2 px-4 ${getStatusColor(r.cpu)}`}>
                 {r.cpu ?? "-"}%
@@ -138,15 +141,17 @@ function closeVideo() {
               </td>
 
               <td className={`py-2 px-4 ${getStatusColor(r.disk)}`}>
-                {r.disk ?? "-"}%
+                {0}%
               </td>
-
+              <td className={`py-2 px-4 ${getStatusColor(r.temperature)}`}>
+                 {r.temperature ?? "-"}%
+              </td>
                 <td className={`py-2 px-4 ${cloudColor}`}>
                   ● {isOffline ? "Offline" : "Online"}
                 </td>
 
               <td className="py-2 px-4">
-                {new Date(r.lastSeen).toLocaleString()}
+                {new Date(r.updatedAt).toLocaleString()}
               </td>
               
                 {role === "admin" && (

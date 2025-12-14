@@ -130,6 +130,10 @@ function closeVideo() {
             <tr key={r.robotId} className="border-b border-gray-700">
               <td className="py-2 px-4">{r.name}</td>
               <td className="py-2 px-4">{r.robotId}</td>
+
+              <td className={`py-2 px-4 ${cloudColor}`}>
+                  ● {isOffline ? "Offline" : "Online"}
+                </td>
               <td className="py-2 px-4">{r.Batterey}</td>
 
               <td className={`py-2 px-4 ${getStatusColor(r.cpu)}`}>
@@ -141,14 +145,12 @@ function closeVideo() {
               </td>
 
               <td className={`py-2 px-4 ${getStatusColor(r.disk)}`}>
-                {0}%
+                 {r.disk ?? "-"}%
               </td>
               <td className={`py-2 px-4 ${getStatusColor(r.temperature)}`}>
                  {r.temperature ?? "-"}%
               </td>
-                <td className={`py-2 px-4 ${cloudColor}`}>
-                  ● {isOffline ? "Offline" : "Online"}
-                </td>
+  
 
               <td className="py-2 px-4">
                 {new Date(r.updatedAt).toLocaleString()}

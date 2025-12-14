@@ -21,8 +21,7 @@ export function getRobot(robotId: string) {
 export async function updateRobotStatus(data:RobotUpdateData) {
   return prisma.robot.upsert({
     where: { robotId: data.robotId },
-    update: {
-      name: data.name ?? undefined,
+    update: { 
       status: data.status ?? undefined,
       battery: data.battery ?? undefined,
       cpu: data.cpu ?? undefined,

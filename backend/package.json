@@ -10,18 +10,18 @@
     "prisma:migrate": "prisma migrate dev --name init"
   },
   "dependencies": {
-    "fastify": "^4.22.2",
     "@fastify/cors": "^8.3.0",
     "@fastify/jwt": "^6.2.0",
     "@prisma/client": "^5.10.2",
-    "bcryptjs": "^2.4.3"
+    "bcryptjs": "^2.4.3",
+    "fastify": "^4.22.2"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "prisma": "^7.1.0",
     "ts-node": "^10.9.2",
-    "prisma": "^5.10.2"
+    "typescript": "^5.3.3"
   },
   "prisma": {
-  "seed": "ts-node ./prisma/seed.ts"
+    "seed": "ts-node ./prisma/seed.ts"
   }
 }

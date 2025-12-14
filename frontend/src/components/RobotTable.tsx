@@ -13,7 +13,7 @@ export default function RobotTable() {
 
   async function load() {
     try {
-      const res = await api.get("/api/robots");
+      const res = await api.get("/api/robots/");
       setRobots(res.data);
     } catch (e) {
       console.error("Failed to load robots", e);

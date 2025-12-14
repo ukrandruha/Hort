@@ -26,5 +26,5 @@ model Robot {
   temperature Int?
   lat         Float?
   lng         Float?
-  updatedAt   DateTime @default(now())
+  updatedAt   DateTime  @updatedAt
 }

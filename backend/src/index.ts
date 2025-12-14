@@ -25,7 +25,7 @@ const start = async () => {
     await app.register(robotRoutes);
 
     await app.listen({
-      port: 30010,
+      port: 3001,
       host: "0.0.0.0"
     });
 

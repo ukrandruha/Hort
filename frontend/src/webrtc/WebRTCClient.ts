@@ -1,5 +1,6 @@
 import type { AyameAddStreamEvent, Connection } from "@open-ayame/ayame-web-sdk";
 import { createConnection, defaultOptions } from "@open-ayame/ayame-web-sdk";
+import type { GamepadState } from "../utils/Gamepad.js";
 
 export class WebRTCClient {
     private videoElement: HTMLVideoElement | null = null;
@@ -163,4 +164,58 @@ export class WebRTCClient {
         this.connB = null;
         this.dataChannel = null;
     }
+     // =================================================
+    // Set data GamePad
+    // =================================================
+    async SetDataGamePad(state: GamepadState) {
+
+        const msgByte = this.pack7(state);
+
+        if (this.dataChannel && this.dataChannel.readyState === 'open') {
+            await this.dataChannel.send(msgByte);
+            //console.log('Sent via datachannel');
+        } else {
+            //console.log('DataChannel not open');
+        }
+    }
+
+    pack7(state: GamepadState): Uint8Array {
+        const values = [
+            state.ch1, state.ch2, state.ch3,
+            state.ch4, state.ch5, state.ch6, state.ch7,
+        ];
+
+        const buf = new Uint8Array(9);
+        let acc = 0;
+        let accBits = 0;
+        let i = 0;
+
+        for (let v of values) {
+            // clamp до [-1, 1]
+            v = Math.max(-1, Math.min(1, v));
+            // перетворення до діапазону [1000..2000]
+            const q = 1000 + Math.round((v + 1) * 500);
+            const x10 = q - 1000; // 0..1000 (10 біт)
+
+            acc |= (x10 & 0x3FF) << accBits;
+            accBits += 10;
+
+            while (accBits >= 8) {
+                buf[i++] = acc & 0xFF;
+                acc >>>= 8;
+                accBits -= 8;
+            }
+        }
+
+        if (accBits > 0) {
+            buf[i++] = acc & 0xFF;
+        }
+
+        return buf; // Uint8Array довжиною 9 байтів
+    }
+
+    async sendDataArray(msg: Uint8Array) {
+
+    }
+    
 }

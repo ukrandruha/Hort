@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
+import {GamepadReader} from "../utils/Gamepad";
 
 export default function VideoViewer({ robot, onClose }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const clientRef = useRef<WebRTCClient | null>(null);
+  const gp = useRef<GamepadReader| null>(null);
 
   const [connected, setConnected] = useState(false);
 
@@ -24,10 +26,9 @@ export default function VideoViewer({ robot, onClose }) {
 
     setConnected(true);
   }
-function fullScreen()
-{
+  function fullScreen() {
 
-}
+  }
   // ============================================
   // DISCONNECT CAMERA
   // ============================================
@@ -55,6 +56,40 @@ function fullScreen()
     };
   }, []);
 
+
+
+  // ============================================
+  // Connect GAMEPAD
+  // ============================================
+
+  function setupGamePadListeners() {
+
+
+    gp.current = new GamepadReader({
+      axisMap: { ch1: 0, ch2: 1, ch3: 2, ch4: 3, ch5: 4, ch6: 5, ch7: 6 }, // підлаштуй порядок осей під свій TX12
+      deadzone: 0.03,
+      smooth: 0.25,
+      updateIntervalMs: 100,
+    });
+
+
+    // отримуємо дані кожен кадр (~60 fps)
+    gp.current.onUpdate = (s) => {
+
+      // sendDataArray(pack7(s));
+      //console.log(s);
+      clientRef.current?.SetDataGamePad(s);
+
+
+    };
+
+    // старт опитування
+    gp.current.start();
+
+
+  }
+
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 flex flex-col z-50">
 
@@ -81,12 +116,12 @@ function fullScreen()
 
       {/* MAIN VIDEO AREA */}
       <div className="relative flex-1 bg-black flex items-center justify-center">
-    <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        className="absolute inset-0 w-full h-full object-contain"
-    />
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="absolute inset-0 w-full h-full object-contain"
+        />
 
         {/* MAP PIP */}
         <div

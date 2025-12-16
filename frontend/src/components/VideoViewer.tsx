@@ -24,6 +24,7 @@ export default function VideoViewer({ robot, onClose }) {
     client.setVideoElement(videoRef.current);
     await client.start();
 
+    setupGamePadListeners();  
     setConnected(true);
   }
   function fullScreen() {
@@ -35,6 +36,11 @@ export default function VideoViewer({ robot, onClose }) {
   async function disconnectCamera() {
     console.log("[UI] Disconnecting camera…");
 
+    if(gp.current)
+    {
+      await gp.current.stop();
+    }
+    
     if (clientRef.current) {
       await clientRef.current.stop();
       clientRef.current = null;

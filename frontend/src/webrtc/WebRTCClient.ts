@@ -154,14 +154,75 @@ export class WebRTCClient {
     async stop() {
         console.log("[WebRTC] Stopping...");
 
-        if (this.connA) await this.connA.disconnect();
-        if (this.connB) await this.connB.disconnect();
+        if (this.dataChannel) {
+            try {
+                this.dataChannel.close();
+            } catch { }
+            this.dataChannel = null;
+        }
+        if (this.connA) {
+            this.teardownConnection(this.connA);
+            await this.connA.disconnect();
+            this.connA = null;
+        }
 
-        this.connA = null;
-        this.connB = null;
-        this.dataChannel = null;
+        if (this.connB) {
+            this.teardownConnection(this.connB);
+            await this.connB.disconnect();
+            this.connB = null;
+        }
+
+        if (this.videoElement) {
+            this.videoElement.srcObject = null;
+        }
+
+        // if (this.connA) await this.connA.disconnect();
+        // if (this.connB) await this.connB.disconnect();
+
+        // this.connA = null;
+        // this.connB = null;
+        // this.dataChannel = null;
     }
-     // =================================================
+
+
+    private teardownConnection(conn: Connection | null) {
+        if (!conn) return;
+
+        const pc = conn.peerConnection;
+        if (!pc) return;
+
+        // // 1. Close DataChannels
+        // pc.getDataChannels?.().forEach(dc => {
+        //     try { dc.close(); } catch {}
+        // });
+
+        // 2. Stop all senders tracks
+        pc.getSenders().forEach(sender => {
+            if (sender.track) {
+                sender.track.stop();
+            }
+        });
+
+        // 3. Stop all receivers tracks
+        pc.getReceivers().forEach(receiver => {
+            if (receiver.track) {
+                receiver.track.stop();
+            }
+        });
+
+        // 4. Remove senders
+        pc.getSenders().forEach(sender => {
+            try { pc.removeTrack(sender); } catch { }
+        });
+
+        // 5. Close PeerConnection
+        pc.close();
+    }
+
+
+
+
+    // =================================================
     // Set data GamePad
     // =================================================
     async SetDataGamePad(state: GamepadState) {
@@ -214,5 +275,5 @@ export class WebRTCClient {
     async sendDataArray(msg: Uint8Array) {
 
     }
-    
+
 }

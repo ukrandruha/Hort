@@ -104,7 +104,6 @@ export class WebRTCClient {
 
         this.connA.on("disconnect", () => {
             console.warn("[A] Disconnected");
-            this.connA?.connect(null);
             this.connA = null;
         });
         this.connA.connect(null);
@@ -144,8 +143,6 @@ export class WebRTCClient {
             if (this.videoElement) {
                 this.videoElement.srcObject = null;
             }
-
-            this.connB?.connect(null);
             this.connB = null;
         });
         this.connB.connect(null);

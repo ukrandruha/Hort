@@ -102,10 +102,10 @@ export class WebRTCClient {
             }
         });
 
-        this.connA.on("disconnect", () => {
-            console.warn("[A] Disconnected");
-            this.connA = null;
-        });
+        // this.connA.on("disconnect", () => {
+        //     console.warn("[A] Disconnected");
+        //     this.connA = null;
+        // });
         this.connA.connect(null);
     };
 
@@ -137,14 +137,12 @@ export class WebRTCClient {
             }
         });
 
-        this.connB.on("disconnect", () => {
-            console.warn("[B] Disconnected");
+        // this.connB.on("disconnect", () => {
+        //     console.warn("[B] Disconnected");
 
-            if (this.videoElement) {
-                this.videoElement.srcObject = null;
-            }
-            this.connB = null;
-        });
+
+        //     this.connB = null;
+        // });
         this.connB.connect(null);
     };
 
@@ -160,6 +158,9 @@ export class WebRTCClient {
         this.connA = null;
         this.connB = null;
         this.dataChannel = null;
+        if (this.videoElement) {
+            this.videoElement.srcObject = null;
+        }
     }
      // =================================================
     // Set data GamePad

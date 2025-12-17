@@ -42,13 +42,13 @@ export default function LeafletMap({ robot, fullscreen }) {
       scrollWheelZoom={fullscreen}
       style={{ width: "100%", height: "100%" }}
     >
-      <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}" />
+      <TileLayer url="http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
       <MovingMarker position={pos} />
 
-      <Popup position={pos}>
+      {/* <Popup position={pos}>
         {robot.name} <br /> {robot.robotId}
-      </Popup>
+      </Popup> */}
 
       {/* Zoom controls */}
       {/* <MapZoomControls /> */}

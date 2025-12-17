@@ -42,7 +42,7 @@ export default function LeafletMap({ robot, fullscreen }) {
       scrollWheelZoom={fullscreen}
       style={{ width: "100%", height: "100%" }}
     >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{x}/{y}" />
 
       <MovingMarker position={pos} />
 

@@ -36,7 +36,7 @@ async function main() {
   await prisma.robot.createMany({
     data: [
       {
-        id: '1000000012a168a1',
+        robotId: '1000000012a168a1',
         name: 'ubuntu',
         active: true,
         cpu: 100,
@@ -48,10 +48,10 @@ async function main() {
         lat: 48.4374592,
         lon: 35.0126993,
         updatedAt: new Date(1766004599878),
-        Webrtclient: '4', // якщо FK string → інакше прибери
+
       },
       {
-        id: '1000000074eefecf',
+        robotId: '1000000074eefecf',
         name: 'Hort1',
         active: true,
         cpu: 100,
@@ -63,7 +63,7 @@ async function main() {
         lat: 48.4374592,
         lon: 35.0126993,
         updatedAt: new Date(1766156486025),
-        Webrtclient: '5',
+
       },
     ],
   });

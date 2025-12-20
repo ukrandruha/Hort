@@ -9,7 +9,14 @@ const prisma = new PrismaClient();
 // Get all robots
 export function getAllRobots() {
   return prisma.robot.findMany({
-    orderBy: { updatedAt: "desc" }
+    orderBy: { updatedAt: "desc" },
+    include: {
+      user: {
+        select: {
+          name: true
+        }
+      }
+    }
   });
 }
 
@@ -54,5 +61,14 @@ export async function editRobot(id: string, data:RobotUpdateData) {
   return prisma.robot.update({
     where: { robotId: id },
     data,
+  });
+}
+
+export async function updateStatusWebRtc(id: string,userconnect:string) {
+  return prisma.robot.upsert({
+    where: { robotId: id },
+    update: { 
+      Webrtclient: userconnect,
+    },
   });
 }

@@ -40,7 +40,7 @@ export default function VideoViewer({ robot, onClose }) {
     {
       await gp.current.stop();
     }
-    
+
     if (clientRef.current) {
       await clientRef.current.stop();
       clientRef.current = null;
@@ -104,9 +104,6 @@ export default function VideoViewer({ robot, onClose }) {
         <div className="text-xl font-semibold text-gray-200">
           Camera View — {robot.name} ({robot.robotId})
         </div>
-
-
-
 
 
         <button

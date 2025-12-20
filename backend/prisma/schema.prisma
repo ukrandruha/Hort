@@ -13,6 +13,8 @@ model User {
   email    String  @unique
   password String
   role     String
+
+  devices  Tc_user_device[]
 }
 
 model Robot {
@@ -30,14 +32,16 @@ model Robot {
   updatedAt   DateTime  @updatedAt
 
   user         User?    @relation(fields: [webrtclient], references: [id])
+  users Tc_user_device[]
 }
 
-tc_user_device{
-	userid Int
-	deviceid Int
+model Tc_user_device {
+  userid   Int
+  deviceid String
+
+  user   User  @relation(fields: [userid], references: [id])
+  robot  Robot @relation(fields: [deviceid], references: [id])
+
+  @@id([userid, deviceid])
 }
 
-tc_user_group{
-	userid Int
-	groupid Int
-}

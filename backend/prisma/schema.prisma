@@ -33,11 +33,11 @@ model Robot {
 }
 
 tc_user_device{
-	userid Int,
+	userid Int
 	deviceid Int
 }
 
 tc_user_group{
-	userid Int,
+	userid Int
 	groupid Int
 }

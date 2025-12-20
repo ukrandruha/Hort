@@ -9,14 +9,7 @@ const prisma = new PrismaClient();
 // Get all robots
 export function getAllRobots() {
   return prisma.robot.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: {
-      user: {
-        select: {
-          name: true
-        }
-      }
-    }
+    orderBy: { updatedAt: "desc" }
   });
 }
 

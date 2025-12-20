@@ -38,7 +38,6 @@ async function main() {
       {
         robotId: '1000000012a168a1',
         name: 'ubuntu',
-        active: true,
         cpu: 100,
         ram: 26,
         disk: 11,
@@ -53,7 +52,6 @@ async function main() {
       {
         robotId: '1000000074eefecf',
         name: 'Hort1',
-        active: true,
         cpu: 100,
         ram: 50,
         disk: 27,

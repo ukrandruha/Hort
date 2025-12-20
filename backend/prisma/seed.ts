@@ -38,29 +38,13 @@ async function main() {
       {
         robotId: '1000000012a168a1',
         name: 'ubuntu',
-        cpu: 100,
-        ram: 26,
-        disk: 11,
-        load1: 61,
-        load5: 56,
-        load15: 48,
-        lat: 48.4374592,
-        lon: 35.0126993,
-        updatedAt: new Date(1766004599878),
+
 
       },
       {
         robotId: '1000000074eefecf',
         name: 'Hort1',
-        cpu: 100,
-        ram: 50,
-        disk: 27,
-        load1: 61,
-        load5: 63,
-        load15: 48,
-        lat: 48.4374592,
-        lon: 35.0126993,
-        updatedAt: new Date(1766156486025),
+
 
       },
     ],

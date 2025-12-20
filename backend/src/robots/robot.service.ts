@@ -61,7 +61,7 @@ export async function updateStatusWebRtc(id: string,userconnect:string) {
   return prisma.robot.upsert({
     where: { robotId: id },
     update: { 
-      Webrtclient: userconnect,
+      webrtclient: userconnect,
     },
   });
 }

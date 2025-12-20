@@ -16,9 +16,11 @@ CREATE TABLE "new_Robot" (
     "battery" INTEGER,
     "cpu" INTEGER,
     "memory" INTEGER,
+    "disk"        INTEGER,
     "temperature" INTEGER,
     "lat" REAL,
     "lng" REAL,
+    "webrtclient" INTEGER,
     "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 INSERT INTO "new_Robot" ("cpu", "memory", "name", "robotId") SELECT "cpu", "memory", "name", "robotId" FROM "Robot";

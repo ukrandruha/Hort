@@ -57,7 +57,7 @@ export async function editRobot(id: string, data:RobotUpdateData) {
   });
 }
 
-export async function updateStatusWebRtc(id: string,userconnect:Number) {
+export async function updateStatusWebRtc(id: string,userconnect:number) {
   return prisma.robot.upsert({
     where: { robotId: id },
     update: { 

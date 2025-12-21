@@ -2,7 +2,7 @@ import type { AyameAddStreamEvent, Connection } from "@open-ayame/ayame-web-sdk"
 import { createConnection, defaultOptions } from "@open-ayame/ayame-web-sdk";
 import type { GamepadState } from "../utils/Gamepad.js";
 import { api } from "../api/api";
-import { useAuth } from "../auth/AuthContext";
+
 
 
 
@@ -12,6 +12,7 @@ export class WebRTCClient {
     private signalingUrl = "wss://andrii.razoom-print.com/signaling";
     private roomIdPrefix = "ukrandruha@";
     private roomName = "";
+    private userId = -1;
     private signalingKey = "ULFkmZABRVve9QbejPrC_wnjKkyeJDtmN69OkYGnxe1vO1Rx";
 
     private clientId = crypto.randomUUID();
@@ -44,8 +45,9 @@ export class WebRTCClient {
     })();
     // =================================================
 
-    constructor(private robotId: string) {
+    constructor(private robotId: string, userId: number) {
         this.roomName = robotId;
+        this.userId = userId;
     }
 
     setVideoElement(video: HTMLVideoElement) {
@@ -138,8 +140,8 @@ export class WebRTCClient {
 
             if (pc) {
                 try {
-                    const { user } = useAuth();
-                    this.updateRobotWebRtcConnect(this.roomName, user.id);
+                    
+                    this.updateRobotWebRtcConnect(this.roomName, this.userId);
                 } catch (e) {
                     alert(e);
                     console.error(e);

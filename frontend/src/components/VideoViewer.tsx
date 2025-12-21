@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import {GamepadReader} from "../utils/Gamepad";
+import { useAuth } from "../auth/AuthContext";
 
 
 
@@ -9,6 +10,7 @@ export default function VideoViewer({ robot, onClose }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const clientRef = useRef<WebRTCClient | null>(null);
   const gp = useRef<GamepadReader| null>(null);
+  const { user } = useAuth();
 
   const [connected, setConnected] = useState(false);
 
@@ -20,7 +22,7 @@ export default function VideoViewer({ robot, onClose }) {
 
     console.log("[UI] Connecting camera…");
 
-    const client = new WebRTCClient(robot.robotId);
+    const client = new WebRTCClient(robot.robotId, user.id);
     clientRef.current = client;
 
     client.setVideoElement(videoRef.current);

@@ -156,17 +156,16 @@ export class WebRTCClient {
 
    private async updateRobotWebRtcConnect(robotId: string, userid: number | null) {
 
-   const data = {
-    "idRobot": robotId,
-    "userconnect": userid
-  };
-    console.log('update client ',robotId);
-    try {
-      await api.post(`/api/robots/updatewebrtcclient`,data);
-    } catch (e) {
-      alert("update webrtc client failed");
-      console.error(e);
-    }
+//    const data = {
+//     "idRobot": robotId,
+//     "userconnect": userid
+//   };
+//     try {
+//       await api.post(`/api/robots/updatewebrtcclient`,data);
+//     } catch (e) {
+//       alert("update webrtc client failed");
+//       console.error(e);
+//     }
   }
 
 

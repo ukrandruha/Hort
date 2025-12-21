@@ -99,6 +99,12 @@ function closeVideo() {
     }
   }
 
+  async function getUserNamebyId(id: number)
+  {
+    const res = await api.get(`/api/auth/user-email/${id}`);
+    return res.data.id;
+  }
+
   const role = getRole();
   const userId = getUserId();
 
@@ -170,7 +176,7 @@ function closeVideo() {
                 {new Date(r.updatedAt).toLocaleString()}
               </td>
               <td className="py-2 px-4">
-                {r.webrtclient ?? "-"}
+                { getUserNamebyId(r.webrtclient) ?? "-"}
               </td>
               
                 {role === "admin" && (

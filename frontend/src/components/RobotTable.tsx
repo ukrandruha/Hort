@@ -8,6 +8,7 @@ import VideoViewer from "./VideoViewer";
 export default function RobotTable() {
   const [robots, setRobots] = useState([]);
   const { token } = useAuth();
+  //const { user } = useAuth();
   const [editRobot, setEditRobot] = useState(null);
   const [videoRobot, setVideoRobot] = useState(null);
 
@@ -89,8 +90,18 @@ function closeVideo() {
       return null;
     }
   }
+  function getUserId(): number | null {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.id;
+    } catch {
+      return null;
+    }
+  }
 
   const role = getRole();
+  const userId = getUserId();
+
   return (
     <div className="p-6">
       {editRobot && (
@@ -102,7 +113,7 @@ function closeVideo() {
       )}
 
       {videoRobot && (
-          <VideoViewer robot={videoRobot} onClose={closeVideo} />
+          <VideoViewer robot={videoRobot} userId={userId} onClose={closeVideo} />
       )}
 
 

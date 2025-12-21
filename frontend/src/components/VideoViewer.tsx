@@ -6,11 +6,11 @@ import { useAuth } from "../auth/AuthContext";
 
 
 
-export default function VideoViewer({ robot, onClose }) {
+export default function VideoViewer({ robot,userId, onClose }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const clientRef = useRef<WebRTCClient | null>(null);
   const gp = useRef<GamepadReader| null>(null);
-  const { user } = useAuth();
+
 
   const [connected, setConnected] = useState(false);
 
@@ -22,7 +22,7 @@ export default function VideoViewer({ robot, onClose }) {
 
     console.log("[UI] Connecting camera…");
 
-    const client = new WebRTCClient(robot.robotId, user.id);
+    const client = new WebRTCClient(robot.robotId, userId);
     clientRef.current = client;
 
     client.setVideoElement(videoRef.current);

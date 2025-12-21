@@ -134,10 +134,13 @@ export class WebRTCClient {
 
         this.connB.on("open", () => {
             const pc = this.connB?.peerConnection;
-            const { user } = useAuth(); 
+
+           // const { user } = useAuth(); 
+
             if (pc) {
                 
-                this.updateRobotWebRtcConnect(this.roomName,user.id);
+                //this.updateRobotWebRtcConnect(this.roomName,user.id);
+
                 pc.onconnectionstatechange = () => {
                     console.log("[B] state:", pc.connectionState);
                 };
@@ -156,16 +159,16 @@ export class WebRTCClient {
 
    private async updateRobotWebRtcConnect(robotId: string, userid: number | null) {
 
-//    const data = {
-//     "idRobot": robotId,
-//     "userconnect": userid
-//   };
-//     try {
-//       await api.post(`/api/robots/updatewebrtcclient`,data);
-//     } catch (e) {
-//       alert("update webrtc client failed");
-//       console.error(e);
-//     }
+   const data = {
+    "idRobot": robotId,
+    "userconnect": userid
+  };
+    try {
+      await api.post(`/api/robots/updatewebrtcclient`,data);
+    } catch (e) {
+      alert("update webrtc client failed");
+      console.error(e);
+    }
   }
 
 

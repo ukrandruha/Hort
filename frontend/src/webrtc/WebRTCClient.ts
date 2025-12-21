@@ -160,8 +160,9 @@ export class WebRTCClient {
     "idRobot": robotId,
     "userconnect": userid
   };
+    console.log('update client ',robotId);
     try {
-      await api.patch(`/api/robots/updatewebrtcclient`,data);
+      await api.post(`/api/robots/updatewebrtcclient`,data);
     } catch (e) {
       alert("update webrtc client failed");
       console.error(e);

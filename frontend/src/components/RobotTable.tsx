@@ -105,9 +105,8 @@ function closeVideo() {
     {
       return "-";
     }
-    else
-      const res = await api.get(`/api/auth/user-email/${id}`);
-      return res.data.id;
+    const res = await api.get(`/api/auth/user-email/${id}`);
+    return res.data.id;
   }
 
   const role = getRole();

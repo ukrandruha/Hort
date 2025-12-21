@@ -102,10 +102,12 @@ function closeVideo() {
   async function getUserNamebyId(id: number)
   {
     if(id === null)
-      return null;
-
-    const res = await api.get(`/api/auth/user-email/${id}`);
-    return res.data.id;
+    {
+      return "-";
+    }
+    else
+      const res = await api.get(`/api/auth/user-email/${id}`);
+      return res.data.id;
   }
 
   const role = getRole();
@@ -148,6 +150,7 @@ function closeVideo() {
             const lastSeenDate = new Date(r.updatedAt);
             const isOffline = Date.now() - lastSeenDate.getTime() > 10000;
             const cloudColor = isOffline ? "text-red-500" : "text-green-400";
+            const webrtcUser = getUserNamebyId(r.webrtclient);
 
             return (
             <tr key={r.robotId} className="border-b border-gray-700">
@@ -179,7 +182,7 @@ function closeVideo() {
                 {new Date(r.updatedAt).toLocaleString()}
               </td>
               <td className="py-2 px-4">
-                { getUserNamebyId(r.webrtclient) ?? "-"}
+                ${webrtcUser} 
               </td>
               
                 {role === "admin" && (

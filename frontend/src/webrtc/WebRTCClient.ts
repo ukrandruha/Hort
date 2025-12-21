@@ -153,13 +153,12 @@ export class WebRTCClient {
             }
         });
 
-        // this.connB.on("disconnect", () => {
-        //     console.warn("[B] Disconnected");
-            
+        this.connB.on("disconnect", () => {
+            console.warn("[B] Disconnected");
+            this.updateRobotWebRtcConnect(this.roomName, null);
+            //     this.connB = null;
+        });
 
-
-        //     //     this.connB = null;
-        // });
         this.connB.connect(null);
     };
 

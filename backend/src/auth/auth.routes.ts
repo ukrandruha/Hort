@@ -96,11 +96,11 @@ const opts: RouteShorthandOptions = {
       return reply.status(401).send({ error: "Invalid token" });
     }
   });
-  
+
 // --------------------------
 // GET /api/auth/user-email/:id
 // --------------------------
-fastify.get("/api/auth/user-email/:id", async (req, reply) => {
+fastify.get<{ Params: { id: number } }>("/api/auth/user-email/:id", async (req, reply) => {
   try {
     
     await req.jwtVerify();

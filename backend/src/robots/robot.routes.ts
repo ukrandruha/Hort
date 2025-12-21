@@ -24,10 +24,11 @@ export async function robotRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { idRobot: string, userconnect: number } }>("/api/robots/updatewebrtcclient", async (req, reply) => {
     try {
-      if (!req.body.robotId || req.body.userconnect === undefined) {
+      const upd = req.body as { idRobot: string, userconnect: number } 
+      if (!upd.idRobot || upd.userconnect === undefined) {
           throw new Error('robotId або userconnect відсутні');
         }
-      await updateStatusWebRtc(req.params.idRobot,req.params.userconnect);
+      await updateStatusWebRtc(upd.idRobot,upd.userconnect);
       return { success: true };
     } catch (err) {
       reply.code(400).send({ error: "Update failed:"+err});

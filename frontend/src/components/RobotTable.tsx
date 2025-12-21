@@ -4,6 +4,7 @@ import { getStatusColor, getCloudColor } from "../utils/statusColors";
 import { useAuth } from "../auth/AuthContext";
 import EditRobotModal from "./EditRobotModal";
 import VideoViewer from "./VideoViewer";
+import {UserEmailCell} from "./UserEmailCell";
 
 export default function RobotTable() {
   const [robots, setRobots] = useState([]);
@@ -99,16 +100,6 @@ function closeVideo() {
     }
   }
 
-  async function getUserNamebyId(id: number)
-  {
-    if(id === null)
-    {
-      return "-";
-    }
-    const res = await api.get(`/api/auth/user-email/${id}`);
-    return res.data.id;
-  }
-
   const role = getRole();
   const userId = getUserId();
 
@@ -149,8 +140,6 @@ function closeVideo() {
             const lastSeenDate = new Date(r.updatedAt);
             const isOffline = Date.now() - lastSeenDate.getTime() > 10000;
             const cloudColor = isOffline ? "text-red-500" : "text-green-400";
-            const webrtcUser = getUserNamebyId(r.webrtclient);
-
             return (
             <tr key={r.robotId} className="border-b border-gray-700">
               <td className="py-2 px-4">{r.name}</td>
@@ -181,7 +170,7 @@ function closeVideo() {
                 {new Date(r.updatedAt).toLocaleString()}
               </td>
               <td className="py-2 px-4">
-                ${webrtcUser} 
+                <UserEmailCell userId={r.webrtclient} />
               </td>
               
                 {role === "admin" && (

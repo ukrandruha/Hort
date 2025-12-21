@@ -135,11 +135,11 @@ export class WebRTCClient {
         this.connB.on("open", () => {
             const pc = this.connB?.peerConnection;
 
-           // const { user } = useAuth(); 
+            const { user } = useAuth(); 
 
             if (pc) {
                 
-                //this.updateRobotWebRtcConnect(this.roomName,user.id);
+                this.updateRobotWebRtcConnect(this.roomName,user.id);
 
                 pc.onconnectionstatechange = () => {
                     console.log("[B] state:", pc.connectionState);

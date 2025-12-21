@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../services/api";  // axios wrapper
+import { api } from "../api/api";
 
 export function UserEmailCell({ userId }: { userId: number }) {
   const [email, setEmail] = useState("loading...");

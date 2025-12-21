@@ -153,13 +153,13 @@ export class WebRTCClient {
             }
         });
 
-        this.connB.on("disconnect", () => {
-            console.warn("[B] Disconnected");
-            this.updateRobotWebRtcConnect(this.roomName, null);
+        // this.connB.on("disconnect", () => {
+        //     console.warn("[B] Disconnected");
+            
 
 
-            //     this.connB = null;
-        });
+        //     //     this.connB = null;
+        // });
         this.connB.connect(null);
     };
 
@@ -193,6 +193,8 @@ export class WebRTCClient {
         if (this.videoElement) {
             this.videoElement.srcObject = null;
         }
+
+        this.updateRobotWebRtcConnect(this.roomName, null);
     }
     // =================================================
     // Set data GamePad

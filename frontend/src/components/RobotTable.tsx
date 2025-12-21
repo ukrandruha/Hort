@@ -116,6 +116,7 @@ function closeVideo() {
             <th className="py-3 px-4">Disk</th>
             <th className="py-3 px-4">Temp</th>
             <th className="py-3 px-4">Last Seen</th>
+            <th className="py-3 px-4">Webrtc</th>
             <th className="py-3 px-4">Actions</th>
           </tr>
         </thead>
@@ -154,6 +155,9 @@ function closeVideo() {
 
               <td className="py-2 px-4">
                 {new Date(r.updatedAt).toLocaleString()}
+              </td>
+              <td className="py-2 px-4">
+                {new Date(r.Webrtclient).toLocaleString()}
               </td>
               
                 {role === "admin" && (

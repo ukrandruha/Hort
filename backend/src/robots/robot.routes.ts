@@ -5,7 +5,8 @@ import {
   getAllRobots, 
   getRobot,
   editRobot,
-  deleteRobot
+  deleteRobot,
+  updateStatusWebRtc
 } from "./robot.service.js";
 
 
@@ -18,6 +19,15 @@ export async function robotRoutes(app: FastifyInstance) {
       return { success: true, robot };
     } catch (err) {
       reply.code(400).send({ error: "Update failed:"+err });
+    }
+  });
+
+  app.post<{ Params: { idRobot: string, userconnect: number } }>("/api/robots/updatewebrtcclient", async (req, reply) => {
+    try {
+      await updateStatusWebRtc(req.idRobot,req.userconnect);
+      return { success: true };
+    } catch (err) {
+      reply.code(400).send({ error: "Update failed:"+err});
     }
   });
 

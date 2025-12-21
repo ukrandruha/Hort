@@ -96,4 +96,39 @@ const opts: RouteShorthandOptions = {
       return reply.status(401).send({ error: "Invalid token" });
     }
   });
+  
+// --------------------------
+// GET /api/auth/user-email/:id
+// --------------------------
+fastify.get("/api/auth/user-email/:id", async (req, reply) => {
+  try {
+    
+    await req.jwtVerify();
+
+    const userId = Number(req.params.id);
+
+    if (isNaN(userId)) {
+      return reply.status(400).send({ error: "Invalid user ID" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true
+      }
+    });
+
+    if (!user) {
+      return reply.status(404).send({ error: "User not found" });
+    }
+
+    return reply.send(user);
+
+  } catch (err) {
+    console.error(err);
+    return reply.status(401).send({ error: "Invalid token" });
+  }
+});
+  
 }

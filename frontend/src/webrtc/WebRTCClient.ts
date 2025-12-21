@@ -141,7 +141,7 @@ export class WebRTCClient {
                     const { user } = useAuth();
                     this.updateRobotWebRtcConnect(this.roomName, user.id);
                 } catch (e) {
-                    alert("Edit failed");
+                    alert(e);
                     console.error(e);
                 }
 

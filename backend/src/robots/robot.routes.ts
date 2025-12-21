@@ -24,7 +24,7 @@ export async function robotRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { idRobot: string, userconnect: number } }>("/api/robots/updatewebrtcclient", async (req, reply) => {
     try {
-      await updateStatusWebRtc(req.idRobot,req.userconnect);
+      await updateStatusWebRtc(req.params.idRobot,req.params.userconnect);
       return { success: true };
     } catch (err) {
       reply.code(400).send({ error: "Update failed:"+err});

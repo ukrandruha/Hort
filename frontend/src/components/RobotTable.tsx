@@ -101,6 +101,9 @@ function closeVideo() {
 
   async function getUserNamebyId(id: number)
   {
+    if(id === null)
+      return null;
+
     const res = await api.get(`/api/auth/user-email/${id}`);
     return res.data.id;
   }

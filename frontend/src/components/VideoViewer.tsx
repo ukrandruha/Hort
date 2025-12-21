@@ -3,6 +3,8 @@ import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import {GamepadReader} from "../utils/Gamepad";
 
+
+
 export default function VideoViewer({ robot, onClose }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const clientRef = useRef<WebRTCClient | null>(null);
@@ -94,6 +96,8 @@ export default function VideoViewer({ robot, onClose }) {
 
 
   }
+
+
 
 
   return (

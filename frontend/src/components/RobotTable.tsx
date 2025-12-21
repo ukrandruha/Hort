@@ -76,6 +76,8 @@ function closeVideo() {
     }
   }
 
+
+
  
 
    // Decode JWT to check role

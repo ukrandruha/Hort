@@ -1,6 +1,10 @@
 import type { AyameAddStreamEvent, Connection } from "@open-ayame/ayame-web-sdk";
 import { createConnection, defaultOptions } from "@open-ayame/ayame-web-sdk";
 import type { GamepadState } from "../utils/Gamepad.js";
+import { api } from "../api/api";
+import { useAuth } from "../auth/AuthContext";
+
+
 
 export class WebRTCClient {
     private videoElement: HTMLVideoElement | null = null;
@@ -130,21 +134,40 @@ export class WebRTCClient {
 
         this.connB.on("open", () => {
             const pc = this.connB?.peerConnection;
+            const { user } = useAuth(); 
             if (pc) {
+                
+                this.updateRobotWebRtcConnect(this.roomName,user.id);
                 pc.onconnectionstatechange = () => {
                     console.log("[B] state:", pc.connectionState);
                 };
             }
         });
 
-        // this.connB.on("disconnect", () => {
-        //     console.warn("[B] Disconnected");
+         this.connB.on("disconnect", () => {
+             console.warn("[B] Disconnected");
+             this.updateRobotWebRtcConnect(this.roomName, null);
 
 
         //     this.connB = null;
-        // });
+        });
         this.connB.connect(null);
     };
+
+   private async updateRobotWebRtcConnect(robotId: string, userid: number | null) {
+
+   const data = {
+    "idRobot": robotId,
+    "userconnect": userid
+  };
+    try {
+      await api.patch(`/api/robots/updatewebrtcclient`,data);
+    } catch (e) {
+      alert("update webrtc client failed");
+      console.error(e);
+    }
+  }
+
 
     // =================================================
     // STOP
@@ -215,5 +238,5 @@ export class WebRTCClient {
     async sendDataArray(msg: Uint8Array) {
 
     }
-    
+
 }

@@ -157,7 +157,7 @@ function closeVideo() {
                 {new Date(r.updatedAt).toLocaleString()}
               </td>
               <td className="py-2 px-4">
-                {new Date(r.Webrtclient).toLocaleString()}
+                {new Date(r.webrtclient).toLocaleString()}
               </td>
               
                 {role === "admin" && (

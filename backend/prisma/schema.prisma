@@ -8,9 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/* =========================
-   ENUMS
-========================= */
+// ENUMS
 
 enum RobotSessionStatus {
   ACTIVE
@@ -19,9 +17,7 @@ enum RobotSessionStatus {
   EXPIRED
 }
 
-/* =========================
-   MODELS
-========================= */
+// MODELS
 
 model User {
   id       Int    @id @default(autoincrement())
@@ -60,9 +56,7 @@ model Tc_user_device {
   @@id([userid, deviceid])
 }
 
-/* =========================
-   ROBOT SESSIONS (NEW)
-========================= */
+// ROBOT SESSIONS
 
 model RobotSession {
   id               String              @id @default(uuid())
@@ -89,7 +83,11 @@ model RobotSession {
   @@index([operatorId])
   @@index([status])
 
-
-  @@unique([robotId], map: "one_active_session_per_robot", 
-    where: status = "ACTIVE")
+  // ✅ ТІЛЬКИ ОДНА ACTIVE СЕСІЯ НА РОБОТА (PostgreSQL)
+  @@index(
+    [robotId],
+    name: "one_active_session_per_robot",
+    type: Unique,
+    where: "status = 'ACTIVE'"
+  )
 }

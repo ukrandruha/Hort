@@ -83,11 +83,5 @@ model RobotSession {
   @@index([operatorId])
   @@index([status])
 
-  // ✅ ТІЛЬКИ ОДНА ACTIVE СЕСІЯ НА РОБОТА (PostgreSQL)
-  @@index(
-    [robotId],
-    name: "one_active_session_per_robot",
-    type: Unique,
-    where: "status = 'ACTIVE'"
-  )
+  
 }

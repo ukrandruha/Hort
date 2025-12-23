@@ -26,6 +26,7 @@ model User {
   role     String
 
   devices  Tc_user_device[]
+  sessions RobotSession[] 
 }
 
 model Robot {

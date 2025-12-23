@@ -1,16 +1,31 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:../database.sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
+/* =========================
+   ENUMS
+========================= */
+
+enum RobotSessionStatus {
+  ACTIVE
+  DISCONNECT_REQUESTED
+  DISCONNECTED
+  EXPIRED
+}
+
+/* =========================
+   MODELS
+========================= */
+
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
+  id       Int    @id @default(autoincrement())
+  email    String @unique
   password String
   role     String
 
@@ -18,7 +33,7 @@ model User {
 }
 
 model Robot {
-  robotId     String @id
+  robotId     String   @id
   name        String?
   status      String?
   battery     Int?
@@ -29,9 +44,10 @@ model Robot {
   lat         Float?
   lng         Float?
   webrtclient Int?
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime @updatedAt
 
-  users Tc_user_device[]
+  users       Tc_user_device[]
+  sessions    RobotSession[]
 }
 
 model Tc_user_device {
@@ -44,3 +60,36 @@ model Tc_user_device {
   @@id([userid, deviceid])
 }
 
+/* =========================
+   ROBOT SESSIONS (NEW)
+========================= */
+
+model RobotSession {
+  id               String              @id @default(uuid())
+
+  robotId          String
+  operatorId       Int
+
+  status           RobotSessionStatus  @default(ACTIVE)
+
+  controlConnId    String?
+  lastHeartbeatAt  DateTime?
+
+  disconnectReason String?
+  disconnectedBy   String?
+
+  startedAt        DateTime            @default(now())
+  disconnectAt     DateTime?
+  updatedAt        DateTime            @updatedAt
+
+  robot            Robot               @relation(fields: [robotId], references: [robotId])
+  operator         User                @relation(fields: [operatorId], references: [id])
+
+  @@index([robotId])
+  @@index([operatorId])
+  @@index([status])
+
+
+  @@unique([robotId], map: "one_active_session_per_robot", 
+    where: status = "ACTIVE")
+}

@@ -141,7 +141,7 @@ export class WebRTCClient {
             if (pc) {
                 try {
                     
-                    this.updateRobotWebRtcConnect(this.roomName, this.userId);
+                    
                 } catch (e) {
                     alert(e);
                     console.error(e);
@@ -149,6 +149,10 @@ export class WebRTCClient {
 
                 pc.onconnectionstatechange = () => {
                     console.log("[B] state:", pc.connectionState);
+                    if(pc.connectionState === "connected")
+                    {
+                        this.updateRobotWebRtcConnect(this.roomName, this.userId);
+                    }
                 };
             }
         });

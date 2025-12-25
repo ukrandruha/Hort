@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import {RobotUpdateData} from "../types/robot.types.js";
+import { RobotSessionStatus } from '@prisma/client';
 //import { RobotUpdateData } from "./robot.types";
 
 
@@ -65,3 +66,99 @@ export async function editRobot(id: string, data:RobotUpdateData) {
      },
    });
 }
+
+
+
+   ////////////////////////////////////////////////////////////
+   ////////////Create new robot control session////////////////
+   ////////////////////////////////////////////////////////////
+
+
+  export async function createSession(params: {
+    robotId: string;
+    operatorId: number;
+
+  }) {
+
+    const { robotId, operatorId} = params;
+
+
+
+
+    // ensure no active session
+    const activeSession = await prisma.robotSession.findFirst({
+      where: {
+        robotId,
+        status: RobotSessionStatus.ACTIVE,
+      },
+    });
+
+    if (activeSession) {
+      throw new Error('Robot already has an active session');
+    }
+
+    return prisma.robotSession.create({
+      data: {
+        robotId,
+        operatorId,
+        status: RobotSessionStatus.ACTIVE,
+        lastHeartbeatAt: new Date(),
+      },
+    });
+  }
+
+
+
+  /**
+   * Request or force disconnect session
+   */
+   export async function disconnectSession(params: {
+    robotId: string;
+    reason?: string; //: "admin_action"
+    disconnectedBy: string;
+    force?: boolean;
+  }) {
+    const { robotId, reason, disconnectedBy, force } = params;
+
+    const session = await prisma.robotSession.findUnique({
+      where: { robotId: robotId },
+    });
+
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    if (session.status === RobotSessionStatus.DISCONNECTED) {
+      return session;
+    }
+
+    // graceful vs force
+    const newStatus = force
+      ? RobotSessionStatus.DISCONNECTED
+      : RobotSessionStatus.DISCONNECT_REQUESTED;
+
+    return prisma.robotSession.update({
+      where: { id: robotId,
+        status: RobotSessionStatus.ACTIVE,
+       },
+      data: {
+        status: newStatus,
+        disconnectReason: reason,
+        disconnectedBy,
+        disconnectAt: new Date() ,
+      },
+    });
+  }
+
+  /**
+   * Confirm disconnect (e.g. robot acknowledged)
+   */
+   export async function confirmDisconnect(sessionId: string) {
+    return prisma.robotSession.update({
+      where: { id: sessionId },
+      data: {
+        status: RobotSessionStatus.DISCONNECTED,
+        disconnectAt: new Date(),
+      },
+    });
+  }

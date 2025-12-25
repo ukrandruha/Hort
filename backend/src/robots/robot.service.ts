@@ -118,8 +118,8 @@ export async function editRobot(id: string, data:RobotUpdateData) {
   }) {
     const { robotId, reason, disconnectedBy, force } = params;
 
-    const session = await prisma.robotSession.findUnique({
-      where: { robotId: robotId },
+    const session = await prisma.robotSession.findFirst({
+      where: { robotId: robotId, status: RobotSessionStatus.ACTIVE },
     });
 
     if (!session) {
@@ -133,9 +133,9 @@ export async function editRobot(id: string, data:RobotUpdateData) {
     // graceful vs force
     const newStatus = force
       ? RobotSessionStatus.DISCONNECT_REQUESTED
-      : RobotSessionStatus.DISCONNECT;
+      : RobotSessionStatus.DISCONNECTED;
 
-    return prisma.robotSession.update({
+    return prisma.robotSession.updateMany({
       where: { id: robotId,
         status: RobotSessionStatus.ACTIVE,
        },

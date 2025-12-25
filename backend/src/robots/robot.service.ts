@@ -135,9 +135,8 @@ export async function editRobot(id: string, data:RobotUpdateData) {
       ? RobotSessionStatus.DISCONNECT_REQUESTED
       : RobotSessionStatus.DISCONNECTED;
 
-    return prisma.robotSession.updateMany({
-      where: { id: robotId,
-        status: RobotSessionStatus.ACTIVE,
+    return prisma.robotSession.update({
+      where: { id: session.id
        },
       data: {
         status: newStatus,

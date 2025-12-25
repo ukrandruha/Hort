@@ -6,7 +6,9 @@ import {
   getRobot,
   editRobot,
   deleteRobot,
-  updateStatusWebRtc
+  updateStatusWebRtc,
+  createSession,
+  disconnectSession
 } from "./robot.service.js";
 
 
@@ -87,6 +89,53 @@ app.delete<{ Params: { id: string } }>(
     return reply.send({ success: true });
   }
 );
+
+
+/**
+   * Create robot session
+   */
+  app.post(
+     "/api/robots/robot-sessions/create",
+    async (req, reply) => {
+      const { robotId, operatorId } = req.body;
+
+      try {
+        const session = await createSession({
+          robotId,
+          operatorId
+        });
+
+        return reply.code(201).send(session);
+      } catch (err: any) {
+        return reply.code(400).send({ message: err.message });
+      }
+    },
+  );
+
+  /**
+   * Disconnect robot session
+   */
+  app.post(
+    '/api/robots/robot-sessions/disconnect',
+
+    async (req, reply) => {
+
+      const {robotId, reason, force, disconnectedBy } = req.body;
+      try {
+        const session = await disconnectSession({
+          robotId,
+          reason,
+          force,
+          disconnectedBy,
+        });
+
+        return reply.send(session);
+      } catch (err: any) {
+        return reply.code(400).send({ message: err.message });
+      }
+    },
+  );
+
 
 
 }

@@ -94,16 +94,16 @@ app.delete<{ Params: { id: string } }>(
 /**
    * Create robot session
    */
-  app.post(
+  app.post<{ Params: { robotId: string, operatorId: number } }>(
      "/api/robots/robot-sessions/create",
-    async (req, reply) => {
-      const { robotId, operatorId } = req.body;
+     async (req, reply) => {
 
       try {
-        const session = await createSession({
-          robotId,
-          operatorId
-        });
+        const param = req.body as { robotId: string, operatorId: number };
+
+        const session = await createSession(
+          param
+        );
 
         return reply.code(201).send(session);
       } catch (err: any) {
@@ -120,14 +120,10 @@ app.delete<{ Params: { id: string } }>(
 
     async (req, reply) => {
 
-      const {robotId, reason, force, disconnectedBy } = req.body;
+      const param = req.body as {robotId: string, reason: string, disconnectedBy:string,force: boolean} ;
+
       try {
-        const session = await disconnectSession({
-          robotId,
-          reason,
-          force,
-          disconnectedBy,
-        });
+        const session = await disconnectSession(param);
 
         return reply.send(session);
       } catch (err: any) {

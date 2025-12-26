@@ -8,9 +8,29 @@ const prisma = new PrismaClient();
 
 
 // Get all robots
+// export function getAllRobots() {
+//   return prisma.robot.findMany({
+//     orderBy: { updatedAt: "desc" }
+//   });
+// }
 export function getAllRobots() {
   return prisma.robot.findMany({
-    orderBy: { updatedAt: "desc" }
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      sessions: {
+        where: {
+          status: 'ACTIVE',
+        },
+        take: 1,
+        select: {
+          operator: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      },
+    },
   });
 }
 

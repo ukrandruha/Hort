@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState,useRef } from "react";
 import { api } from "../api/api";
 import { getStatusColor, getCloudColor } from "../utils/statusColors";
 import { useAuth } from "../auth/AuthContext";
 import EditRobotModal from "./EditRobotModal";
-import VideoViewer from "./VideoViewer";
+import VideoViewer, { VideoViewerHandle } from "./VideoViewer";
+
 import {UserEmailCell} from "./UserEmailCell";
 
 export default function RobotTable() {
@@ -13,10 +15,29 @@ export default function RobotTable() {
   const [editRobot, setEditRobot] = useState(null);
   const [videoRobot, setVideoRobot] = useState(null);
 
+  const videoViewerRef = useRef<VideoViewerHandle | null>(null);
+
+  let videorobotId: string = "";
+
   async function load() {
     try {
       const res = await api.get("/api/robots/");
-      setRobots(res.data);
+      const data = res.data;
+      setRobots(data);
+
+      
+    if (videoRobot) {
+      const current = data.find(
+        (r: any) => r.robotId === videoRobot.robotId,
+      );
+
+      if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
+        // ✅ ВИКЛИК МЕТОДУ В VideoViewer
+        videoViewerRef.current?.onDisconnectRequested();
+      }
+    }
+
+
     } catch (e) {
       console.error("Failed to load robots", e);
     }
@@ -34,24 +55,14 @@ export default function RobotTable() {
 
 function openVideo(robot) {
   setVideoRobot(robot);
+  videorobotId = robot.robotId;
 }
 
 function closeVideo() {
   setVideoRobot(null);
+  videorobotId = "";
 }
 
-  // async function editRobot(robot) {
-  //   const newName = prompt("New robot name:", robot.name);
-  //   if (!newName) return;
-
-  //   try {
-  //     await api.patch(`/api/robots/${robot.robotId}`, { name: newName });
-  //     load();
-  //   } catch (e) {
-  //     alert("Edit failed");
-  //     console.error(e);
-  //   }
-  // }
 
   async function saveRobot(data) {
     if (!editRobot) return;
@@ -114,7 +125,7 @@ function closeVideo() {
       )}
 
       {videoRobot && (
-          <VideoViewer robot={videoRobot} userId={userId} onClose={closeVideo} />
+          <VideoViewer  ref={videoViewerRef} robot={videoRobot} userId={userId} onClose={closeVideo} />
       )}
 
 
@@ -142,7 +153,7 @@ function closeVideo() {
             const cloudColor = isOffline ? "text-red-500" : "text-green-400";
            
             const requestdisconect = r.sessionStatus === "DISCONNECT_REQUESTED";
-            const operatorColor = requestdisconect ? "text-red-500" : "text-green-400";
+            const operatorColor = requestdisconect ? "text-yellow-400" : "text-green-400";
            
             return (
             <tr key={r.robotId} className="border-b border-gray-700">

@@ -3,10 +3,19 @@ import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import {GamepadReader} from "../utils/Gamepad";
 import { useAuth } from "../auth/AuthContext";
+import { forwardRef, useImperativeHandle } from "react";
+
+  //////////////////////////
+  export type VideoViewerHandle = {
+  onDisconnectRequested: () => void;
+};
+
+//export default function VideoViewer({ robot,userId, onClose }) {
 
 
+const VideoViewer = forwardRef<VideoViewerHandle, any>(
+  ({ robot, userId, onClose }, ref) => {
 
-export default function VideoViewer({ robot,userId, onClose }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const clientRef = useRef<WebRTCClient | null>(null);
   const gp = useRef<GamepadReader| null>(null);
@@ -61,26 +70,12 @@ export default function VideoViewer({ robot,userId, onClose }) {
   // CLEANUP ON CLOSE
   // ============================================
   useEffect(() => {
-      loadState();
-      const interval = setInterval(loadState, 3000);
-
     return () => {
       disconnectCamera();
-      clearInterval(interval);
     };
   }, []);
 
-   async function loadState() {
-      try {
-     
-        if (robot?.sessionStatus === 'DISCONNECT_REQUESTED') {
-            // stop control immediately
-            alert("DISCONNECT_REQUESTED");
-        }
-      } catch (e) {
-        console.error("Failed to load State", e);
-      }
-    }
+
 
 
 
@@ -114,6 +109,19 @@ export default function VideoViewer({ robot,userId, onClose }) {
 
 
   }
+
+    useImperativeHandle(ref, () => ({
+      onDisconnectRequested() {
+        console.log("DISCONNECT_REQUESTED in VideoViewer");
+
+          alert("DISCONNECT_REQUESTED");
+      },
+    }));
+
+
+
+
+
 
 
 
@@ -187,3 +195,5 @@ export default function VideoViewer({ robot,userId, onClose }) {
     </div>
   );
 }
+);
+export default VideoViewer;

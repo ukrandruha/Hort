@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
 //   });
 // }
 export function getAllRobots() {
-  return prisma.robot.findMany({
+  const robots = prisma.robot.findMany({
     orderBy: { updatedAt: 'desc' },
     include: {
       sessions: {
@@ -34,6 +34,12 @@ export function getAllRobots() {
       },
     },
   });
+   return {
+   ...robots, // ✅ всі поля робота 
+    email: robots.session?.operator.email ?? null,
+    sessionStatus: robots.session?.status ?? null,
+   }
+
 }
 
 // Get robot by ID

@@ -54,7 +54,7 @@ export default function RobotTable() {
     load();
     const interval = setInterval(load, 3000);
     return () => clearInterval(interval);
-  }, []);
+  },  [videoRobot]);
 
   function openEdit(robot) {
     setEditRobot(robot);

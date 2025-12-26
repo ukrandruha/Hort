@@ -170,7 +170,7 @@ function closeVideo() {
                 {new Date(r.updatedAt).toLocaleString()}
               </td>
               <td className="py-2 px-4">
-                <UserEmailCell userId={r.webrtclient} />
+                {r.operatorEmail ?? "-"}
               </td>
               
                 {role === "admin" && (

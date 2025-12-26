@@ -140,8 +140,8 @@ export class WebRTCClient {
 
             if (pc) {
                 try {
-                    
-                    
+
+
                 } catch (e) {
                     alert(e);
                     console.error(e);
@@ -149,8 +149,7 @@ export class WebRTCClient {
 
                 pc.onconnectionstatechange = () => {
                     console.log("[B] state:", pc.connectionState);
-                    if(pc.connectionState === "connected")
-                    {
+                    if (pc.connectionState === "connected") {
                         this.updateRobotWebRtcConnect(this.roomName, this.userId);
                     }
                 };
@@ -168,12 +167,25 @@ export class WebRTCClient {
 
     private async updateRobotWebRtcConnect(robotId: string, userid: number | null) {
 
-        const data = {
-            "idRobot": robotId,
-            "userconnect": userid
-        };
+
         try {
-            await api.post(`/api/robots/updatewebrtcclient`, data);
+            const connectData = {
+                "robotId": robotId,
+                "operatorId": userid
+            };
+            if (userid != null) {
+                await api.post(`/api/robots/robot-sessions/create`, connectData);
+            } else {
+                const disconnectData = {
+                    "robotId": robotId,
+                    "reason": "",
+                    "disconnectedBy": userid,
+                    "force": false
+                };
+                //{ "robotId": "1000000012a168a1","reason":"force", "disconnectedBy": "4" , "force":true}
+                await api.post(`/api/robots/robot-sessions/disconnect`, disconnectData);
+            }
+
         } catch (e) {
             alert("update webrtc client failed");
             console.error(e);

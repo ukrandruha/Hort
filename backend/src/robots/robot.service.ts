@@ -13,18 +13,19 @@ const prisma = new PrismaClient();
 //     orderBy: { updatedAt: "desc" }
 //   });
 // }
-export function getAllRobots() {
-  const robots = prisma.robot.findMany({
+export async function getAllRobots() {
+  const robots = await prisma.robot.findMany({
     orderBy: { updatedAt: 'desc' },
     include: {
       sessions: {
         where: {
-         status: {
+          status: {
             in: ['ACTIVE', 'DISCONNECT_REQUESTED'],
           },
         },
         take: 1,
         select: {
+          status: true, // ✅ ОБОВʼЯЗКОВО
           operator: {
             select: {
               email: true,
@@ -34,13 +35,19 @@ export function getAllRobots() {
       },
     },
   });
-   return {
-   ...robots, // ✅ всі поля робота 
-    email: robots.session?.operator.email ?? null,
-    sessionStatus: robots.session?.status ?? null,
-   }
 
+  return robots.map(robot => {
+    const session = robot.sessions[0];
+
+    return {
+      ...robot, // ✅ всі поля Robot
+      operatorEmail: session?.operator.email ?? null,
+      sessionStatus: session?.status ?? null,
+      sessions: undefined, // опціонально
+    };
+  });
 }
+
 
 // Get robot by ID
 export function getRobot(robotId: string) {

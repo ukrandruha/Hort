@@ -140,6 +140,10 @@ function closeVideo() {
             const lastSeenDate = new Date(r.updatedAt);
             const isOffline = Date.now() - lastSeenDate.getTime() > 10000;
             const cloudColor = isOffline ? "text-red-500" : "text-green-400";
+           
+            const requestdisconect = r.sessionStatus === "DISCONNECT_REQUESTED";
+            const operatorColor = requestdisconect ? "text-red-500" : "text-green-400";
+           
             return (
             <tr key={r.robotId} className="border-b border-gray-700">
               <td className="py-2 px-4">{r.name}</td>
@@ -169,7 +173,7 @@ function closeVideo() {
               <td className="py-2 px-4">
                 {new Date(r.updatedAt).toLocaleString()}
               </td>
-              <td className="py-2 px-4">
+              <td className = {`py-2 px-4 ${operatorColor}`}>
                 {r.operatorEmail ?? "-"}
               </td>
               

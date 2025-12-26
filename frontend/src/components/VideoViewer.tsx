@@ -61,10 +61,26 @@ export default function VideoViewer({ robot,userId, onClose }) {
   // CLEANUP ON CLOSE
   // ============================================
   useEffect(() => {
+      loadState();
+      const interval = setInterval(loadState, 3000);
+
     return () => {
       disconnectCamera();
+      clearInterval(interval);
     };
   }, []);
+
+   async function loadState() {
+      try {
+     
+        if (robot?.sessionStatus === 'DISCONNECT_REQUESTED') {
+            // stop control immediately
+            alert("DISCONNECT_REQUESTED");
+        }
+      } catch (e) {
+        console.error("Failed to load State", e);
+      }
+    }
 
 
 

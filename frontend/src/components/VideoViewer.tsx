@@ -110,14 +110,18 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
   }
 
-    useImperativeHandle(ref, () => ({
+
+useImperativeHandle(
+  ref,
+  () => ({
       onDisconnectRequested() {
-        console.log("DISCONNECT_REQUESTED in VideoViewer");
-
-          alert("DISCONNECT_REQUESTED");
-      },
-    }));
-
+      alert("DISCONNECT_REQUESTED in VideoViewer");
+      disconnectCamera();
+      onClose();
+    },
+  }),
+  [onClose],
+);
 
 
 

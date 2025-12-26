@@ -30,9 +30,10 @@ export default function RobotTable() {
       const current = data.find(
         (r: any) => r.robotId === videoRobot.robotId,
       );
-
+       alert("videoRobot");
       if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
         // ✅ ВИКЛИК МЕТОДУ В VideoViewer
+        alert("ВИКЛИК МЕТОДУ В VideoViewer");
         videoViewerRef.current?.onDisconnectRequested();
       }
     }

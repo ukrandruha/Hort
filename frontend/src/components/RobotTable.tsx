@@ -16,6 +16,7 @@ export default function RobotTable() {
   const [videoRobot, setVideoRobot] = useState(null);
 
   const videoViewerRef = useRef<VideoViewerHandle | null>(null);
+  const videoRobotRef = useRef<any>(null);
 
   let videorobotId: string = "";
 
@@ -23,13 +24,16 @@ export default function RobotTable() {
     try {
       const res = await api.get("/api/robots/");
       const data = res.data;
+      const currentVideoRobot = videoRobotRef.current; 
+
       setRobots(data);
 
-      
-    if (videoRobot) {
- alert("videoRobot");
+    
+
+    if (currentVideoRobot) {
+      alert("videoRobot");
       const current = data.find(
-        (r: any) => r.robotId === videoRobot.robotId,
+        (r: any) => r.robotId === currentVideoRobot.robotId,
       );
       
       if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
@@ -46,6 +50,7 @@ export default function RobotTable() {
   }
 
   useEffect(() => {
+    videoRobotRef.current = videoRobot;
     load();
     const interval = setInterval(load, 3000);
     return () => clearInterval(interval);

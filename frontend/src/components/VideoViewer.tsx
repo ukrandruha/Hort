@@ -3,6 +3,7 @@ import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import {GamepadReader} from "../utils/Gamepad";
 import { useAuth } from "../auth/AuthContext";
+import { api } from "../api/api";
 import { forwardRef, useImperativeHandle } from "react";
 
   //////////////////////////
@@ -62,8 +63,12 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    
+    await api.post(`api/robots/robot-sessions/disconnect`, { "robotId": robot.robotId,"reason":"", "disconnectedBy": userId, "force":false});
+
 
     setConnected(false);
+
   }
 
   // ============================================
@@ -115,7 +120,6 @@ useImperativeHandle(
   ref,
   () => ({
       onDisconnectRequested() {
-      alert("DISCONNECT_REQUESTED in VideoViewer");
       disconnectCamera();
       onClose();
     },

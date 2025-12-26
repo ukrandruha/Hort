@@ -31,14 +31,12 @@ export default function RobotTable() {
     
 
     if (currentVideoRobot) {
-      alert("videoRobot");
       const current = data.find(
         (r: any) => r.robotId === currentVideoRobot.robotId,
       );
-      
-      if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
+    if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
         // ✅ ВИКЛИК МЕТОДУ В VideoViewer
-        alert("ВИКЛИК МЕТОДУ В VideoViewer");
+        //alert("ВИКЛИК МЕТОДУ В VideoViewer");
         videoViewerRef.current?.onDisconnectRequested();
       }
     }

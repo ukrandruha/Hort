@@ -19,7 +19,9 @@ export function getAllRobots() {
     include: {
       sessions: {
         where: {
-          status: 'ACTIVE',
+         status: {
+            in: ['ACTIVE', 'DISCONNECT_REQUESTED'],
+          },
         },
         take: 1,
         select: {

@@ -78,7 +78,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     // ============================================
     useEffect(() => {
       return () => {
-        disconnectCamera();
+        operatorDisconnect();
+        //disconnectCamera();
       };
     }, []);
 

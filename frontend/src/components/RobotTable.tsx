@@ -214,18 +214,19 @@ export default function RobotTable() {
                 <td className="py-2 px-4 relative">
                   {/* Кнопка ⋮ */}
                   <button
-                    onClick={() =>
-                      e.stopPropagation(); 
-                      setOpenMenuId(openMenuId === r.robotId ? null : r.robotId)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation(); // 🔴 КРИТИЧНО
+                      setOpenMenuId(openMenuId === r.robotId ? null : r.robotId);
+                    }}
                     className="px-2 py-1 rounded hover:bg-gray-700"
                   >
                     ⋮
                   </button>
-
                   {/* Dropdown */}
                   {openMenuId === r.robotId && (
-                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
+                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50"
+                     onClick={(e) => e.stopPropagation()}
+                    >
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-gray-700"
                         onClick={() => {

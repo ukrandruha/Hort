@@ -84,7 +84,26 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     }, []);
 
 
+useEffect(() => {
+  const onUnload = () => {
+    if (!connected) return;
 
+    navigator.sendBeacon(
+      "/api/robots/robot-sessions/disconnect",
+      JSON.stringify({
+        robotId: robot.robotId,
+        disconnectedBy: userId.toString(),
+        reason: "browser_closed",
+        force: false,
+      })
+    );
+  };
+
+  window.addEventListener("unload", onUnload);
+  return () => {
+    window.removeEventListener("unload", onUnload);
+  };
+}, []);
 
 
     // ============================================

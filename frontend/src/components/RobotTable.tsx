@@ -201,16 +201,17 @@ export default function RobotTable() {
                   {r.operatorEmail ?? "-"}
                 </td>
 
-                <td className="py-2 px-4 flex gap-2">
+                 <td className="py-2 px-4 flex gap-2">
                     <button
                       className="bg-green-600 px-3 py-1 rounded hover:bg-green-700"
                       onClick={() => openVideo(r)}
                     >
                       Open
                     </button>
-
+                </td>
 
                {role === "admin" && (
+                <td className="py-2 px-4 relative">
                   {/* Кнопка ⋮ */}
                   <button
                     onClick={() =>
@@ -248,9 +249,9 @@ export default function RobotTable() {
                       </button>
                     </div>
                   )}
+                </td>
+              )}
 
-                )}
-              </td>
               </tr>
             );
           })}

@@ -186,9 +186,14 @@ export async function editRobot(id: string, data:RobotUpdateData) {
    * Confirm disconnect (e.g. robot acknowledged)
    */
    export async function confirmDisconnect(robotId: string) {
+   
     const session = await prisma.robotSession.findFirst({
       where: { robotId: robotId, status: RobotSessionStatus.DISCONNECT_REQUESTED },
     });
+   
+    if (!session) {
+      throw new Error('Session not found');
+    }
 
     return prisma.robotSession.update({
       where: {id: session.id },

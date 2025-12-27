@@ -261,7 +261,7 @@ export default function RobotTable() {
               setOpenMenuId(null);
             }}
           >
-            Request Disconect
+            Disconect
           </button>
         </div>
       )}

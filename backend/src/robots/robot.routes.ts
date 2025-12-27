@@ -8,7 +8,8 @@ import {
   deleteRobot,
   updateStatusWebRtc,
   createSession,
-  disconnectSession
+  disconnectSession,
+  confirmDisconnect
 } from "./robot.service.js";
 
 
@@ -132,6 +133,22 @@ app.delete<{ Params: { id: string } }>(
     },
   );
 
+    app.post(
+    '/api/robots/robot-sessions/confirmDisconnect',
+
+    async (req, reply) => {
+
+      const param = req.body as {robotId: string} ;
+
+      try {
+        const session = await confirmDisconnect(param.robotId);
+
+        return reply.send(session);
+      } catch (err: any) {
+        return reply.code(400).send({ message: err.message });
+      }
+    },
+  )
 
 
 }

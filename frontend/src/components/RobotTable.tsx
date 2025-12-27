@@ -1,12 +1,12 @@
 
-import { useEffect, useState,useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { api } from "../api/api";
 import { getStatusColor, getCloudColor } from "../utils/statusColors";
 import { useAuth } from "../auth/AuthContext";
 import EditRobotModal from "./EditRobotModal";
 import VideoViewer, { VideoViewerHandle } from "./VideoViewer";
 
-import {UserEmailCell} from "./UserEmailCell";
+import { UserEmailCell } from "./UserEmailCell";
 
 export default function RobotTable() {
   const [robots, setRobots] = useState([]);
@@ -24,23 +24,19 @@ export default function RobotTable() {
     try {
       const res = await api.get("/api/robots/");
       const data = res.data;
-      const currentVideoRobot = videoRobotRef.current; 
+      const currentVideoRobot = videoRobotRef.current;
 
       setRobots(data);
 
-    
-
-    if (currentVideoRobot) {
-      const current = data.find(
-        (r: any) => r.robotId === currentVideoRobot.robotId,
-      );
-    if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
-        // ✅ ВИКЛИК МЕТОДУ В VideoViewer
-        //alert("ВИКЛИК МЕТОДУ В VideoViewer");
-        videoViewerRef.current?.onDisconnectRequested();
+      if (currentVideoRobot) {
+        const current = data.find(
+          (r: any) => r.robotId === currentVideoRobot.robotId,
+        );
+        if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
+          // ✅ ВИКЛИК МЕТОДУ В VideoViewer
+          videoViewerRef.current?.onDisconnectRequested();
+        }
       }
-    }
-
 
     } catch (e) {
       console.error("Failed to load robots", e);
@@ -52,21 +48,22 @@ export default function RobotTable() {
     load();
     const interval = setInterval(load, 3000);
     return () => clearInterval(interval);
-  },  [videoRobot]);
+  }, [videoRobot]);
+
 
   function openEdit(robot) {
     setEditRobot(robot);
   }
 
-function openVideo(robot) {
-  setVideoRobot(robot);
-  videorobotId = robot.robotId;
-}
+  function openVideo(robot) {
+    setVideoRobot(robot);
+    videorobotId = robot.robotId;
+  }
 
-function closeVideo() {
-  setVideoRobot(null);
-  videorobotId = "";
-}
+  function closeVideo() {
+    setVideoRobot(null);
+    videorobotId = "";
+  }
 
 
   async function saveRobot(data) {
@@ -96,9 +93,9 @@ function closeVideo() {
 
 
 
- 
 
-   // Decode JWT to check role
+
+  // Decode JWT to check role
   function getRole(): string | null {
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
@@ -130,7 +127,7 @@ function closeVideo() {
       )}
 
       {videoRobot && (
-          <VideoViewer  ref={videoViewerRef} robot={videoRobot} userId={userId} onClose={closeVideo} />
+        <VideoViewer ref={videoViewerRef} robot={videoRobot} userId={userId} onClose={closeVideo} />
       )}
 
 
@@ -156,52 +153,52 @@ function closeVideo() {
             const lastSeenDate = new Date(r.updatedAt);
             const isOffline = Date.now() - lastSeenDate.getTime() > 10000;
             const cloudColor = isOffline ? "text-red-500" : "text-green-400";
-           
+
             const requestdisconect = r.sessionStatus === "DISCONNECT_REQUESTED";
             const operatorColor = requestdisconect ? "text-yellow-400" : "text-green-400";
-           
-            return (
-            <tr key={r.robotId} className="border-b border-gray-700">
-              <td className="py-2 px-4">{r.name}</td>
-              <td className="py-2 px-4">{r.robotId}</td>
 
-              <td className={`py-2 px-4 ${cloudColor}`}>
+            return (
+              <tr key={r.robotId} className="border-b border-gray-700">
+                <td className="py-2 px-4">{r.name}</td>
+                <td className="py-2 px-4">{r.robotId}</td>
+
+                <td className={`py-2 px-4 ${cloudColor}`}>
                   ● {isOffline ? "Offline" : "Online"}
                 </td>
-              <td className="py-2 px-4">{r.Battery}</td>
+                <td className="py-2 px-4">{r.Battery}</td>
 
-              <td className={`py-2 px-4 ${getStatusColor(r.cpu)}`}>
-                {r.cpu ?? "-"}%
-              </td>
+                <td className={`py-2 px-4 ${getStatusColor(r.cpu)}`}>
+                  {r.cpu ?? "-"}%
+                </td>
 
-              <td className={`py-2 px-4 ${getStatusColor(r.memory)}`}>
-                {r.memory ?? "-"}%
-              </td>
+                <td className={`py-2 px-4 ${getStatusColor(r.memory)}`}>
+                  {r.memory ?? "-"}%
+                </td>
 
-              <td className={`py-2 px-4 ${getStatusColor(r.disk)}`}>
-                 {r.disk ?? "-"}%
-              </td>
-              <td className={`py-2 px-4 ${getStatusColor(r.temperature)}`}>
-                 {r.temperature ?? "-"}°
-              </td>
-  
+                <td className={`py-2 px-4 ${getStatusColor(r.disk)}`}>
+                  {r.disk ?? "-"}%
+                </td>
+                <td className={`py-2 px-4 ${getStatusColor(r.temperature)}`}>
+                  {r.temperature ?? "-"}°
+                </td>
 
-              <td className="py-2 px-4">
-                {new Date(r.updatedAt).toLocaleString()}
-              </td>
-              <td className = {`py-2 px-4 ${operatorColor}`}>
-                {r.operatorEmail ?? "-"}
-              </td>
-              
+
+                <td className="py-2 px-4">
+                  {new Date(r.updatedAt).toLocaleString()}
+                </td>
+                <td className={`py-2 px-4 ${operatorColor}`}>
+                  {r.operatorEmail ?? "-"}
+                </td>
+
                 {role === "admin" && (
                   <td className="py-2 px-4 flex gap-2">
 
-                  <button
-                    className="bg-green-600 px-3 py-1 rounded hover:bg-green-700"
-                    onClick={() => openVideo(r)}
-                  >
-                    Open
-                  </button>
+                    <button
+                      className="bg-green-600 px-3 py-1 rounded hover:bg-green-700"
+                      onClick={() => openVideo(r)}
+                    >
+                      Open
+                    </button>
                     <button
                       className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
                       onClick={() => openEdit(r)}
@@ -216,10 +213,10 @@ function closeVideo() {
                       Delete
                     </button>
                   </td>
-               )} 
+                )}
 
-            </tr>
-             );
+              </tr>
+            );
           })}
         </tbody>
       </table>

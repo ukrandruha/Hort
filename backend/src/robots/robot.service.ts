@@ -185,9 +185,9 @@ export async function editRobot(id: string, data:RobotUpdateData) {
   /**
    * Confirm disconnect (e.g. robot acknowledged)
    */
-   export async function confirmDisconnect(sessionId: string) {
+   export async function confirmDisconnect(robotId: string) {
     return prisma.robotSession.update({
-      where: { id: sessionId },
+      where: { robotId: robotId, status: RobotSessionStatus.DISCONNECT_REQUESTED },
       data: {
         status: RobotSessionStatus.DISCONNECTED,
         disconnectAt: new Date(),

@@ -64,7 +64,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       videoRef.current.srcObject = null;
     }
     
-    await api.post(`api/robots/robot-sessions/disconnect`, { "robotId": robot.robotId,"reason":"", "disconnectedBy": userId, "force":false});
+    
 
 
     setConnected(false);
@@ -121,13 +121,17 @@ useImperativeHandle(
   () => ({
       onDisconnectRequested() {
       disconnectCamera();
-      onClose();
+      confirmDisconnect();
+      //onClose();
     },
   }),
-  [onClose],
+  //[onClose],
 );
 
-
+async function confirmDisconnect() 
+{
+  await api.post(`api/robots/robot-sessions/disconnect`, { "robotId": robot.robotId});
+}
 
 
 

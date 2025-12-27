@@ -150,7 +150,7 @@ export class WebRTCClient {
                 pc.onconnectionstatechange = () => {
                     console.log("[B] state:", pc.connectionState);
                     if (pc.connectionState === "connected") {
-                        this.updateRobotWebRtcConnect(this.roomName, this.userId);
+                        this.createSessions(this.roomName, this.userId);
                     }
                 };
             }

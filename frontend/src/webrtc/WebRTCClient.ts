@@ -225,7 +225,7 @@ export class WebRTCClient {
             this.videoElement.srcObject = null;
         }
 
-        this.updateRobotWebRtcConnect(this.roomName, null);
+        //this.updateRobotWebRtcConnect(this.roomName, null);
     }
     // =================================================
     // Set data GamePad

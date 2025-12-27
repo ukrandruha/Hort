@@ -5,7 +5,7 @@ interface AlertModalProps {
 }
 
 export default function AlertModal({
-  title = "Notification",
+  title = "Сповіщення",
   message,
   onOk,
 }: AlertModalProps): JSX.Element {

@@ -161,7 +161,7 @@ async function operatorDisconnect()
 
         <button
           onClick={() => {
-            disconnectCamera();
+            operatorDisconnect();
             onClose();
           }}
           className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded"

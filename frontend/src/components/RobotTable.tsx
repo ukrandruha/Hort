@@ -17,6 +17,7 @@ export default function RobotTable() {
 
   const videoViewerRef = useRef<VideoViewerHandle | null>(null);
   const videoRobotRef = useRef<any>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   let videorobotId: string = "";
 
@@ -49,6 +50,16 @@ export default function RobotTable() {
     const interval = setInterval(load, 3000);
     return () => clearInterval(interval);
   }, [videoRobot]);
+
+  useEffect(() => {
+    function handleClickOutside() {
+      setOpenMenuId(null);
+    }
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+    document.removeEventListener("click", handleClickOutside);
+  };
+}, []);
 
 
   function openEdit(robot) {
@@ -189,9 +200,7 @@ export default function RobotTable() {
                 <td className={`py-2 px-4 ${operatorColor}`}>
                   {r.operatorEmail ?? "-"}
                 </td>
-
-                {role === "admin" && (
-                  <td className="py-2 px-4 flex gap-2">
+                 <td className="py-2 px-4 flex gap-2">
 
                     <button
                       className="bg-green-600 px-3 py-1 rounded hover:bg-green-700"
@@ -199,21 +208,46 @@ export default function RobotTable() {
                     >
                       Open
                     </button>
-                    <button
-                      className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700"
-                      onClick={() => openEdit(r)}
-                    >
-                      Edit
-                    </button>
+                </td>
 
-                    <button
-                      className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
-                      onClick={() => deleteRobot(r.robotId)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                )}
+               {role === "admin" && (
+                <td className="py-2 px-4 relative">
+                  {/* Кнопка ⋮ */}
+                  <button
+                    onClick={() =>
+                      setOpenMenuId(openMenuId === r.robotId ? null : r.robotId)
+                    }
+                    className="px-2 py-1 rounded hover:bg-gray-700"
+                  >
+                    ⋮
+                  </button>
+
+                  {/* Dropdown */}
+                  {openMenuId === r.robotId && (
+                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
+                      <button
+                        className="w-full text-left px-4 py-2 hover:bg-gray-700"
+                        onClick={() => {
+                          openEdit(r);
+                          setOpenMenuId(null);
+                        }}
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white"
+                        onClick={() => {
+                          deleteRobot(r.robotId);
+                          setOpenMenuId(null);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </td>
+              )}
 
               </tr>
             );

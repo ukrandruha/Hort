@@ -200,21 +200,21 @@ export default function RobotTable() {
                 <td className={`py-2 px-4 ${operatorColor}`}>
                   {r.operatorEmail ?? "-"}
                 </td>
-                 <td className="py-2 px-4 flex gap-2">
 
+                <td className="py-2 px-4 flex gap-2">
                     <button
                       className="bg-green-600 px-3 py-1 rounded hover:bg-green-700"
                       onClick={() => openVideo(r)}
                     >
                       Open
                     </button>
-                </td>
+
 
                {role === "admin" && (
-                <td className="py-2 px-4 relative">
                   {/* Кнопка ⋮ */}
                   <button
                     onClick={() =>
+                      e.stopPropagation(); 
                       setOpenMenuId(openMenuId === r.robotId ? null : r.robotId)
                     }
                     className="px-2 py-1 rounded hover:bg-gray-700"
@@ -224,7 +224,9 @@ export default function RobotTable() {
 
                   {/* Dropdown */}
                   {openMenuId === r.robotId && (
-                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
+                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50"
+                      onClick={(e) => e.stopPropagation()}
+                      >
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-gray-700"
                         onClick={() => {
@@ -246,9 +248,9 @@ export default function RobotTable() {
                       </button>
                     </div>
                   )}
-                </td>
-              )}
 
+                )}
+              </td>
               </tr>
             );
           })}

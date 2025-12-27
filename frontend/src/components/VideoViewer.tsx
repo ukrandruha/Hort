@@ -141,7 +141,7 @@ async function operatorDisconnect()
    const disconnectData = {
           "robotId": robot.robotId,
           "reason": "",
-          "disconnectedBy": userId as string,
+          "disconnectedBy": userId.toString(),
           "force": false
         };
   await api.post(`/api/robots/robot-sessions/disconnect`, disconnectData);

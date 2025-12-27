@@ -137,10 +137,11 @@ async function adminDisconnect()
 async function operatorDisconnect() 
 {
    disconnectCamera();
+   // "robotId": "1000000012a168a1","reason":"", "disconnectedBy": "4" , "force":false}
    const disconnectData = {
           "robotId": robot.robotId,
           "reason": "",
-          "disconnectedBy": userId,
+          "disconnectedBy": userId as string,
           "force": false
         };
   await api.post(`/api/robots/robot-sessions/disconnect`, disconnectData);

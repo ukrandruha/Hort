@@ -208,10 +208,8 @@ export default function RobotTable() {
                     >
                       Open
                     </button>
-                </td>
 
                {role === "admin" && (
-                <td className="py-2 px-4 relative">
                   {/* Кнопка ⋮ */}
                   <button
                     onClick={(e) => {
@@ -219,9 +217,10 @@ export default function RobotTable() {
                       setOpenMenuId(openMenuId === r.robotId ? null : r.robotId);
                     }}
                     className="px-2 py-1 rounded hover:bg-gray-700"
-                  >
+                   >
                     ⋮
                   </button>
+
                   {/* Dropdown */}
                   {openMenuId === r.robotId && (
                     <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50"
@@ -248,9 +247,9 @@ export default function RobotTable() {
                       </button>
                     </div>
                   )}
-                </td>
-              )}
-
+                
+                )}
+              </td>
               </tr>
             );
           })}

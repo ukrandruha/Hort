@@ -201,55 +201,59 @@ export default function RobotTable() {
                   {r.operatorEmail ?? "-"}
                 </td>
 
-                 <td className="py-2 px-4 flex gap-2">
-                    <button
-                      className="bg-green-600 px-3 py-1 rounded hover:bg-green-700"
-                      onClick={() => openVideo(r)}
-                    >
-                      Open
-                    </button>
 
-               {role === "admin" && (
-                  {/* Кнопка ⋮ */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation(); // 🔴 КРИТИЧНО
-                      setOpenMenuId(openMenuId === r.robotId ? null : r.robotId);
-                    }}
-                    className="px-2 py-1 rounded hover:bg-gray-700"
-                   >
-                    ⋮
-                  </button>
+<td className="py-2 px-4 flex items-center gap-2 relative">
+  <button
+    className="bg-green-600 px-3 py-1 rounded hover:bg-green-700"
+    onClick={() => openVideo(r)}
+  >
+    Open
+  </button>
 
-                  {/* Dropdown */}
-                  {openMenuId === r.robotId && (
-                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50"
-                     onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        className="w-full text-left px-4 py-2 hover:bg-gray-700"
-                        onClick={() => {
-                          openEdit(r);
-                          setOpenMenuId(null);
-                        }}
-                      >
-                        Edit
-                      </button>
+  {role === "admin" && (
+    <>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpenMenuId(openMenuId === r.robotId ? null : r.robotId);
+        }}
+        className="px-2 py-1 rounded hover:bg-gray-700"
+      >
+        ⋮
+      </button>
 
-                      <button
-                        className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white"
-                        onClick={() => {
-                          deleteRobot(r.robotId);
-                          setOpenMenuId(null);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                
-                )}
-              </td>
+      {openMenuId === r.robotId && (
+        <div
+          className="absolute right-0 top-full mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            onClick={() => {
+              openEdit(r);
+              setOpenMenuId(null);
+            }}
+          >
+            Edit
+          </button>
+
+          <button
+            className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white"
+            onClick={() => {
+              deleteRobot(r.robotId);
+              setOpenMenuId(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+    </>
+  )}
+</td>
+
+
+                 
               </tr>
             );
           })}

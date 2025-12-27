@@ -6,7 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import EditRobotModal from "./EditRobotModal";
 import VideoViewer, { VideoViewerHandle } from "./VideoViewer";
 
-import { UserEmailCell } from "./UserEmailCell";
+import { alert } from "./Alert/globalAlert";
 
 export default function RobotTable() {
   const [robots, setRobots] = useState([]);

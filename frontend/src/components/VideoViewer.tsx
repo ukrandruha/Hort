@@ -106,7 +106,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
       // sendDataArray(pack7(s));
       //console.log(s);
-      clientRef.current?.SetDataGamePad(s);
+    clientRef.current?.SetDataGamePad(s);
 
 
     };
@@ -132,11 +132,9 @@ useImperativeHandle(
 
 async function confirmDisconnect() 
 {
+  alert("Зʼєднання розірвано адміністратором");
   await api.post(`api/robots/robot-sessions/confirmDisconnect`, { "robotId": robot.robotId});
 }
-
-
-
 
 
 

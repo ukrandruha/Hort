@@ -20,6 +20,8 @@ export default function RobotTable() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   let videorobotId: string = "";
+  const role = getRole();
+  const userId = getUserId();
 
   async function load() {
     try {
@@ -102,16 +104,16 @@ export default function RobotTable() {
     }
   }
 
-   async function requestDisconect(robotId: string, userId:string) {
+   async function requestDisconect(robotId: string) {
 
     try {
         const disconnectData = {
           "robotId": robotId,
-          "reason": "admin disconnect",
+          "reason": "admin",
           "disconnectedBy": userId.toString(),
           "force": true
         };
-      await api.post(`api/robots/robot-sessions/disconnect`,disconnectData);
+        await api.post(`api/robots/robot-sessions/disconnect`, disconnectData);
     } catch (e) {
       alert(e);
     }
@@ -139,8 +141,7 @@ export default function RobotTable() {
     }
   }
 
-  const role = getRole();
-  const userId = getUserId();
+
 
   return (
     <div className="p-6">
@@ -256,7 +257,7 @@ export default function RobotTable() {
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white"
             onClick={() => {
              // deleteRobot(r.robotId);
-              requestDisconect(r.robotId,r.userId)
+              requestDisconect(r.robotId)
               setOpenMenuId(null);
             }}
           >

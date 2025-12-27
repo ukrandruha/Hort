@@ -6,6 +6,8 @@ import { useAuth } from "../auth/AuthContext";
 import { api } from "../api/api";
 import { forwardRef, useImperativeHandle } from "react";
 
+import { alert } from "./Alert/globalAlert";
+
   //////////////////////////
   export type VideoViewerHandle = {
   onDisconnectRequested: () => void;
@@ -130,7 +132,7 @@ useImperativeHandle(
 
 async function confirmDisconnect() 
 {
-  await api.post(`api/robots/robot-sessions/disconnect`, { "robotId": robot.robotId});
+  await api.post(`api/robots/robot-sessions/confirmDisconnect`, { "robotId": robot.robotId});
 }
 
 

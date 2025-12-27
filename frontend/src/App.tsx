@@ -4,7 +4,18 @@ import DashboardPage from "./pages/DashboardPage";
 import { AuthProvider } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 
+import { AlertProvider } from "./components/Alert/AlertContext";
+import { useAlert } from "./components/Alert/AlertContext";
+import { registerAlert } from "./components/Alert/globalAlert";
+import { useEffect } from "react";
+
 export default function App() {
+  
+  const { show } = useAlert();
+  useEffect(() => {
+    registerAlert(show);
+  }, [show]);
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -24,3 +35,8 @@ export default function App() {
     </AuthProvider>
   );
 }
+root.render(
+  <AlertProvider>
+    <App />
+  </AlertProvider>
+);

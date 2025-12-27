@@ -102,6 +102,22 @@ export default function RobotTable() {
     }
   }
 
+   async function requestDisconect(robotId: string, userId:string) {
+
+    try {
+        const disconnectData = {
+          "robotId": robotId,
+          "reason": "admin disconnect",
+          "disconnectedBy": userId.toString(),
+          "force": true
+        };
+      await api.post(`api/robots/robot-sessions/disconnect`);
+      load();
+    } catch (e) {
+      alert(e);
+    }
+
+   }
 
 
 
@@ -240,11 +256,12 @@ export default function RobotTable() {
           <button
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white"
             onClick={() => {
-              deleteRobot(r.robotId);
+             // deleteRobot(r.robotId);
+              requestDisconect(r.robotId,r.userId)
               setOpenMenuId(null);
             }}
           >
-            Delete
+            Request Disconect
           </button>
         </div>
       )}

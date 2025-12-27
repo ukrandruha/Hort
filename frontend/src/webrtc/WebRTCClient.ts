@@ -158,39 +158,55 @@ export class WebRTCClient {
 
         this.connB.on("disconnect", () => {
             console.warn("[B] Disconnected");
-            this.updateRobotWebRtcConnect(this.roomName, null);
+            //this.updateRobotWebRtcConnect(this.roomName, null);
             //     this.connB = null;
         });
 
         this.connB.connect(null);
     };
 
-    private async updateRobotWebRtcConnect(robotId: string, userid: number | null) {
-
-
-        try {
+    private async createSessions(robotId: string, userid: number | null)
+    {
+     try {
             const connectData = {
                 "robotId": robotId,
                 "operatorId": userid
             };
             if (userid != null) {
                 await api.post(`/api/robots/robot-sessions/create`, connectData);
-            } else {
-                const disconnectData = {
-                    "robotId": robotId,
-                    "reason": "",
-                    "disconnectedBy": userid,
-                    "force": false
-                };
-                //{ "robotId": "1000000012a168a1","reason":"force", "disconnectedBy": "4" , "force":true}
-                await api.post(`/api/robots/robot-sessions/disconnect`, disconnectData);
             }
 
         } catch (e) {
-            alert("update webrtc client failed");
+            alert("Помилка створення сессії");
             console.error(e);
         }
     }
+    // private async updateRobotWebRtcConnect(robotId: string, userid: number | null) {
+
+
+    //     try {
+    //         const connectData = {
+    //             "robotId": robotId,
+    //             "operatorId": userid
+    //         };
+    //         if (userid != null) {
+    //             await api.post(`/api/robots/robot-sessions/create`, connectData);
+    //         } else {
+    //             const disconnectData = {
+    //                 "robotId": robotId,
+    //                 "reason": "",
+    //                 "disconnectedBy": userid,
+    //                 "force": false
+    //             };
+    //             //{ "robotId": "1000000012a168a1","reason":"force", "disconnectedBy": "4" , "force":true}
+    //             await api.post(`/api/robots/robot-sessions/disconnect`, disconnectData);
+    //         }
+
+    //     } catch (e) {
+    //         alert("update webrtc client failed");
+    //         console.error(e);
+    //     }
+    // }
 
 
     // =================================================

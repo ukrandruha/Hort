@@ -66,8 +66,6 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       videoRef.current.srcObject = null;
     }
     
-    
-
 
     setConnected(false);
 
@@ -122,19 +120,32 @@ useImperativeHandle(
   ref,
   () => ({
       onDisconnectRequested() {
-      disconnectCamera();
-      confirmDisconnect();
+      adminDisconnect();
       //onClose();
     },
   }),
   //[onClose],
 );
 
-async function confirmDisconnect() 
+async function adminDisconnect() 
 {
+  disconnectCamera();
   alert("Зʼєднання розірвано адміністратором");
   await api.post(`api/robots/robot-sessions/confirmDisconnect`, { "robotId": robot.robotId});
 }
+
+async function operatorDisconnect() 
+{
+   disconnectCamera();
+   const disconnectData = {
+          "robotId": robot.robotId,
+          "reason": "",
+          "disconnectedBy": userId,
+          "force": false
+        };
+  await api.post(`/api/robots/robot-sessions/disconnect`, disconnectData);
+}
+
 
 
 
@@ -193,7 +204,7 @@ async function confirmDisconnect()
 
         {connected && (
           <button
-            onClick={disconnectCamera}
+            onClick={operatorDisconnect}
             className="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700"
           >
             Disconnect camera

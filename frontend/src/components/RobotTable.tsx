@@ -111,8 +111,7 @@ export default function RobotTable() {
           "disconnectedBy": userId.toString(),
           "force": true
         };
-      await api.post(`api/robots/robot-sessions/disconnect`);
-      load();
+      await api.post(`api/robots/robot-sessions/disconnect`,disconnectData);
     } catch (e) {
       alert(e);
     }

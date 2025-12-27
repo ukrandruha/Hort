@@ -225,9 +225,7 @@ export default function RobotTable() {
 
                   {/* Dropdown */}
                   {openMenuId === r.robotId && (
-                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50"
-                      onClick={(e) => e.stopPropagation()}
-                      >
+                    <div className="absolute right-0 mt-2 w-32 bg-gray-800 border border-gray-700 rounded shadow-lg z-50">
                       <button
                         className="w-full text-left px-4 py-2 hover:bg-gray-700"
                         onClick={() => {

@@ -40,7 +40,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
       client.setVideoElement(videoRef.current);
       await client.start();
-      
+
       setConnected(true);
 
       setupGamePadListeners();
@@ -145,6 +145,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
           "disconnectedBy": userId.toString(),
           "force": false
         };
+        await api.post(`api/robots/robot-sessions/disconnect`, disconnectData);
+
       }
     }
 

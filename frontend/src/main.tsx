@@ -4,6 +4,7 @@ import App from "./App";
 import "./styles/index.css";
 import "leaflet/dist/leaflet.css";
 import "webrtc-adapter";
+import { AlertProvider } from "./components/Alert/AlertContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -189,6 +189,7 @@ async function stopRecording()
   if (clientRef.current) {
           await clientRef.current.stopRecording();
         setvideoRecord(false);
+  }
         
 }
    

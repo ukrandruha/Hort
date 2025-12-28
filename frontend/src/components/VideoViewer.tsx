@@ -259,16 +259,16 @@ async function stopRecording()
 {!videoRecord && (
           <button 
           onClick={startRecording}
-          className="px-4 py-2 bg-red-700 rounded hover:bg-red-800">
-            Record
+          className="px-4 py-2 bg-gray-400 rounded hover:bg-red-800">
+            🔴 REC
           </button>
 )}
  {videoRecord && (
             <button
               onClick={stopRecording}
-              className="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700"
+              className="px-4 py-2 bg-gray-400 rounded hover:bg-yellow-700"
             >
-              Stop Record
+             🔴 Stop 
             </button>
           )}
 

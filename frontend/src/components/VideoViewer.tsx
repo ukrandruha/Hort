@@ -27,6 +27,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
 
     const [connected, setConnected] = useState(false);
+    const [videoRecord, setvideoRecord] = useState(false);
 
 
 
@@ -65,6 +66,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
       if (clientRef.current) {
         await clientRef.current.stopRecording();
+        setvideoRecord(false);
         await clientRef.current.stop();
         clientRef.current = null;
       }
@@ -177,8 +179,17 @@ useEffect(() => {
 function startRecording() 
 {
     if (clientRef.current) {
+      setvideoRecord(true);
       clientRef.current.startRecording();
     }
+}
+
+async function stopRecording()
+{
+  if (clientRef.current) {
+          await clientRef.current.stopRecording();
+        setvideoRecord(false);
+        
 }
    
 
@@ -244,12 +255,22 @@ function startRecording()
               Disconnect camera
             </button>
           )}
-
+{!videoRecord && (
           <button 
           onClick={startRecording}
           className="px-4 py-2 bg-red-700 rounded hover:bg-red-800">
             Record
           </button>
+)}
+ {videoRecord && (
+            <button
+              onClick={stopRecording}
+              className="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700"
+            >
+              Stop Record
+            </button>
+          )}
+
         </div>
       </div>
     );

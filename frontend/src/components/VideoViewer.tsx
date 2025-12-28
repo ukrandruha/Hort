@@ -8,6 +8,8 @@ import { forwardRef, useImperativeHandle } from "react";
 
 import { alert } from "./Alert/globalAlert";
 
+
+
 //////////////////////////
 export type VideoViewerHandle = {
   onDisconnectRequested: () => void;
@@ -25,6 +27,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
 
     const [connected, setConnected] = useState(false);
+
+
 
     // ============================================
     // CONNECT CAMERA
@@ -60,6 +64,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       }
 
       if (clientRef.current) {
+        await clientRef.current.stopRecording();
         await clientRef.current.stop();
         clientRef.current = null;
       }
@@ -169,8 +174,13 @@ useEffect(() => {
 
       }
     }
-
-
+function startRecording() 
+{
+    if (clientRef.current) {
+      clientRef.current.startRecording();
+    }
+}
+   
 
 
     return (
@@ -235,8 +245,10 @@ useEffect(() => {
             </button>
           )}
 
-          <button className="px-4 py-2 bg-red-700 rounded hover:bg-red-800">
-            Reboot robot
+          <button 
+          onClick={startRecording}
+          className="px-4 py-2 bg-red-700 rounded hover:bg-red-800">
+            Record
           </button>
         </div>
       </div>

@@ -22,6 +22,10 @@ export class WebRTCClient {
     private connA: Connection | null = null;
     private connB: Connection | null = null;
 
+    private mediaRecorder: MediaRecorder | null = null;
+    private recordedChunks: BlobPart[] = [];
+    private recordingStartTime: Date | null = null;
+
     // ================= OPTIONS ======================
     private options = (() => {
         const opt = { ...defaultOptions };
@@ -165,9 +169,8 @@ export class WebRTCClient {
         this.connB.connect(null);
     };
 
-    private async createSessions(robotId: string, userid: number | null)
-    {
-     try {
+    private async createSessions(robotId: string, userid: number | null) {
+        try {
             const connectData = {
                 "robotId": robotId,
                 "operatorId": userid
@@ -181,7 +184,7 @@ export class WebRTCClient {
             console.error(e);
         }
     }
-    
+
 
 
     // =================================================
@@ -255,5 +258,96 @@ export class WebRTCClient {
     async sendDataArray(msg: Uint8Array) {
 
     }
+
+    // =================================================
+    // Recording VIDEO
+    // =================================================
+
+
+
+    startRecording() {
+
+        const pc = this.connB?.peerConnection;
+        
+        if (pc?.connectionState === "connected") {
+            if (!this.videoElement) {
+                console.warn("Video element not set");
+                return;
+            }
+
+            const stream = this.videoElement.srcObject as MediaStream | null;
+            if (!stream) {
+                console.warn("No MediaStream to record");
+                return;
+            }
+
+            this.recordedChunks = [];
+            this.recordingStartTime = new Date();
+
+            const options: MediaRecorderOptions = {
+                mimeType: "video/webm; codecs=vp8"
+                // якщо браузер не підтримує vp8:
+                // mimeType: "video/webm"
+            };
+
+            this.mediaRecorder = new MediaRecorder(stream, options);
+
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.recordedChunks.push(event.data);
+                }
+            };
+
+            this.mediaRecorder.onstart = () => {
+                console.log("[Recorder] Recording started");
+            };
+
+            this.mediaRecorder.onstop = () => {
+                console.log("[Recorder] Recording stopped");
+                this.saveRecording();
+            };
+
+            this.mediaRecorder.start();
+        }
+    }
+
+    stopRecording() {
+        if (this.mediaRecorder && this.mediaRecorder.state !== "inactive") {
+            this.mediaRecorder.stop();
+        }
+    }
+
+
+    private saveRecording() {
+        if (!this.recordingStartTime) return;
+
+        const blob = new Blob(this.recordedChunks, {
+            type: "video/webm"
+        });
+
+        const filename = this.formatDateForFilename(this.recordingStartTime);
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${filename}.webm`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    private formatDateForFilename(date: Date): string {
+        const pad = (n: number) => n.toString().padStart(2, "0");
+
+        return (
+            date.getFullYear() + "-" +
+            pad(date.getMonth() + 1) + "-" +
+            pad(date.getDate()) + "_" +
+            pad(date.getHours()) + "-" +
+            pad(date.getMinutes()) + "-" +
+            pad(date.getSeconds())
+        );
+    }
+
 
 }

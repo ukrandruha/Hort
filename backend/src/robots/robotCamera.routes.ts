@@ -5,8 +5,10 @@ import {
 } from "./robotCamera.service.js";
 
 export async function robotCameraRoutes(app: FastifyInstance) {
- app.post("/api/robots/:robotId/cameras", async (req, reply) => {
-      const { robotId } = req.params as any;
+
+ app.post<{ Params: { robotId: string} }>("/api/robots/cameras:robotId", async (req, reply) => {
+     
+      const { robotId } = req.params.robotId;
       const cameras = req.body as any[];
 
       await syncRobotCameras(robotId, cameras);
@@ -14,4 +16,5 @@ export async function robotCameraRoutes(app: FastifyInstance) {
       reply.send({ ok: true });
     },
   );
+
 }

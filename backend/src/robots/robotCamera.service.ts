@@ -3,6 +3,16 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+export async function getRobotCameras(
+    robotId: string
+)
+{
+    return  await prisma.robotCamera.findMany({
+    where: { robotId },
+    orderBy: { port: "asc" },
+  });
+}
+
 export async function syncRobotCameras(
   robotId: string,
   cameras: { name: string; port: string }[],

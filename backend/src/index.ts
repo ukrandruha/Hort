@@ -4,6 +4,7 @@ import jwt from "@fastify/jwt";
 import { PrismaClient } from "@prisma/client";
 
 import { robotRoutes } from "./robots/robot.routes.js";
+import {robotCameraRoutes} from "./robots/robotCamera.routes.js";
 import { authRoutes } from "./auth/auth.routes.js";
 
 const prisma = new PrismaClient();
@@ -23,6 +24,7 @@ const start = async () => {
 
     await app.register(authRoutes);
     await app.register(robotRoutes);
+    await app.register(robotCameraRoutes);
 
     await app.listen({
       port: 3001,

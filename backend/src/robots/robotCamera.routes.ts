@@ -7,9 +7,9 @@ import {
 
 export async function robotCameraRoutes(app: FastifyInstance) {
 
- app.post<{ Params: { id: string } }>("/api/robots/cameras:id", async (req, reply) => {
+ app.post("/api/robots/cameras:robotId", async (req, reply) => {
      
-      const  robotId  = req.params.id;
+      const { robotId } = req.params as any;
       const cameras = req.body as any[];
 
       await syncRobotCameras(robotId, cameras);

@@ -6,7 +6,7 @@ import {
   getRobot,
   editRobot,
   deleteRobot,
-  updateStatusWebRtc,
+ // updateStatusWebRtc,
   createSession,
   disconnectSession,
   confirmDisconnect
@@ -25,18 +25,18 @@ export async function robotRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post<{ Params: { idRobot: string, userconnect: number } }>("/api/robots/updatewebrtcclient", async (req, reply) => {
-    try {
-      const upd = req.body as { idRobot: string, userconnect: number } 
-      if (!upd.idRobot || upd.userconnect === undefined) {
-          throw new Error('robotId або userconnect відсутні');
-        }
-      await updateStatusWebRtc(upd.idRobot,upd.userconnect);
-      return { success: true };
-    } catch (err) {
-      reply.code(400).send({ error: "Update failed:"+err});
-    }
-  });
+  // app.post<{ Params: { idRobot: string, userconnect: number } }>("/api/robots/updatewebrtcclient", async (req, reply) => {
+  //   try {
+  //     const upd = req.body as { idRobot: string, userconnect: number } 
+  //     if (!upd.idRobot || upd.userconnect === undefined) {
+  //         throw new Error('robotId або userconnect відсутні');
+  //       }
+  //     await updateStatusWebRtc(upd.idRobot,upd.userconnect);
+  //     return { success: true };
+  //   } catch (err) {
+  //     reply.code(400).send({ error: "Update failed:"+err});
+  //   }
+  // });
 
   // List robots (JWT)
   app.get("/api/robots/", { preHandler: [app.auth] }, async () => {

@@ -27,11 +27,24 @@ export async function syncRobotCameras(
       throw new Error(`Robot ${robotId} not registered`);
     }
 
-
-    // 1️⃣ видалити старі
-    await tx.robotCamera.deleteMany({
+      // 2️⃣ перевіряємо, чи вже є камери
+    const existingCount = await tx.robotCamera.count({
       where: { robotId },
     });
+
+    if (existingCount > 0) {
+      // 🔕 нічого не робимо
+      return {
+        skipped: true,
+        reason: "Cameras already exist",
+      };
+    }
+
+
+    // // 1️⃣ видалити старі
+    // await tx.robotCamera.deleteMany({
+    //   where: { robotId },
+    // });
 
     // 2️⃣ вставити актуальні
     if (cameras.length > 0) {

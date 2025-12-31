@@ -20,7 +20,7 @@ export async function robotCameraRoutes(app: FastifyInstance) {
 
   app.get("/api/robots/:robotId/cameras", async (req, reply) => {
   const { robotId } = req.params as { robotId: string };
-  const cameras = getRobotCameras(robotId);
+  const cameras = await getRobotCameras(robotId);
   reply.send(cameras);
 });
 

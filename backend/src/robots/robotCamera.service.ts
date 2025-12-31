@@ -18,6 +18,16 @@ export async function syncRobotCameras(
   cameras: { name: string; port: string }[],
 ) {
   return prisma.$transaction(async tx => {
+
+    const robot = await tx.robot.findUnique({
+      where: { robotId },
+    });
+
+    if (!robot) {
+      throw new Error(`Robot ${robotId} not registered`);
+    }
+
+
     // 1️⃣ видалити старі
     await tx.robotCamera.deleteMany({
       where: { robotId },

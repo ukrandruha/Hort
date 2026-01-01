@@ -26,19 +26,23 @@ export async function robotCameraRoutes(app: FastifyInstance) {
 });
 
 
-app.post(
-  "/api/robots/:robotId/cameras/:cameraId/activate",
-  async (req, reply) => {
-    const { robotId, cameraId } = req.params as {
-      robotId: string;
-      cameraId: string;
-    };
+    app.post(
+        "/api/robots/:robotId/cameras/:cameraId/activate",
+        async (req, reply) => {
+            try {
+                const { robotId, cameraId } = req.params as {
+                    robotId: string;
+                    cameraId: string;
+                };
 
-    await setActiveCamera(robotId.trim(), Number(cameraId));
+                await setActiveCamera(robotId.trim(), Number(cameraId));
+            } catch (err: any) {
+                return reply.code(400).send({ message: err.message });
+            }
 
-    reply.send({ ok: true });
-  },
-);
+            reply.send({ ok: true });
+        },
+    );
 
 
 }

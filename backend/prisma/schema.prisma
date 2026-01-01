@@ -93,6 +93,7 @@ model RobotCamera {
   robotId   String
   name      String
   port      String
+  active    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

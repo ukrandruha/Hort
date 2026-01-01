@@ -2,7 +2,8 @@ import type { FastifyInstance } from "fastify";
 
 import { 
   syncRobotCameras,
-  getRobotCameras
+  getRobotCameras,
+  setActiveCamera
 } from "./robotCamera.service.js";
 
 export async function robotCameraRoutes(app: FastifyInstance) {
@@ -24,4 +25,18 @@ export async function robotCameraRoutes(app: FastifyInstance) {
   reply.send(cameras);
 });
 
+
+ app.post("/api/robots/:robotId/cameras:cameraId/activate", async (req, reply) => {
+     
+      const param = req.params as { robotId: string, cameraId: number};
+
+      await setActiveCamera(param.robotId, param.cameraId);
+
+      reply.send({ ok: true });
+    },
+  );
+
 }
+
+
+

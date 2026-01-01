@@ -60,3 +60,24 @@ export async function syncRobotCameras(
     return true;
   });
 }
+
+export async function setActiveCamera(
+  robotId: string,
+  cameraId: number,
+) {
+  return prisma.$transaction(async tx => {
+    // 1️⃣ деактивуємо всі
+    await tx.robotCamera.updateMany({
+      where: { robotId },
+      data: { active: false },
+    });
+
+    // 2️⃣ активуємо одну
+    await tx.robotCamera.update({
+      where: { id: cameraId },
+      data: { active: true },
+    });
+
+    return true;
+  });
+}

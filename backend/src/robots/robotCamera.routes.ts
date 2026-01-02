@@ -3,7 +3,8 @@ import type { FastifyInstance } from "fastify";
 import { 
   syncRobotCameras,
   getRobotCameras,
-  setActiveCamera
+  setActiveCamera,
+  getActiveRobotCamera
 } from "./robotCamera.service.js";
 
 export async function robotCameraRoutes(app: FastifyInstance) {
@@ -25,7 +26,6 @@ export async function robotCameraRoutes(app: FastifyInstance) {
   reply.send(cameras);
 });
 
-
     app.post(
         "/api/robots/:robotId/cameras/:cameraId/activate",
         async (req, reply) => {
@@ -34,7 +34,6 @@ export async function robotCameraRoutes(app: FastifyInstance) {
                     robotId: string;
                     cameraId: string;
                 };
-
                 await setActiveCamera(robotId.trim(), Number(cameraId));
             } catch (err: any) {
                 return reply.code(400).send({ message: err.message });
@@ -43,6 +42,22 @@ export async function robotCameraRoutes(app: FastifyInstance) {
             reply.send({ ok: true });
         },
     );
+
+ app.get(
+  "/api/robots/:robotId/cameras/active",
+  async (req, reply) => {
+    const { robotId } = req.params as { robotId: string };
+
+    const camera = await getActiveRobotCamera(robotId.trim());
+
+    // якщо активної камери немає
+    if (!camera) {
+      return reply.send(null);
+    }
+
+    reply.send(camera);
+  },
+);
 
 
 }

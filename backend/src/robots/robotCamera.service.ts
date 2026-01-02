@@ -81,3 +81,12 @@ export async function setActiveCamera(
     return true;
   });
 }
+
+export async function getActiveRobotCamera(robotId: string) {
+  return prisma.robotCamera.findFirst({
+    where: {
+      robotId,
+      active: true,
+    },
+  });
+}

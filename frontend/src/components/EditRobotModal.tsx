@@ -13,7 +13,7 @@ export default function EditRobotModal({ robot, onClose, onSave }) {
 
   async function loadCameras() {
     try {
-      const res = await api.get(`api/robots/${robot.id}/cameras`);
+      const res = await api.get(`api/robots/${robot.robotId}/cameras`);
       const data = res.data ?? [];
 
       setCameras(data);

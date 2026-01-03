@@ -83,7 +83,10 @@ export default function RobotTable() {
     if (!editRobot) return;
 
     try {
-      await api.patch(`/api/robots/${editRobot.robotId.trim()}`, data);
+      await api.patch(`/api/robots/${editRobot.robotId.trim()}`,  {name: data.name});
+      ///api/robots/:robotId/cameras/:cameraId/activate
+      await api.post(`/api/robots/${editRobot.robotId.trim()}/cameras/${data.cameraId}/activate`);
+
       setEditRobot(null);
       load();
     } catch (e) {

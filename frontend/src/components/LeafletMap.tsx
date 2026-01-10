@@ -67,7 +67,7 @@ function MovingDrone({ position }: { position: [number, number] }) {
   }, [position]);
 
   return     <Marker
-      ref={ref}
+      ref={markerRef}
       position={position}
       icon={createCircleIcon("#27ae60")}
     />;

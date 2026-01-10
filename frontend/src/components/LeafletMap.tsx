@@ -57,7 +57,7 @@ function createPointIcon(number: number) {
 
 /* ================= COMPONENTS ================= */
 
-function MovingMarker({ position }: { position: [number, number] }) {
+function MovingDrone({ position }: { position: [number, number] }) {
   const markerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
@@ -135,7 +135,7 @@ export default function LeafletMap({
       <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
       {/* DRONE */}
-      <MovingDrone position={pos} heading={heading} />
+      <MovingDrone position={pos}  />
 
       {/* MAIN ROUTE */}
       {routeLatLngs.length > 1 && (

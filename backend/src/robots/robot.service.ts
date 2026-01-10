@@ -203,3 +203,36 @@ export async function editRobot(id: string, data:RobotUpdateData) {
       },
     });
   }
+  
+export async function deleteMission(missionId: string)
+{
+  return await prisma.mission.delete({
+    where: { id: Number(missionId) },
+  });
+}
+
+  export async function createMission(
+  robotId: string,
+  name: string,
+  points: { lat: number; lng: number }[],
+) {
+  return prisma.$transaction(async tx => {
+    const mission = await tx.mission.create({
+      data: {
+        robotId,
+        name,
+      },
+    });
+
+    await tx.missionPoint.createMany({
+      data: points.map((p, index) => ({
+        missionId: mission.id,
+        order: index,
+        lat: p.lat,
+        lng: p.lng,
+      })),
+    });
+
+    return mission;
+  });
+}

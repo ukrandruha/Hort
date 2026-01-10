@@ -9,7 +9,8 @@ import {
  // updateStatusWebRtc,
   createSession,
   disconnectSession,
-  confirmDisconnect
+  confirmDisconnect,
+  createMission
 } from "./robot.service.js";
 
 
@@ -150,5 +151,23 @@ app.delete<{ Params: { id: string } }>(
     },
   )
 
+
+  app.post("/api/robots/:robotId/missions", async (req, reply) => {
+  const { robotId } = req.params as { robotId: string };
+  const { name, points } = req.body as any;
+
+  const mission = await createMission(robotId.trim(), name, points);
+
+  reply.send(mission);
+});
+
+app.delete("/api/missions/:missionId", async (req, reply) => {
+  const { missionId } = req.params as { missionId: string };
+
+  await deleteMission(missionId);
+
+
+  reply.send({ ok: true });
+});
 
 }

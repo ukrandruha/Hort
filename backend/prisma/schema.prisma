@@ -102,3 +102,28 @@ model RobotCamera {
   @@unique([robotId, port])
   @@index([robotId])
 }
+
+model Mission {
+  id        Int      @id @default(autoincrement())
+  robotId   String
+  name      String
+  createdAt DateTime @default(now())
+
+  robot  Robot          @relation(fields: [robotId], references: [robotId])
+  points MissionPoint[]
+
+  @@index([robotId])
+}
+
+model MissionPoint {
+  id        Int      @id @default(autoincrement())
+  missionId Int
+  order     Int
+  lat       Float
+  lng       Float
+
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@unique([missionId, order])
+  @@index([missionId])
+}

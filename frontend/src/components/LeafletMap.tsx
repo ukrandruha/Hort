@@ -100,6 +100,24 @@ function DroneMarker({
   );
 }
 
+function moveTowards(
+  from: [number, number],
+  to: [number, number],
+  distanceMeters: number,
+  map: L.Map
+): [number, number] {
+  const total = map.distance(from, to);
+
+  if (total === 0 || distanceMeters >= total) return to;
+
+  const ratio = distanceMeters / total;
+
+  return [
+    from[0] + (to[0] - from[0]) * ratio,
+    from[1] + (to[1] - from[1]) * ratio,
+  ];
+}
+
 /* ================= MAIN MAP ================= */
 
 export default function LeafletMap({
@@ -152,6 +170,34 @@ export default function LeafletMap({
     const angle = getBearing(pos, target);
     setHeading(angle);
   }, [pos, points]);
+
+////////////////test/////////////////////
+const SPEED_MPS = 6; // швидкість дрона (м/с)
+const TICK_MS = 200; // інтервал оновлення
+
+const [activeIndex, setActiveIndex] = useState(1);
+
+useEffect(() => {
+  if (!mapRef.current || activeIndex >= points.length) return;
+
+  const map = mapRef.current;
+  const target = points[activeIndex];
+
+  const interval = setInterval(() => {
+    setPos((current) =>
+      moveTowards(
+        current,
+        [target.lat, target.lng],
+        (SPEED_MPS * TICK_MS) / 1000,
+        map
+      )
+    );
+  }, TICK_MS);
+
+  return () => clearInterval(interval);
+}, [activeIndex, points]);
+
+
 
   return (
     <LeafletMapBase

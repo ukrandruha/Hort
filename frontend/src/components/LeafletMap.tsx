@@ -157,7 +157,7 @@ export default function LeafletMap({
         <Polyline
           positions={[pos, startPoint]}
           pathOptions={{
-            color: "#8b0b0bff",
+            color: "#1198ceff",
             weight: 2,
             dashArray: "4 6",
           }}

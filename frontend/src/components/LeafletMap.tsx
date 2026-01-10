@@ -90,7 +90,8 @@ export default function LeafletMap({
     { id: number; lat: number; lng: number; order: number }[]
   >([]);
 
-  const [showStartLine, setShowStartLine] = useState(false);
+  const [showStartLine, setShowStartLine] = useState(true);
+ 
 
   const mapRef = useRef<L.Map | null>(null);
 
@@ -106,8 +107,9 @@ export default function LeafletMap({
     loadMission();
   }, [missionId]);
 
-  const startPoint = [48.4629585, 35.0321044] as [number, number];
-
+  const startPoint = points.length
+    ? ([points[0].lat, points[0].lng] as [number, number])
+    : null;
 
   /* ===== DISTANCE TO START ===== */
   useEffect(() => {
@@ -116,6 +118,9 @@ export default function LeafletMap({
     const distance = mapRef.current.distance(pos, startPoint);
     setShowStartLine(distance > 10); // meters
   }, [pos, startPoint]);
+
+
+
 
   const routeLatLngs = useMemo(
     () => points.map((p) => [p.lat, p.lng] as [number, number]),

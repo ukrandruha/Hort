@@ -158,8 +158,8 @@ export default function LeafletMap({
           positions={[pos, startPoint]}
           pathOptions={{
             color: "#1198ceff",
-            weight: 2,
-            dashArray: "7 7",
+            weight: 3,
+            dashArray: "6 6",
           }}
         />
       )}

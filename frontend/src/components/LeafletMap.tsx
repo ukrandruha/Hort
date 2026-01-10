@@ -70,7 +70,6 @@ function MovingDrone({ position }: { position: [number, number] }) {
       ref={ref}
       position={position}
       icon={createCircleIcon("#27ae60")}
-      rotationOrigin="center"
     />;
 }
 /* ================= MAIN MAP ================= */

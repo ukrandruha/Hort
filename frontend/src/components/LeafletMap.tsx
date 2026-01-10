@@ -106,9 +106,8 @@ export default function LeafletMap({
     loadMission();
   }, [missionId]);
 
-  const startPoint = points.length
-    ? ([points[0].lat, points[0].lng] as [number, number])
-    : null;
+  const startPoint = [48.4629585, 35.0321044] as [number, number];
+
 
   /* ===== DISTANCE TO START ===== */
   useEffect(() => {

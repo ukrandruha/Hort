@@ -6,15 +6,28 @@ import {
   Polyline,
 } from "react-leaflet";
 import L from "leaflet";
+import "leaflet-rotatedmarker";
 import { api } from "../api/api";
 
 /* ================= ICONS ================= */
 
-const droneIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/854/854894.png",
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
-});
+function createDroneIcon() {
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #27ae60;
+        border: 3px solid white;
+        box-shadow: 0 0 6px rgba(0,0,0,0.4);
+      "></div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+}
 
 function createPointIcon(number: number) {
   return L.divIcon({
@@ -42,18 +55,49 @@ function createPointIcon(number: number) {
   });
 }
 
+/* ================= UTILS ================= */
+
+function getBearing(
+  from: [number, number],
+  to: [number, number]
+): number {
+  const lat1 = (from[0] * Math.PI) / 180;
+  const lat2 = (to[0] * Math.PI) / 180;
+  const dLon = ((to[1] - from[1]) * Math.PI) / 180;
+
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
 /* ================= COMPONENTS ================= */
 
-function MovingMarker({ position }: { position: [number, number] }) {
-  const markerRef = useRef<L.Marker | null>(null);
+function DroneMarker({
+  position,
+  heading,
+}: {
+  position: [number, number];
+  heading: number;
+}) {
+  const ref = useRef<L.Marker | null>(null);
 
   useEffect(() => {
-    if (markerRef.current) {
-      markerRef.current.setLatLng(position);
-    }
-  }, [position]);
+    if (!ref.current) return;
+    ref.current.setLatLng(position);
+    ref.current.setRotationAngle(heading);
+  }, [position, heading]);
 
-  return <Marker position={position} icon={droneIcon} ref={markerRef} />;
+  return (
+    <Marker
+      ref={ref}
+      position={position}
+      icon={createDroneIcon()}
+      rotationOrigin="center"
+    />
+  );
 }
 
 /* ================= MAIN MAP ================= */
@@ -75,38 +119,39 @@ export default function LeafletMap({
     { id: number; lat: number; lng: number; order: number }[]
   >([]);
 
-  const [showStartLine, setShowStartLine] = useState(false);
-
+  const [heading, setHeading] = useState(0);
   const mapRef = useRef<L.Map | null>(null);
 
   /* ===== LOAD MISSION ===== */
   useEffect(() => {
     async function loadMission() {
       const { data } = await api.get(`/api/missions/${missionId}`);
-      setPoints(
-        [...data.points].sort((a, b) => a.order - b.order)
-      );
+      setPoints([...data.points].sort((a, b) => a.order - b.order));
     }
-
     loadMission();
   }, [missionId]);
-
-  const startPoint = points.length
-    ? ([points[0].lat, points[0].lng] as [number, number])
-    : null;
-
-  /* ===== DISTANCE TO START ===== */
-  useEffect(() => {
-    if (!mapRef.current || !startPoint) return;
-
-    const distance = mapRef.current.distance(pos, startPoint);
-    setShowStartLine(distance > 10); // meters
-  }, [pos, startPoint]);
 
   const routeLatLngs = useMemo(
     () => points.map((p) => [p.lat, p.lng] as [number, number]),
     [points]
   );
+
+  /* ===== DJI CAMERA LOGIC ===== */
+  useEffect(() => {
+    if (!mapRef.current || points.length === 0) return;
+
+    const map = mapRef.current;
+
+    // 1️⃣ камера завжди на дроні
+    map.setView(pos, map.getZoom(), { animate: true });
+
+    // 2️⃣ напрямок — на наступну точку
+    const targetPoint = points[0];
+    const target: [number, number] = [targetPoint.lat, targetPoint.lng];
+
+    const angle = getBearing(pos, target);
+    setHeading(angle);
+  }, [pos, points]);
 
   return (
     <LeafletMapBase
@@ -118,10 +163,7 @@ export default function LeafletMap({
     >
       <TileLayer url="http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
-      {/* DRONE */}
-      <MovingMarker position={pos} />
-
-      {/* MAIN ROUTE */}
+      {/* ROUTE */}
       {routeLatLngs.length > 1 && (
         <Polyline
           positions={routeLatLngs}
@@ -133,19 +175,7 @@ export default function LeafletMap({
         />
       )}
 
-      {/* START CONNECTION */}
-      {showStartLine && startPoint && (
-        <Polyline
-          positions={[pos, startPoint]}
-          pathOptions={{
-            color: "#f2c94c",
-            weight: 2,
-            dashArray: "4 6",
-          }}
-        />
-      )}
-
-      {/* POINT MARKERS */}
+      {/* WAYPOINTS */}
       {points.map((p) => (
         <Marker
           key={p.id}
@@ -153,6 +183,9 @@ export default function LeafletMap({
           icon={createPointIcon(p.order + 1)}
         />
       ))}
+
+      {/* DRONE */}
+      <DroneMarker position={pos} heading={heading} />
     </LeafletMapBase>
   );
 }

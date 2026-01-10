@@ -10,7 +10,8 @@ import {
   createSession,
   disconnectSession,
   confirmDisconnect,
-  createMission
+  createMission,
+  deleteMission
 } from "./robot.service.js";
 
 

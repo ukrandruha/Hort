@@ -24,7 +24,7 @@ function createCircleIcon(color: string) {
         box-shadow: 0 0 6px rgba(0,0,0,0.4);
       "></div>
     `,
-    iconSize: [26, 26],
+    iconSize: [15, 15],
     iconAnchor: [14, 14], 
   });
 }
@@ -157,7 +157,7 @@ export default function LeafletMap({
         <Polyline
           positions={[pos, startPoint]}
           pathOptions={{
-            color: "#f2c94c",
+            color: "#8b0b0bff",
             weight: 2,
             dashArray: "4 6",
           }}

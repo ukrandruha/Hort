@@ -133,7 +133,7 @@ export default function LeafletMap({
  { 
   if (activeIndex >= points.length) 
   {
-     setPos(pos); 
+     //setPos(pos); 
      setActiveIndex(1);
   }
   else

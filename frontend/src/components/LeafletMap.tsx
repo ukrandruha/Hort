@@ -29,7 +29,7 @@ function createDroneIcon() {
   });
 }
 
-function createPointIcon(number: number) {
+function createPointIcon(number: number, active = false) {
   return L.divIcon({
     className: "",
     html: `
@@ -37,7 +37,7 @@ function createPointIcon(number: number) {
         width: 26px;
         height: 26px;
         border-radius: 50%;
-        background: #2f80ed;
+        background: ${active ? "#f2994a" : "#2f80ed"};
         border: 2px solid white;
         color: white;
         font-size: 13px;
@@ -57,10 +57,7 @@ function createPointIcon(number: number) {
 
 /* ================= UTILS ================= */
 
-function getBearing(
-  from: [number, number],
-  to: [number, number]
-): number {
+function getBearing(from: [number, number], to: [number, number]): number {
   const lat1 = (from[0] * Math.PI) / 180;
   const lat2 = (to[0] * Math.PI) / 180;
   const dLon = ((to[1] - from[1]) * Math.PI) / 180;
@@ -71,6 +68,24 @@ function getBearing(
     Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
 
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+function moveTowards(
+  from: [number, number],
+  to: [number, number],
+  distanceMeters: number,
+  map: L.Map
+): [number, number] {
+  const total = map.distance(from, to);
+
+  if (total === 0 || distanceMeters >= total) return to;
+
+  const ratio = distanceMeters / total;
+
+  return [
+    from[0] + (to[0] - from[0]) * ratio,
+    from[1] + (to[1] - from[1]) * ratio,
+  ];
 }
 
 /* ================= COMPONENTS ================= */
@@ -100,24 +115,6 @@ function DroneMarker({
   );
 }
 
-function moveTowards(
-  from: [number, number],
-  to: [number, number],
-  distanceMeters: number,
-  map: L.Map
-): [number, number] {
-  const total = map.distance(from, to);
-
-  if (total === 0 || distanceMeters >= total) return to;
-
-  const ratio = distanceMeters / total;
-
-  return [
-    from[0] + (to[0] - from[0]) * ratio,
-    from[1] + (to[1] - from[1]) * ratio,
-  ];
-}
-
 /* ================= MAIN MAP ================= */
 
 export default function LeafletMap({
@@ -137,45 +134,74 @@ export default function LeafletMap({
     { id: number; lat: number; lng: number; order: number }[]
   >([]);
 
+  const [activeIndex, setActiveIndex] = useState(1);
   const [heading, setHeading] = useState(0);
+
   const mapRef = useRef<L.Map | null>(null);
+  const WAYPOINT_RADIUS = 12; // meters
 
   /* ===== LOAD MISSION ===== */
   useEffect(() => {
     async function loadMission() {
       const { data } = await api.get(`/api/missions/${missionId}`);
-      setPoints([...data.points].sort((a, b) => a.order - b.order));
+      const sorted = [...data.points].sort((a, b) => a.order - b.order);
+      setPoints(sorted);
+      setActiveIndex(sorted.length > 1 ? 1 : 0);
     }
     loadMission();
   }, [missionId]);
 
-  const routeLatLngs = useMemo(
-    () => points.map((p) => [p.lat, p.lng] as [number, number]),
-    [points]
-  );
-
-  /* ===== DJI CAMERA LOGIC ===== */
+  /* ===== AUTO WAYPOINT SWITCH ===== */
   useEffect(() => {
-    if (!mapRef.current || points.length === 0) return;
+    if (!mapRef.current || activeIndex >= points.length) return;
+
+    const next = points[activeIndex];
+    const distance = mapRef.current.distance(pos, [next.lat, next.lng]);
+
+    if (distance < WAYPOINT_RADIUS) {
+      setActiveIndex((i) => Math.min(i + 1, points.length));
+    }
+  }, [pos, activeIndex, points]);
+
+  /* ===== CAMERA + HEADING ===== */
+  useEffect(() => {
+    if (!mapRef.current || activeIndex >= points.length) return;
 
     const map = mapRef.current;
-
-    // 1️⃣ камера завжди на дроні
     map.setView(pos, map.getZoom(), { animate: true });
 
-    // 2️⃣ напрямок — на наступну точку
-    const targetPoint = points[0];
-    const target: [number, number] = [targetPoint.lat, targetPoint.lng];
-
-    const angle = getBearing(pos, target);
+    const target = points[activeIndex];
+    const angle = getBearing(pos, [target.lat, target.lng]);
     setHeading(angle);
-  }, [pos, points]);
+  }, [pos, activeIndex, points]);
 
-////////////////test/////////////////////
+  /* ===== ROUTE SEGMENTS ===== */
+  const completed = useMemo(
+    () =>
+      points
+        .slice(0, activeIndex)
+        .map((p) => [p.lat, p.lng] as [number, number]),
+    [points, activeIndex]
+  );
+
+  const activeSegment = useMemo(() => {
+    if (activeIndex === 0 || activeIndex >= points.length) return [];
+    return [
+      [points[activeIndex - 1].lat, points[activeIndex - 1].lng],
+      [points[activeIndex].lat, points[activeIndex].lng],
+    ] as [number, number][];
+  }, [points, activeIndex]);
+
+  const future = useMemo(
+    () =>
+      points
+        .slice(activeIndex)
+        .map((p) => [p.lat, p.lng] as [number, number]),
+    [points, activeIndex]
+  );
+
 const SPEED_MPS = 6; // швидкість дрона (м/с)
 const TICK_MS = 200; // інтервал оновлення
-
-const [activeIndex, setActiveIndex] = useState(1);
 
 useEffect(() => {
   if (!mapRef.current || activeIndex >= points.length) return;
@@ -198,7 +224,6 @@ useEffect(() => {
 }, [activeIndex, points]);
 
 
-
   return (
     <LeafletMapBase
       center={pos}
@@ -209,24 +234,45 @@ useEffect(() => {
     >
       <TileLayer url="http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
-      {/* ROUTE */}
-      {routeLatLngs.length > 1 && (
+      {/* COMPLETED */}
+      {completed.length > 1 && (
         <Polyline
-          positions={routeLatLngs}
+          positions={completed}
+          pathOptions={{ color: "#6fcf97", weight: 3 }}
+        />
+      )}
+
+      {/* ACTIVE */}
+      {activeSegment.length === 2 && (
+        <Polyline
+          positions={activeSegment}
           pathOptions={{
             color: "#f2c94c",
-            weight: 3,
+            weight: 4,
             dashArray: "6 6",
           }}
         />
       )}
 
+      {/* FUTURE */}
+      {future.length > 1 && (
+        <Polyline
+          positions={future}
+          pathOptions={{
+            color: "#f2c94c",
+            weight: 2,
+            dashArray: "6 6",
+            
+          }}
+        />
+      )}
+
       {/* WAYPOINTS */}
-      {points.map((p) => (
+      {points.map((p, i) => (
         <Marker
           key={p.id}
           position={[p.lat, p.lng]}
-          icon={createPointIcon(p.order + 1)}
+          icon={createPointIcon(p.order + 1, i === activeIndex)}
         />
       ))}
 

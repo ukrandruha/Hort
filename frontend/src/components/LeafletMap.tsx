@@ -86,7 +86,7 @@ export default function LeafletMap({robot, missionId, fullscreen }) {
         <Polyline
           positions={routeLatLngs}
           pathOptions={{
-            color: "blue",
+            color: "yellow",
             weight: 3,
             dashArray: "6 6",
           }}
@@ -98,7 +98,7 @@ export default function LeafletMap({robot, missionId, fullscreen }) {
         <Polyline
           positions={[pos, startPoint]}
           pathOptions={{
-            color: "blue",
+            color: "yellow",
             weight: 2,
             dashArray: "4 6",
           }}

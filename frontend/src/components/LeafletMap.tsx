@@ -6,7 +6,7 @@ import {
   Polyline,
 } from "react-leaflet";
 import L from "leaflet";
-import api from "@/api";
+import { api } from "../api/api";
 
 /* ================= ICONS ================= */
 
@@ -59,6 +59,7 @@ function MovingMarker({ position }: { position: [number, number] }) {
 /* ================= MAIN MAP ================= */
 
 export default function LeafletMap({
+  robot,
   missionId,
   fullscreen,
 }: {

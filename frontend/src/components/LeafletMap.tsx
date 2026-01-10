@@ -232,7 +232,7 @@ useEffect(() => {
       style={{ width: "100%", height: "100%" }}
       whenCreated={(map) => (mapRef.current = map)}
     >
-      <TileLayer url="http://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
+      <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
       {/* COMPLETED */}
       {completed.length > 1 && (

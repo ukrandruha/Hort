@@ -8,7 +8,7 @@ import {
 import L from "leaflet";
 import { api } from "../api/api";
 
-/* ================= ICONS ================= */
+/** ================= ICONS ================= **/
 
 
 function createCircleIcon(color: string) {
@@ -24,8 +24,8 @@ function createCircleIcon(color: string) {
         box-shadow: 0 0 6px rgba(0,0,0,0.4);
       "></div>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [26, 26],
+    iconAnchor: [14, 14], 
   });
 }
 
@@ -57,29 +57,21 @@ function createPointIcon(number: number) {
 
 /* ================= COMPONENTS ================= */
 
-function MovingDrone({
-  position,
-  heading,
-}: {
-  position: [number, number];
-  heading: number;
-}) {
-  const ref = useRef<L.Marker | null>(null);
+function MovingMarker({ position }: { position: [number, number] }) {
+  const markerRef = useRef<L.Marker | null>(null);
 
   useEffect(() => {
-    if (!ref.current) return;
-    ref.current.setLatLng(position);
-    ref.current.setRotationAngle(heading);
-  }, [position, heading]);
+    if (markerRef.current) {
+      markerRef.current.setLatLng(position);
+    }
+  }, [position]);
 
-  return (
-    <Marker
+  return     <Marker
       ref={ref}
       position={position}
       icon={createCircleIcon("#27ae60")}
       rotationOrigin="center"
-    />
-  );
+    />;
 }
 /* ================= MAIN MAP ================= */
 

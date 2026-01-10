@@ -127,6 +127,26 @@ export default function LeafletMap({
     [points]
   );
 
+ // Симуляція руху дрона 
+ const [activeIndex, setActiveIndex] = useState(1);
+ useEffect(() => { const interval = setInterval(() => 
+ { 
+  if (activeIndex >= points.length) 
+  {
+     setPos(pos); 
+     setActiveIndex(1);
+  }
+  else
+  {
+    const target = points[activeIndex];
+    setPos([target.lat, target.lng]);
+    setActiveIndex(activeIndex + 1);
+  }
+}, 800); 
+  return () => clearInterval(interval); },
+   []); 
+
+
   return (
     <LeafletMapBase
       center={pos}
@@ -157,7 +177,7 @@ export default function LeafletMap({
         <Polyline
           positions={[pos, startPoint]}
           pathOptions={{
-            color: "#1198ceff",
+            color: "#d8c00eff",
             weight: 3,
             dashArray: "6 6",
           }}

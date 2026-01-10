@@ -46,6 +46,7 @@ model Robot {
   users       Tc_user_device[]
   sessions    RobotSession[]
   cameras RobotCamera[]
+  missions Mission[]
 }
 
 model Tc_user_device {
@@ -107,6 +108,7 @@ model Mission {
   id        Int      @id @default(autoincrement())
   robotId   String
   name      String
+  active    Boolean  @default(false)
   createdAt DateTime @default(now())
 
   robot  Robot          @relation(fields: [robotId], references: [robotId])

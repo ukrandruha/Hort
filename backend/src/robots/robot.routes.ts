@@ -11,7 +11,8 @@ import {
   disconnectSession,
   confirmDisconnect,
   createMission,
-  deleteMission
+  deleteMission,
+  getMission
 } from "./robot.service.js";
 
 
@@ -170,5 +171,13 @@ app.delete("/api/missions/:missionId", async (req, reply) => {
 
   reply.send({ ok: true });
 });
+
+
+app.get("/api/missions/:missionId", async (req, reply) => {
+  const { missionId } = req.params as { missionId: string };
+  const mission = await getMission(missionId);
+  reply.send(mission);
+});
+
 
 }

@@ -203,7 +203,19 @@ export async function editRobot(id: string, data:RobotUpdateData) {
       },
     });
   }
-  
+
+export async function getMission(missionId: string)
+{
+    return await prisma.mission.findUnique({
+    where: { id: Number(missionId)},
+    include: {
+      points: {
+        orderBy: { order: "asc" },
+      },
+    },
+  });
+}
+
 export async function deleteMission(missionId: string)
 {
   return await prisma.mission.delete({

@@ -159,7 +159,7 @@ export default function LeafletMap({
           pathOptions={{
             color: "#1198ceff",
             weight: 2,
-            dashArray: "4 6",
+            dashArray: "7 7",
           }}
         />
       )}

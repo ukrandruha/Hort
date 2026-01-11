@@ -58,10 +58,9 @@ function createPointIcon(number: number) {
 /* ================= COMPONENTS ================= */
 
 function MovingDrone({ position }: { position: [number, number] }) {
-  
   //const markerRef = useRef<L.Marker | null>(null);
-  const markerRef = useRef(null);
-
+    const markerRef = useRef(null);
+    
   useEffect(() => {
     if (markerRef.current) {
       markerRef.current.setLatLng(position);
@@ -71,7 +70,7 @@ function MovingDrone({ position }: { position: [number, number] }) {
   return     <Marker
       ref={markerRef}
       position={position}
-      icon={createCircleIcon("#27ae60") ref={markerRef} 
+      icon={createCircleIcon("#27ae60")}
     />;
 }
 /* ================= MAIN MAP ================= */
@@ -131,7 +130,7 @@ export default function LeafletMap({
 
  // Симуляція руху дрона 
  const [activeIndex, setActiveIndex] = useState(0);
-
+ 
  useEffect(() => { const interval = setInterval(() => 
  { 
   if (activeIndex >= points.length) 

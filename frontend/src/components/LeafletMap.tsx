@@ -71,7 +71,7 @@ function MovingDrone({ position }: { position: [number, number] }) {
   return     <Marker
       ref={markerRef}
       position={position}
-      icon={createCircleIcon("#27ae60") ref={markerRef} }
+      icon={createCircleIcon("#27ae60") ref={markerRef} 
     />;
 }
 /* ================= MAIN MAP ================= */

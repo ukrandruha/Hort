@@ -7,6 +7,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import { api } from "../api/api";
+import { useMap } from "react-leaflet";
 
 /** ================= ICONS ================= **/
 
@@ -24,7 +25,7 @@ function createCircleIcon(color: string) {
         box-shadow: 0 0 6px rgba(0,0,0,0.4);
       "></div>
     `,
-    iconSize: [15, 15],
+    iconSize: [27, 27],
     iconAnchor: [14, 14], 
   });
 }
@@ -56,6 +57,18 @@ function createPointIcon(number: number) {
 }
 
 /* ================= COMPONENTS ================= */
+function MapFollower({ target }: { target: [number, number] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.panTo(target, {
+      animate: true,
+      duration: 1,
+    });
+  }, [target, map]);
+
+  return null;
+}
 
 function MovingDrone({ position }: { position: [number, number] }) {
   //const markerRef = useRef<L.Marker | null>(null);
@@ -67,10 +80,14 @@ function MovingDrone({ position }: { position: [number, number] }) {
     }
   }, [position]);
 
+
+
+
   return     <Marker
       ref={markerRef}
       position={position}
       icon={createCircleIcon("#27ae60")}
+      zIndexOffset={1000}
     />;
 }
 /* ================= MAIN MAP ================= */
@@ -100,9 +117,8 @@ export default function LeafletMap({
   useEffect(() => {
     async function loadMission() {
       const { data } = await api.get(`/api/missions/${missionId}`);
-      setPoints(
-        [...data.points].sort((a, b) => a.order - b.order)
-      );
+      const sorted = [...data.points].sort((a, b) => a.order - b.order);
+      setPoints(sorted);
     }
 
     loadMission();
@@ -130,36 +146,50 @@ export default function LeafletMap({
 
  // Симуляція руху дрона 
  const [activeIndex, setActiveIndex] = useState(0);
+ //const [mapReady, setMapReady] = useState(false);
  
  useEffect(() => { const interval = setInterval(() => 
  { 
-  if (activeIndex >= points.length) 
+  //if (!points.length || !mapReady || !mapRef.current) return;
+  if(points.length > 0)
   {
-     //setPos(pos); 
-     setActiveIndex(0);
+    if (activeIndex >= points.length) 
+    {
+      //setPos(pos); 
+      setActiveIndex(0);
+    }else{
+      const target = points[activeIndex];
+      setPos([target.lat, target.lng]);
+
+
+      setActiveIndex(activeIndex + 1);
+    }
   }
 
-  const target = points[activeIndex];
-  setPos([target.lat, target.lng]);
-  setActiveIndex(activeIndex + 1);
-
-}, 800); 
+}, 1000); 
   return () => clearInterval(interval); },
-   []); 
+   [activeIndex, points]); 
 
 
   return (
     <LeafletMapBase
       center={pos}
-      zoom={16}
+      zoom={13}
       scrollWheelZoom={fullscreen}
       style={{ width: "100%", height: "100%" }}
-      whenCreated={(map) => (mapRef.current = map)}
+      
+            whenCreated={(map) => {
+        mapRef.current = map;
+        setMapReady(true);
+      }}
+
     >
       <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
       {/* DRONE */}
       <MovingDrone position={pos}  />
+
+       <MapFollower target={pos} />
 
       {/* MAIN ROUTE */}
       {routeLatLngs.length > 1 && (
@@ -193,6 +223,7 @@ export default function LeafletMap({
           icon={createPointIcon(p.order + 1)}
         />
       ))}
+      
     </LeafletMapBase>
-  );
-}
+   
+  );}

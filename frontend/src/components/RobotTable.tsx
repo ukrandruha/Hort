@@ -4,6 +4,7 @@ import { api } from "../api/api";
 import { getStatusColor, getCloudColor } from "../utils/statusColors";
 import { useAuth } from "../auth/AuthContext";
 import EditRobotModal from "./EditRobotModal";
+import FileSelectModal from "./FileSelect";
 import VideoViewer, { VideoViewerHandle } from "./VideoViewer";
 
 import { alert } from "./Alert/globalAlert";
@@ -13,6 +14,7 @@ export default function RobotTable() {
   const { token } = useAuth();
   //const { user } = useAuth();
   const [editRobot, setEditRobot] = useState(null);
+  const[missionRobot,setSelectFile]= useState(null);
   const [videoRobot, setVideoRobot] = useState(null);
 
   const videoViewerRef = useRef<VideoViewerHandle | null>(null);
@@ -67,6 +69,10 @@ export default function RobotTable() {
   function openEdit(robot) {
     setEditRobot(robot);
   }
+
+ function openSelectFile(robot){
+    setSelectFile(robot);
+ }
 
   function openVideo(robot) {
     setVideoRobot(robot);
@@ -148,12 +154,25 @@ export default function RobotTable() {
 
   return (
     <div className="p-6">
+     
       {editRobot && (
         <EditRobotModal
           robot={editRobot}
           onClose={() => setEditRobot(null)}
           onSave={saveRobot}
         />
+      )}
+
+      {missionRobot && (
+            <FileSelectModal
+            robot={missionRobot}
+
+            onClose={() => setSelectFile(null)}
+            
+            onConfirm={(file) => {
+            console.log("Selected file:", file);
+        }}
+      />
       )}
 
       {videoRobot && (
@@ -254,6 +273,16 @@ export default function RobotTable() {
             }}
           >
             Edit
+          </button>
+
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            onClick={() => {
+              openSelectFile(r);
+              setOpenMenuId(null);
+            }}
+          >
+           Mission
           </button>
 
           <button

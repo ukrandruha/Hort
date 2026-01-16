@@ -17,7 +17,11 @@ export function errorHandler(
   reply: FastifyReply
 ) {
   // Логування помилки
-  request.log.error(error);
+  if (request.log) {
+    request.log.error(error);
+  } else {
+    console.error(error);
+  }
 
   // Якщо це наша кастомна помилка
   if (error instanceof AppError) {
@@ -32,7 +36,7 @@ export function errorHandler(
   const message =
     process.env.NODE_ENV === "production"
       ? "Internal server error"
-      : error.message;
+      : (error?.message || "Unknown error");
 
   return reply.status(statusCode).send({
     error: message,

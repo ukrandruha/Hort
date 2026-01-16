@@ -1,4 +1,4 @@
-import { AppError } from "./errors";
+import { AppError } from "./errors.js";
 
 // Валідація email
 export function validateEmail(email: string): void {

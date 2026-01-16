@@ -17,7 +17,10 @@ app.setErrorHandler(errorHandler);
 const start = async () => {
   try {
     // CORS з env змінною
-    const corsOrigin = process.env.CORS_ORIGIN?.split(",") || ["http://localhost:5173"];
+    const corsOriginEnv = process.env.CORS_ORIGIN;
+    const corsOrigin = corsOriginEnv 
+      ? corsOriginEnv.split(",").map(origin => origin.trim())
+      : ["http://localhost:5173"];
     await app.register(cors, { origin: corsOrigin });
     
     // JWT secret з env змінної

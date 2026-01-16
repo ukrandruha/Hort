@@ -1,8 +1,8 @@
 import { FastifyInstance , RouteShorthandOptions } from "fastify";
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../db/prisma.js";
+import { validateEmail, validatePassword } from "../utils/validation.js";
+import { AppError } from "../utils/errors.js";
 
 export async function authRoutes(fastify: FastifyInstance) {
 
@@ -35,7 +35,13 @@ const opts: RouteShorthandOptions = {
     };
 
     if (!email || !password) {
-      return reply.status(400).send({ error: "Email and password required" });
+      throw new AppError(400, "Email and password required", "MISSING_CREDENTIALS");
+    }
+
+    try {
+      validateEmail(email);
+    } catch (error) {
+      throw error;
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
@@ -64,7 +70,14 @@ const opts: RouteShorthandOptions = {
     };
 
     if (!email || !password) {
-      return reply.status(400).send({ error: "Email and password required" });
+      throw new AppError(400, "Email and password required", "MISSING_CREDENTIALS");
+    }
+
+    try {
+      validateEmail(email);
+      validatePassword(password);
+    } catch (error) {
+      throw error;
     }
 
     const exists = await prisma.user.findUnique({ where: { email } });

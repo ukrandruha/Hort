@@ -1,7 +1,4 @@
-// src/services/robotCamera.service.ts
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../db/prisma.js";
 
 export async function getRobotCameras(
     robotId: string
@@ -17,7 +14,7 @@ export async function syncRobotCameras(
   robotId: string,
   cameras: { name: string; port: string }[],
 ) {
-  return prisma.$transaction(async tx => {
+  return prisma.$transaction(async (tx: any) => {
 
     const robot = await tx.robot.findUnique({
       where: { robotId },
@@ -27,26 +24,12 @@ export async function syncRobotCameras(
       throw new Error(`Robot ${robotId} not registered`);
     }
 
-      // 2️⃣ перевіряємо, чи вже є камери
-    const existingCount = await tx.robotCamera.count({
+    // Видалити старі камери перед синхронізацією
+    await tx.robotCamera.deleteMany({
       where: { robotId },
     });
 
-    if (existingCount > 0) {
-      // 🔕 нічого не робимо
-      return {
-        skipped: true,
-        reason: "Cameras already exist",
-      };
-    }
-
-
-    // // 1️⃣ видалити старі
-    // await tx.robotCamera.deleteMany({
-    //   where: { robotId },
-    // });
-
-    // 2️⃣ вставити актуальні
+    // Вставити актуальні камери
     if (cameras.length > 0) {
       await tx.robotCamera.createMany({
         data: cameras.map(c => ({
@@ -65,7 +48,7 @@ export async function setActiveCamera(
   robotId: string,
   cameraId: number,
 ) {
-  return prisma.$transaction(async tx => {
+  return prisma.$transaction(async (tx: any) => {
     // 1️⃣ деактивуємо всі
     await tx.robotCamera.updateMany({
       where: { robotId },

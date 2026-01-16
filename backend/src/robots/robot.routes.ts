@@ -12,19 +12,22 @@ import {
   confirmDisconnect,
   createMission,
   deleteMission,
-  getMission
+  getMission,
+  getRobotMissions,
+  deleteRobotMissions
 } from "./robot.service.js";
 
 
 export async function robotRoutes(app: FastifyInstance) {
 
-  // Raspberry update (open endpoint)
+  // Raspberry update endpoint
+  // TODO: Додати API ключ або інший механізм автентифікації для роботів
   app.post("/api/robots/update", async (req, reply) => {
     try {
       const robot = await updateRobotStatus(req.body as RobotUpdateData);
       return { success: true, robot };
     } catch (err) {
-      reply.code(400).send({ error: "Update failed:"+err });
+      reply.code(400).send({ error: "Update failed: " + (err instanceof Error ? err.message : String(err)) });
     }
   });
 
@@ -61,32 +64,35 @@ export async function robotRoutes(app: FastifyInstance) {
 
   // Update robot (admin only)
 app.patch<{ Params: { id: string } }>("/api/robots/:id", { preHandler: [app.auth] }, async (req, reply) => {
-
-  //if (req.user.role !== "admin") {
-  //  return reply.code(403).send({ error: "Forbidden" });
-  //}
+  // Перевірка ролі адміністратора
+  const user = req.user as { id: number; role: string; email?: string };
+  if (user.role !== "admin") {
+    return reply.code(403).send({ error: "Forbidden: Admin access required" });
+  }
 
   const robotId = req.params.id;
   const data:RobotUpdateData = req.body as RobotUpdateData;
 
   try {
-    //const updated = await prisma.robot.update({where: { robotId },data});
-  
-    const updated = editRobot(robotId,data);
+    const updated = await editRobot(robotId, data);
     return updated;
   } catch (err) {
-    return reply.code(404).send({ error: `err: ${err}`});
+    return reply.code(404).send({ error: `Update failed: ${err}`});
   }
 });
 
 // Delete robot (admin only)
 app.delete<{ Params: { id: string } }>(
   "/api/robots/:id",
+  { preHandler: [app.auth] },
   async (req, reply) => {
-    const { id } = req.params;
+    // Перевірка ролі адміністратора
+    const user = req.user as { id: number; role: string; email?: string };
+    if (user.role !== "admin") {
+      return reply.status(403).send({ error: "Forbidden: Admin access required" });
+    }
 
-    //if (req.user.role !== "admin")
-    //  return reply.status(403).send({ error: "Forbidden" });
+    const { id } = req.params;
 
     await deleteRobot(id);
 
@@ -177,6 +183,18 @@ app.get("/api/missions/:missionId", async (req, reply) => {
   const { missionId } = req.params as { missionId: string };
   const mission = await getMission(missionId);
   reply.send(mission);
+});
+
+app.get("/api/robots/:robotId/missions", async (req, reply) => {
+  const { robotId } = req.params as { robotId: string };
+  const missions = await getRobotMissions(robotId.trim());
+  reply.send(missions);
+});
+
+app.delete("/api/robots/:robotId/missions", async (req, reply) => {
+  const { robotId } = req.params as { robotId: string };
+  await deleteRobotMissions(robotId.trim());
+  reply.send({ ok: true });
 });
 
 

@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { api } from "../api/api";
 import { getStatusColor, getCloudColor } from "../utils/statusColors";
@@ -9,19 +8,33 @@ import VideoViewer, { VideoViewerHandle } from "./VideoViewer";
 
 import { alert } from "./Alert/globalAlert";
 
+interface Robot {
+  robotId: string;
+  name: string | null;
+  status: string | null;
+  battery: number | null;
+  cpu: number | null;
+  memory: number | null;
+  disk: number | null;
+  temperature: number | null;
+  lat: number | null;
+  lng: number | null;
+  updatedAt: string;
+  operatorEmail: string | null;
+  sessionStatus: string | null;
+}
+
 export default function RobotTable() {
-  const [robots, setRobots] = useState([]);
+  const [robots, setRobots] = useState<Robot[]>([]);
   const { token } = useAuth();
-  //const { user } = useAuth();
-  const [editRobot, setEditRobot] = useState(null);
-  const[missionRobot,setSelectFile]= useState(null);
-  const [videoRobot, setVideoRobot] = useState(null);
+  const [editRobot, setEditRobot] = useState<Robot | null>(null);
+  const [missionRobot, setSelectFile] = useState<Robot | null>(null);
+  const [videoRobot, setVideoRobot] = useState<Robot | null>(null);
 
   const videoViewerRef = useRef<VideoViewerHandle | null>(null);
   const videoRobotRef = useRef<any>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  let videorobotId: string = "";
   const role = getRole();
   const userId = getUserId();
 
@@ -35,7 +48,7 @@ export default function RobotTable() {
 
       if (currentVideoRobot) {
         const current = data.find(
-          (r: any) => r.robotId === currentVideoRobot.robotId,
+          (r: Robot) => r.robotId === currentVideoRobot.robotId,
         );
         if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
           // ✅ ВИКЛИК МЕТОДУ В VideoViewer
@@ -66,22 +79,20 @@ export default function RobotTable() {
 }, []);
 
 
-  function openEdit(robot) {
+  function openEdit(robot: Robot) {
     setEditRobot(robot);
   }
 
- function openSelectFile(robot){
+  function openSelectFile(robot: Robot) {
     setSelectFile(robot);
- }
+  }
 
-  function openVideo(robot) {
+  function openVideo(robot: Robot) {
     setVideoRobot(robot);
-    videorobotId = robot.robotId;
   }
 
   function closeVideo() {
     setVideoRobot(null);
-    videorobotId = "";
   }
 
 
@@ -113,27 +124,31 @@ export default function RobotTable() {
     }
   }
 
-   async function requestDisconect(robotId: string) {
-
-    try {
-        const disconnectData = {
-          "robotId": robotId,
-          "reason": "admin",
-          "disconnectedBy": userId.toString(),
-          "force": true
-        };
-        await api.post(`api/robots/robot-sessions/disconnect`, disconnectData);
-    } catch (e) {
-      alert(e);
+  async function requestDisconect(robotId: string) {
+    if (!userId) {
+      alert("User ID not available");
+      return;
     }
 
-   }
+    try {
+      const disconnectData = {
+        robotId: robotId,
+        reason: "admin",
+        disconnectedBy: userId.toString(),
+        force: true
+      };
+      await api.post(`api/robots/robot-sessions/disconnect`, disconnectData);
+    } catch (e) {
+      alert(String(e));
+    }
+  }
 
 
 
 
   // Decode JWT to check role
   function getRole(): string | null {
+    if (!token) return null;
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       return payload.role;
@@ -141,7 +156,9 @@ export default function RobotTable() {
       return null;
     }
   }
+  
   function getUserId(): number | null {
+    if (!token) return null;
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       return payload.id;
@@ -149,6 +166,40 @@ export default function RobotTable() {
       return null;
     }
   }
+
+
+ type Waypoint = {
+  lat: number;
+  lng: number;
+};
+
+async function  parseQgcWaypoints(
+  file: File
+) {
+  const text = await file.text();
+  const lines = text.split(/\r?\n/);
+  const points: Waypoint[] = [];
+
+
+
+  // перший рядок — header
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    const parts = line.split("\t");
+    if (parts.length < 10) continue;
+
+    const lat = Number(parts[8]);
+    const lng = Number(parts[9]);
+
+    if (Number.isNaN(lat) || Number.isNaN(lng)) continue;
+
+    points.push({ lat, lng });
+  }
+
+  return points;
+}
 
 
 
@@ -164,18 +215,46 @@ export default function RobotTable() {
       )}
 
       {missionRobot && (
-            <FileSelectModal
-            robot={missionRobot}
+        <FileSelectModal
+          onClose={() => setSelectFile(null)}
+          onConfirm={async (file) => {
+            try {
+              // Парсимо файл та отримуємо точки
+              const points = await parseQgcWaypoints(file);
+              
+              if (points.length === 0) {
+                alert("Файл не містить валідних точок");
+                return;
+              }
 
-            onClose={() => setSelectFile(null)}
-            
-            onConfirm={(file) => {
-            console.log("Selected file:", file);
-        }}
-      />
+              const robotId = missionRobot.robotId;
+
+              // Видаляємо старі місії робота
+              try {
+                await api.delete(`/api/robots/${robotId.trim()}/missions`);
+              } catch (err) {
+                // Ігноруємо помилку, якщо місій немає
+                console.log("No existing missions to delete");
+              }
+
+              // Створюємо нову місію
+              await api.post(`/api/robots/${robotId.trim()}/missions`, {
+                name: `Mission ${new Date().toLocaleString()}`,
+                points: points
+              });
+
+              alert("Місію успішно створено");
+              setSelectFile(null);
+              load(); // Оновлюємо список роботів
+            } catch (err) {
+              console.error("Failed to create mission:", err);
+              alert("Помилка при створенні місії: " + (err instanceof Error ? err.message : String(err)));
+            }
+          }}
+        />
       )}
 
-      {videoRobot && (
+      {videoRobot && userId && (
         <VideoViewer ref={videoViewerRef} robot={videoRobot} userId={userId} onClose={closeVideo} />
       )}
 
@@ -214,20 +293,20 @@ export default function RobotTable() {
                 <td className={`py-2 px-4 ${cloudColor}`}>
                   ● {isOffline ? "Offline" : "Online"}
                 </td>
-                <td className="py-2 px-4">{r.Battery}</td>
+                <td className="py-2 px-4">{r.battery ?? "-"}%</td>
 
-                <td className={`py-2 px-4 ${getStatusColor(r.cpu)}`}>
+                <td className={`py-2 px-4 ${getStatusColor(r.cpu ?? 0)}`}>
                   {r.cpu ?? "-"}%
                 </td>
 
-                <td className={`py-2 px-4 ${getStatusColor(r.memory)}`}>
+                <td className={`py-2 px-4 ${getStatusColor(r.memory ?? 0)}`}>
                   {r.memory ?? "-"}%
                 </td>
 
-                <td className={`py-2 px-4 ${getStatusColor(r.disk)}`}>
+                <td className={`py-2 px-4 ${getStatusColor(r.disk ?? 0)}`}>
                   {r.disk ?? "-"}%
                 </td>
-                <td className={`py-2 px-4 ${getStatusColor(r.temperature)}`}>
+                <td className={`py-2 px-4 ${getStatusColor(r.temperature ?? 0)}`}>
                   {r.temperature ?? "-"}°
                 </td>
 

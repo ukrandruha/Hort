@@ -1,18 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../db/prisma.js";
 import {RobotUpdateData} from "../types/robot.types.js";
 import { RobotSessionStatus } from '@prisma/client';
-//import { RobotUpdateData } from "./robot.types";
+import { validateRobotId, validateCoordinates } from "../utils/validation.js";
 
 
-const prisma = new PrismaClient();
-
-
-// Get all robots
-// export function getAllRobots() {
-//   return prisma.robot.findMany({
-//     orderBy: { updatedAt: "desc" }
-//   });
-// }
 export async function getAllRobots() {
   const robots = await prisma.robot.findMany({
     orderBy: { updatedAt: 'desc' },
@@ -36,7 +27,7 @@ export async function getAllRobots() {
     },
   });
 
-  return robots.map(robot => {
+  return robots.map((robot: any) => {
     const session = robot.sessions[0];
 
     return {
@@ -55,6 +46,13 @@ export function getRobot(robotId: string) {
 }
 
 export async function updateRobotStatus(data:RobotUpdateData) {
+  validateRobotId(data.robotId);
+  
+  // Валідація координат якщо вони є
+  if (data.position) {
+    validateCoordinates(data.position.lat, data.position.lng);
+  }
+  
   return prisma.robot.upsert({
     where: { robotId: data.robotId },
     update: { 
@@ -93,14 +91,6 @@ export async function editRobot(id: string, data:RobotUpdateData) {
   });
 }
 
-//  export async function updateStatusWebRtc(id: string,userconnect:number) {
-//    return prisma.robot.update({
-//     where: { robotId: id },
-//      data: { 
-//       webrtclient: userconnect,
-//      },
-//    });
-// }
 
 
 
@@ -216,6 +206,23 @@ export async function getMission(missionId: string)
   });
 }
 
+export async function getRobotMissions(robotId: string) {
+  return await prisma.mission.findMany({
+    where: { robotId },
+    include: {
+      points: {
+        orderBy: { order: "asc" },
+      },
+    },
+  });
+}
+
+export async function deleteRobotMissions(robotId: string) {
+  return await prisma.mission.deleteMany({
+    where: { robotId },
+  });
+}
+
 export async function deleteMission(missionId: string)
 {
   return await prisma.mission.delete({
@@ -228,7 +235,7 @@ export async function deleteMission(missionId: string)
   name: string,
   points: { lat: number; lng: number }[],
 ) {
-  return prisma.$transaction(async tx => {
+  return prisma.$transaction(async (tx: any) => {
     const mission = await tx.mission.create({
       data: {
         robotId,

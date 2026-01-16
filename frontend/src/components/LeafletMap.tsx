@@ -93,10 +93,10 @@ function MovingDrone({ position }: { position: [number, number] }) {
 /* ================= MAIN MAP ================= */
 
 export default function LeafletMap({
-  missionId,
+  robotId,
   fullscreen,
 }: {
-  missionId: number;
+  robotId: number;
   fullscreen: boolean;
 }) {
   const [pos, setPos] = useState<[number, number]>([
@@ -116,13 +116,13 @@ export default function LeafletMap({
   /* ===== LOAD MISSION ===== */
   useEffect(() => {
     async function loadMission() {
-      const { data } = await api.get(`/api/missions/${missionId}`);
-      const sorted = [...data.points].sort((a, b) => a.order - b.order);
+      const { data } = await api.get(`api/robots/${robotId}/missions`);
+      const sorted = [...data[0].points].sort((a, b) => a.order - b.order);
       setPoints(sorted);
     }
 
     loadMission();
-  }, [missionId]);
+  }, [robotId]);
 
   const startPoint = points.length
     ? ([points[0].lat, points[0].lng] as [number, number])

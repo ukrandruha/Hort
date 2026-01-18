@@ -1,4 +1,12 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  type Dispatch,
+  type SetStateAction,
+  type MutableRefObject,
+} from "react";
 import {
   MapContainer as LeafletMapBase,
   TileLayer,
@@ -70,6 +78,35 @@ function MapFollower({ target }: { target: [number, number] }) {
   return null;
 }
 
+function StartLineManager({
+  pos,
+  startPoint,
+  hasReachedStartRef,
+  setShowStartLine,
+}: {
+  pos: [number, number];
+  startPoint: [number, number] | null;
+  hasReachedStartRef: MutableRefObject<boolean>;
+  setShowStartLine: Dispatch<SetStateAction<boolean>>;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!startPoint) return;
+    if (hasReachedStartRef.current) return;
+
+    const distance = map.distance(pos, startPoint);
+    if (distance <= 20) {
+      hasReachedStartRef.current = true;
+      setShowStartLine(false);
+      return;
+    }
+    setShowStartLine(true);
+  }, [map, pos, startPoint, hasReachedStartRef, setShowStartLine]);
+
+  return null;
+}
+
 function MovingDrone({ position }: { position: [number, number] }) {
   //const markerRef = useRef<L.Marker | null>(null);
     const markerRef = useRef(null);
@@ -107,11 +144,16 @@ export default function LeafletMap({
   const [points, setPoints] = useState<
     { id: number; lat: number; lng: number; order: number }[]
   >([]);
+  const [startPoint, setStartPoint] = useState<[number, number] | null>(null);
 
   const [showStartLine, setShowStartLine] = useState(true);
+  const hasReachedStartRef = useRef(false);
  
-
-  const mapRef = useRef<L.Map | null>(null);
+  useEffect(() => {
+    setStartPoint(null);
+    hasReachedStartRef.current = false;
+    setShowStartLine(true);
+  }, [robotId]);
 
   /* ===== LOAD MISSION ===== */
   useEffect(() => {
@@ -119,22 +161,20 @@ export default function LeafletMap({
       const { data } = await api.get(`api/robots/${robotId}/missions`);
       const sorted = [...data[0].points].sort((a, b) => a.order - b.order);
       setPoints(sorted);
+      if (sorted.length > 0) {
+        setStartPoint((prev) =>
+          prev ?? ([sorted[0].lat, sorted[0].lng] as [number, number])
+        );
+      }
     }
 
     loadMission();
   }, [robotId]);
 
-  const startPoint = points.length
-    ? ([points[0].lat, points[0].lng] as [number, number])
-    : null;
-
-  /* ===== DISTANCE TO START ===== */
   useEffect(() => {
-    if (!mapRef.current || !startPoint) return;
-
-    const distance = mapRef.current.distance(pos, startPoint);
-    setShowStartLine(distance > 10); // meters
-  }, [pos, startPoint]);
+    hasReachedStartRef.current = false;
+    setShowStartLine(true);
+  }, [startPoint]);
 
 
 
@@ -146,11 +186,10 @@ export default function LeafletMap({
 
  // Симуляція руху дрона 
  const [activeIndex, setActiveIndex] = useState(0);
- //const [mapReady, setMapReady] = useState(false);
  
  useEffect(() => { const interval = setInterval(() => 
  { 
-  //if (!points.length || !mapReady || !mapRef.current) return;
+  //if (!points.length) return;
   if(points.length > 0)
   {
     if (activeIndex >= points.length) 
@@ -177,12 +216,6 @@ export default function LeafletMap({
       zoom={13}
       scrollWheelZoom={fullscreen}
       style={{ width: "100%", height: "100%" }}
-      
-            whenCreated={(map) => {
-        mapRef.current = map;
-        setMapReady(true);
-      }}
-
     >
       <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
@@ -190,6 +223,12 @@ export default function LeafletMap({
       <MovingDrone position={pos}  />
 
        <MapFollower target={pos} />
+       <StartLineManager
+        pos={pos}
+        startPoint={startPoint}
+        hasReachedStartRef={hasReachedStartRef}
+        setShowStartLine={setShowStartLine}
+      />
 
       {/* MAIN ROUTE */}
       {routeLatLngs.length > 1 && (
@@ -208,7 +247,7 @@ export default function LeafletMap({
         <Polyline
           positions={[pos, startPoint]}
           pathOptions={{
-            color: "#d8c00eff",
+            color: "rgb(216, 28, 14)",
             weight: 3,
             dashArray: "6 6",
           }}

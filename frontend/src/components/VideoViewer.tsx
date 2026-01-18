@@ -121,7 +121,7 @@ useEffect(() => {
 
 
       gp.current = new GamepadReader({
-        axisMap: { ch1: 0, ch2: 1, ch3: 2, ch4: 3, ch5: 4, ch6: 5, ch7: 6 }, // підлаштуй порядок осей під свій TX12
+        axisMap: { ch1: 0, ch2: 1, ch3: 2, ch4: 3, ch5: 4, ch6: 5, ch7: 6, ch8: 7 }, // підлаштуй порядок осей під свій TX12
         deadzone: 0.03,
         smooth: 0.25,
         updateIntervalMs: 100,

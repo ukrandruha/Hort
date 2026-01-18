@@ -223,10 +223,10 @@ export class WebRTCClient {
     pack7(state: GamepadState): Uint8Array {
         const values = [
             state.ch1, state.ch2, state.ch3,
-            state.ch4, state.ch5, state.ch6, state.ch7,
+            state.ch4, state.ch5, state.ch6, state.ch7,state.ch8,
         ];
 
-        const buf = new Uint8Array(9);
+        const buf = new Uint8Array(10);
         let acc = 0;
         let accBits = 0;
         let i = 0;
@@ -252,7 +252,7 @@ export class WebRTCClient {
             buf[i++] = acc & 0xFF;
         }
 
-        return buf; // Uint8Array довжиною 9 байтів
+        return buf; // Uint8Array довжиною 10 байтів
     }
 
     async sendDataArray(msg: Uint8Array) {

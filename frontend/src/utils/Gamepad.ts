@@ -3,7 +3,7 @@
    Gamepad API integration for RadioMaster TX12 (HID / Liftoff-style)
    ========================================================================== */
 
-export type AxisMap = { ch1: number; ch2: number;ch3: number;ch4: number ;ch5: number; ch6: number ;ch7: number };
+export type AxisMap = { ch1: number; ch2: number;ch3: number;ch4: number ;ch5: number; ch6: number ;ch7: number; ch8: number  };
 
 export interface GamepadReaderOptions {
   axisMap?: AxisMap;
@@ -20,6 +20,7 @@ export interface GamepadState {
   ch5: number;
   ch6: number;
   ch7: number;
+  ch8: number;
 
 }
 
@@ -37,12 +38,12 @@ export class GamepadReader {
   private index: number = -1;
 
   //private prev: Record<keyof AxisMap, number> = { thr: 0, roll: 0, pitch: 0, yaw: 0 ,armAxis:0};
-  private prev: Record<keyof AxisMap, number> = {  ch1:0,ch2:0,ch3:0,ch4:0, ch5:0,ch6:0,ch7:0};
+  private prev: Record<keyof AxisMap, number> = {  ch1:0,ch2:0,ch3:0,ch4:0, ch5:0,ch6:0,ch7:0,ch8:0};
 
   onUpdate: ((s: GamepadState) => void) | null = null;
 
   constructor(opts: GamepadReaderOptions = {}) {
-    this.axisMap = opts.axisMap ?? {  ch1:0,ch2:0,ch3:0,ch4:0, ch5:0,ch6:0,ch7:0};
+    this.axisMap = opts.axisMap ?? {  ch1:0,ch2:0,ch3:0,ch4:0, ch5:0,ch6:0,ch7:0,ch8:0};
     this.deadzone = clamp01(opts.deadzone ?? 0.05);
     this.smooth = clamp01(opts.smooth ?? 0.25);
     this.updateIntervalMs = opts.updateIntervalMs ?? 16;
@@ -78,6 +79,7 @@ const raw = {
   ch5: Number(axes[this.axisMap.ch5].toFixed(3) ?? 0),
   ch6: Number(axes[this.axisMap.ch6].toFixed(3) ?? 0),
   ch7: Number(axes[this.axisMap.ch7].toFixed(3) ?? 0),
+  ch8: Number(axes[this.axisMap.ch8].toFixed(3) ?? 0),
 };
 
         const dead = (x: number) => {
@@ -93,6 +95,7 @@ const raw = {
            ch5:  dead(raw.ch5),
            ch6:  dead(raw.ch6),
            ch7:  dead(raw.ch7),
+           ch8:  dead(raw.ch8),
 
          };
         this.prev = filtered;
@@ -111,7 +114,7 @@ const raw = {
       } else {
         if (this.onUpdate) {
           this.onUpdate({
-             ch1:0,ch2:0,ch3:0,ch4:0, ch5:0,ch6:0,ch7:0,
+             ch1:0,ch2:0,ch3:0,ch4:0, ch5:0,ch6:0,ch7:0,ch8:0,
           });
         }
       }

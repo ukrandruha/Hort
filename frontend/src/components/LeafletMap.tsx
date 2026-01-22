@@ -184,30 +184,30 @@ export default function LeafletMap({
     [points]
   );
 
- // Симуляція руху дрона 
- const [activeIndex, setActiveIndex] = useState(0);
+//  // Симуляція руху дрона 
+//  const [activeIndex, setActiveIndex] = useState(0);
  
- useEffect(() => { const interval = setInterval(() => 
- { 
-  //if (!points.length) return;
-  if(points.length > 0)
-  {
-    if (activeIndex >= points.length) 
-    {
-      //setPos(pos); 
-      setActiveIndex(0);
-    }else{
-      const target = points[activeIndex];
-      setPos([target.lat, target.lng]);
+//  useEffect(() => { const interval = setInterval(() => 
+//  { 
+//   //if (!points.length) return;
+//   if(points.length > 0)
+//   {
+//     if (activeIndex >= points.length) 
+//     {
+//       //setPos(pos); 
+//       setActiveIndex(0);
+//     }else{
+//       const target = points[activeIndex];
+//       setPos([target.lat, target.lng]);
 
 
-      setActiveIndex(activeIndex + 1);
-    }
-  }
+//       setActiveIndex(activeIndex + 1);
+//     }
+//   }
 
-}, 1000); 
-  return () => clearInterval(interval); },
-   [activeIndex, points]); 
+// }, 1000); 
+//   return () => clearInterval(interval); },
+//    [activeIndex, points]); 
 
 
   return (

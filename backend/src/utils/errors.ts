@@ -12,7 +12,7 @@ export class AppError extends Error {
 }
 
 export function errorHandler(
-  error: Error | AppError,
+  error: Error | AppError | any,
   request: FastifyRequest,
   reply: FastifyReply
 ) {
@@ -21,6 +21,28 @@ export function errorHandler(
     request.log.error(error);
   } else {
     console.error(error);
+  }
+
+  // Обробка JWT помилок
+  if (error?.code === "FST_JWT_NO_AUTHORIZATION_IN_HEADER") {
+    return reply.status(401).send({
+      error: "Missing or invalid authorization header",
+      code: "UNAUTHORIZED",
+    });
+  }
+
+  if (error?.code === "FST_JWT_AUTHORIZATION_TOKEN_EXPIRED") {
+    return reply.status(401).send({
+      error: "Token has expired",
+      code: "TOKEN_EXPIRED",
+    });
+  }
+
+  if (error?.code === "FST_JWT_BAD_REQUEST") {
+    return reply.status(401).send({
+      error: "Invalid token",
+      code: "INVALID_TOKEN",
+    });
   }
 
   // Якщо це наша кастомна помилка
@@ -32,7 +54,7 @@ export function errorHandler(
   }
 
   // Неочікувані помилки
-  const statusCode = 500;
+  const statusCode = error?.statusCode || 500;
   const message =
     process.env.NODE_ENV === "production"
       ? "Internal server error"

@@ -29,7 +29,7 @@ const opts: RouteShorthandOptions = {
   // POST /api/auth/login
   // --------------------------
   fastify.post("/api/auth/login", async (req, reply) => {
-    const { email, password } = req.body as {
+    const { email, password } = (req.body as {
       email: string;
       password: string;
     };

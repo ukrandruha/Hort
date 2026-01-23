@@ -16,12 +16,12 @@ app.setErrorHandler(errorHandler);
 
 const start = async () => {
   try {
-    // CORS з env змінною
-    const corsOriginEnv = process.env.CORS_ORIGIN;
-    const corsOrigin = corsOriginEnv 
-      ? corsOriginEnv.split(",").map(origin => origin.trim())
-      : ["http://localhost:5173"];
-    await app.register(cors, { origin: corsOrigin });
+    // Обовʼязково реєструємо плагіни для парсування JSON та CORS
+    await app.register(cors, { 
+      origin: process.env.CORS_ORIGIN 
+        ? process.env.CORS_ORIGIN.split(",").map(origin => origin.trim())
+        : ["http://localhost:5173"]
+    });
     
     // JWT secret з env змінної
     const jwtSecret = process.env.JWT_SECRET;

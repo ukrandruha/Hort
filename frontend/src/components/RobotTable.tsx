@@ -327,7 +327,7 @@ async function  parseQgcWaypoints(
     Open
   </button>
 
-  {role === "admin" && (
+  {(
     <>
       <button
         onClick={(e) => {

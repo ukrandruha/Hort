@@ -50,13 +50,18 @@ model Robot {
 }
 
 model Tc_user_device {
-  userid   Int
-  deviceid String
+  userid    Int
+  deviceid  String
+  groupName String? @default("Default")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user   User  @relation(fields: [userid], references: [id])
-  robot  Robot @relation(fields: [deviceid], references: [robotId])
+  user   User  @relation(fields: [userid], references: [id], onDelete: Cascade)
+  robot  Robot @relation(fields: [deviceid], references: [robotId], onDelete: Cascade)
 
   @@id([userid, deviceid])
+  @@index([userid])
+  @@index([deviceid])
 }
 
 // ROBOT SESSIONS

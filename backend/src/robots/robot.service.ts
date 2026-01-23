@@ -4,8 +4,16 @@ import { RobotSessionStatus } from '@prisma/client';
 import { validateRobotId, validateCoordinates } from "../utils/validation.js";
 
 
-export async function getAllRobots() {
+export async function getAllRobots(userId?: number) {
+  // Якщо переданий userId, показувати тільки його роботи
   const robots = await prisma.robot.findMany({
+    where: userId ? {
+      users: {
+        some: {
+          userid: userId,
+        },
+      },
+    } : undefined,
     orderBy: { updatedAt: 'desc' },
     include: {
       sessions: {
@@ -24,6 +32,11 @@ export async function getAllRobots() {
           },
         },
       },
+      users: {
+        select: {
+          userid: true,
+        },
+      },
     },
   });
 
@@ -34,15 +47,34 @@ export async function getAllRobots() {
       ...robot, // ✅ всі поля Robot
       operatorEmail: session?.operator.email ?? null,
       sessionStatus: session?.status ?? null,
+      groups: [],
       sessions: undefined, // опціонально
+      users: undefined, // опціонально
     };
   });
 }
 
 
-// Get robot by ID
-export function getRobot(robotId: string) {
-  return prisma.robot.findUnique({ where: { robotId } });
+// Get robot by ID з перевіркою доступу користувача
+export async function getRobot(robotId: string, userId?: number) {
+  const robot = await prisma.robot.findUnique({
+    where: { robotId },
+    include: {
+      users: {
+        where: userId ? { userid: userId } : undefined,
+        select: {
+          userid: true,
+        },
+      },
+    },
+  });
+
+  // Якщо переданий userId і користувач не має доступу - повернути null
+  if (userId && (!robot || robot.users.length === 0)) {
+    return null;
+  }
+
+  return robot;
 }
 
 export async function updateRobotStatus(data:RobotUpdateData) {

@@ -44,18 +44,25 @@ export async function robotRoutes(app: FastifyInstance) {
   //   }
   // });
 
-  // List robots (JWT)
-  app.get("/api/robots/", { preHandler: [app.auth] }, async () => {
-    return getAllRobots();
+  // List robots (JWT) - показувати тільки роботи користувача
+  app.get("/api/robots/", { preHandler: [app.auth] }, async (req) => {
+    const user = req.user as { id: number; role: string; email?: string };
+    // Адміни бачать всіх роботів, інші - тільки своїх
+    return getAllRobots(user.role === "admin" ? undefined : user.id);
   });
 
-  // Single robot (JWT) 
+  // Single robot (JWT) - з перевіркою доступу
   app.get<{ Params: { id: string } }>("/api/robots/:id", { preHandler: [app.auth] }, async (req, reply) => {
     const id = req.params.id;
-    const robot = await getRobot(id);
+    const user = req.user as { id: number; role: string; email?: string };
+    
+    // Адміни мають доступ до всіх роботів
+    const robot = user.role === "admin" 
+      ? await getRobot(id)
+      : await getRobot(id, user.id);
 
     if (!robot) {
-      return reply.code(404).send({ error: "Robot not found" });
+      return reply.code(404).send({ error: "Robot not found or access denied" });
     }
 
     return robot;

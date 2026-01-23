@@ -32,7 +32,7 @@ const opts: RouteShorthandOptions = {
     const { email, password } = (req.body as {
       email: string;
       password: string;
-    };
+    });
 
     if (!email || !password) {
       throw new AppError(400, "Email and password required", "MISSING_CREDENTIALS");

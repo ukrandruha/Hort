@@ -29,29 +29,24 @@ const opts: RouteShorthandOptions = {
   // POST /api/auth/login
   // --------------------------
   fastify.post("/api/auth/login", async (req, reply) => {
-    const { email, password } = (req.body as {
-      email: string;
-      password: string;
-    });
+    const body = req.body as { email?: string; password?: string };
+    const email = body?.email?.trim();
+    const password = body?.password;
 
     if (!email || !password) {
       throw new AppError(400, "Email and password required", "MISSING_CREDENTIALS");
     }
 
-    try {
-      validateEmail(email);
-    } catch (error) {
-      throw error;
-    }
+    validateEmail(email);
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return reply.status(401).send({ error: "Invalid email" });
+      return reply.status(401).send({ error: "Invalid email or password" });
     }
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      return reply.status(401).send({ error: "Invalid password" });
+      return reply.status(401).send({ error: "Invalid email or password" });
     }
 
     const token = fastify.jwt.sign({ id: user.id, role: user.role });

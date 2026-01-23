@@ -2,8 +2,14 @@ import { AppError } from "./errors.js";
 
 // Валідація email
 export function validateEmail(email: string): void {
+  // Простіша й більш толерантна регулярка для email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  
+  if (!email || typeof email !== 'string' || email.trim().length === 0) {
+    throw new AppError(400, "Email is required", "INVALID_EMAIL");
+  }
+  
+  if (!emailRegex.test(email.trim())) {
     throw new AppError(400, "Invalid email format", "INVALID_EMAIL");
   }
 }

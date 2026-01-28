@@ -4,6 +4,7 @@ import jwt from "@fastify/jwt";
 
 import { robotRoutes } from "./robots/robot.routes.js";
 import {robotCameraRoutes} from "./robots/robotCamera.routes.js";
+import { adminRoutes } from "./admin/admin.routes.js";
 import { authRoutes } from "./auth/auth.routes.js";
 import { errorHandler } from "./utils/errors.js";
 
@@ -40,6 +41,7 @@ const start = async () => {
     await app.register(authRoutes);
     await app.register(robotRoutes);
     await app.register(robotCameraRoutes);
+    await app.register(adminRoutes);
 
     const port = Number(process.env.PORT) || 3001;
     const host = process.env.HOST || "0.0.0.0";

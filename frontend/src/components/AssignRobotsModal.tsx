@@ -14,17 +14,27 @@ type Robot = {
 export default function AssignRobotsModal({ onClose }: Props) {
   const [robots, setRobots] = useState<Robot[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
-  const [userId, setUserId] = useState<string>("");
+  const [users, setUsers] = useState<{ id: number; email: string }[]>([]);
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.get("/api/robots");
+        const res = await api.get("/api/robots/");
         setRobots(res.data || []);
       } catch (e) {
         console.error(e);
         alert("Failed to load robots");
+      }
+    })();
+    (async () => {
+      try {
+        const res = await api.get("/api/admin/users");
+        setUsers(res.data || []);
+      } catch (e) {
+        console.error(e);
+        // non-fatal
       }
     })();
   }, []);
@@ -34,8 +44,8 @@ export default function AssignRobotsModal({ onClose }: Props) {
   }
 
   async function submit() {
-    if (!userId) {
-      alert("Enter user id");
+    if (!selectedUser) {
+      alert("Select a user");
       return;
     }
 
@@ -48,14 +58,15 @@ export default function AssignRobotsModal({ onClose }: Props) {
     setLoading(true);
     try {
       await api.post("/api/admin/assign-robots", {
-        userId: Number(userId),
+        userId: Number(selectedUser),
         devices,
       });
       alert("Assigned successfully");
       onClose();
-    } catch (e) {
-      console.error(e);
-      alert("Assign failed");
+    } catch (err: any) {
+      console.error("Assign robots error:", err);
+      const serverMsg = err?.response?.data?.error || err?.response?.data || err?.message;
+      alert("Assign failed: " + String(serverMsg));
     } finally {
       setLoading(false);
     }
@@ -69,13 +80,35 @@ export default function AssignRobotsModal({ onClose }: Props) {
         <h2 className="text-lg font-semibold mb-4">Assign Robots to User</h2>
 
         <div className="mb-4">
-          <label className="block text-sm text-gray-300 mb-1">User ID</label>
-          <input
+          <label className="block text-sm text-gray-300 mb-1">User</label>
+          <select
             className="w-full px-3 py-2 bg-gray-800 rounded border border-gray-700"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-            placeholder="Enter numeric user id"
-          />
+            value={selectedUser ?? ""}
+            onChange={async (e) => {
+              const v = e.target.value ? Number(e.target.value) : null;
+              setSelectedUser(v);
+              setSelected({});
+              if (v) {
+                try {
+                  const res = await api.get(`/api/admin/user-devices/${v}`);
+                  const assigned: string[] = res.data || [];
+                  const map: Record<string, boolean> = {};
+                  assigned.forEach((d) => (map[d] = true));
+                  setSelected(map);
+                } catch (err) {
+                  console.error(err);
+                  alert("Failed to load user's devices");
+                }
+              }
+            }}
+          >
+            <option value="">-- Select user --</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.email} ({u.id})
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="mb-4 max-h-64 overflow-y-auto border border-gray-700 rounded p-2">

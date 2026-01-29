@@ -60,4 +60,47 @@ export async function adminRoutes(fastify: FastifyInstance) {
       }
     },
   );
+
+  // List users (id + email)
+  fastify.get("/api/admin/users", async (req: any, reply) => {
+    try {
+      await req.jwtVerify();
+      const user = req.user as { id: number; role: string };
+      if (!user || user.role !== "admin") {
+        return reply.status(403).send({ error: "Forbidden" });
+      }
+
+      const users = await prisma.user.findMany({ select: { id: true, email: true } });
+      return reply.send(users);
+    } catch (err: any) {
+      console.error(err);
+      return reply.status(500).send({ error: "Server error" });
+    }
+  });
+
+  // Get devices assigned to a user
+  fastify.get<{ Params: { id: number } }>("/api/admin/user-devices/:id", async (req: any, reply) => {
+    try {
+      await req.jwtVerify();
+      const authUser = req.user as { id: number; role: string };
+      if (!authUser || authUser.role !== "admin") {
+        return reply.status(403).send({ error: "Forbidden" });
+      }
+
+      const userId = Number(req.params.id);
+      if (!Number.isInteger(userId) || userId <= 0) {
+        return reply.status(400).send({ error: "Invalid user id" });
+      }
+
+      const devices = await prisma.tc_user_device.findMany({
+        where: { userid: userId },
+        select: { deviceid: true },
+      });
+
+      return reply.send(devices.map((d: any) => d.deviceid));
+    } catch (err: any) {
+      console.error(err);
+      return reply.status(500).send({ error: "Server error" });
+    }
+  });
 }

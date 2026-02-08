@@ -28,6 +28,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
     const [connected, setConnected] = useState(false);
     const [videoRecord, setvideoRecord] = useState(false);
+    const [overlayData, setOverlayData] = useState<any>(null);
+    const [recordStart, setRecordStart] = useState<number | null>(null);
+    const [elapsed, setElapsed] = useState<string>("00:00");
+    const intervalRef = useRef<number | null>(null);
 
 
 
@@ -44,6 +48,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       clientRef.current = client;
 
       client.setVideoElement(videoRef.current);
+      // receive parsed data from robot and show in header
+      client.onData = (d: any) => {
+        setOverlayData(d);
+      };
       await client.start();
 
       setConnected(true);
@@ -144,6 +152,15 @@ useEffect(() => {
 
     }
 
+    function formatElapsed(ms: number) {
+      const total = Math.floor(ms / 1000);
+      const hrs = Math.floor(total / 3600);
+      const mins = Math.floor((total % 3600) / 60);
+      const secs = total % 60;
+      if (hrs > 0) return `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+    }
+
 
     useImperativeHandle(
       ref,
@@ -181,6 +198,14 @@ function startRecording()
     if (clientRef.current) {
       setvideoRecord(true);
       clientRef.current.startRecording();
+      const now = Date.now();
+      setRecordStart(now);
+      setElapsed(formatElapsed(0));
+      if (intervalRef.current) window.clearInterval(intervalRef.current as any);
+      intervalRef.current = window.setInterval(() => {
+        const diff = Date.now() - now;
+        setElapsed(formatElapsed(diff));
+      }, 500) as unknown as number;
     }
 }
 
@@ -189,6 +214,12 @@ async function stopRecording()
   if (clientRef.current) {
           await clientRef.current.stopRecording();
         setvideoRecord(false);
+         if (intervalRef.current) {
+           window.clearInterval(intervalRef.current as any);
+           intervalRef.current = null;
+         }
+         setRecordStart(null);
+         setElapsed("00:00");
   }
         
 }
@@ -199,11 +230,38 @@ async function stopRecording()
       <div className="fixed inset-0 bg-black bg-opacity-90 flex flex-col z-50">
 
         {/* HEADER */}
-        <div className="h-14 bg-gray-900 border-b border-gray-700 flex items-center justify-between px-6">
-          <div className="text-xl font-semibold text-gray-200">
-            Camera View — {robot.name} ({robot.robotId})
+        <div className="h-14 bg-gray-900 border-b border-gray-700 flex items-center justify-between px-6 relative">
+          <div className="flex items-center gap-4">
+            <div className="text-xl font-semibold text-gray-200">{robot.name}</div>
+            <div className="h-6 w-px bg-gray-700" />
+            <div className="text-sm text-gray-300">
+              {videoRecord ? (
+                <span className="font-mono text-sm">🔴 {elapsed}</span>
+              ) : (
+                <span className="text-gray-500">&nbsp;</span>
+              )}
+            </div>
           </div>
 
+          {/* center overlay */}
+          <div className="absolute left-0 right-0 top-0 h-14 flex items-center justify-center pointer-events-none">
+            <div className="text-gray-300 text-sm text-center whitespace-pre">
+              {overlayData ? (
+                overlayData.raw ? String(overlayData.raw) : (
+                  overlayData.v !== undefined ? [
+                    `v: ${overlayData.v}`,
+                    `i: ${overlayData.i}`,
+                    `p: ${overlayData.p}`,
+                    `wh: ${overlayData.wh}`,
+                  ].join("  ") : JSON.stringify(overlayData)
+                )
+              ) : null}
+            </div>
+          </div>
+
+          {/* vertical separators near center to isolate overlay */}
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-160px, -50%)' }} className="h-8 w-px bg-gray-700" />
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(160px, -50%)' }} className="h-8 w-px bg-gray-700" />
 
           <button
             onClick={() => {

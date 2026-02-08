@@ -1,5 +1,7 @@
 import type { AyameAddStreamEvent, Connection } from "@open-ayame/ayame-web-sdk";
 import { createConnection, defaultOptions } from "@open-ayame/ayame-web-sdk";
+import { signal } from "@preact/signals";
+
 import type { GamepadState } from "../utils/Gamepad.js";
 import { api } from "../api/api";
 
@@ -7,6 +9,9 @@ import { api } from "../api/api";
 
 
 export class WebRTCClient {
+    // Optional callback invoked when structured data arrives from robot
+    public onData: ((data: any) => void) | null = null;
+
     private videoElement: HTMLVideoElement | null = null;
 
     private signalingUrl = "wss://andrii.razoom-print.com/signaling";
@@ -25,6 +30,7 @@ export class WebRTCClient {
     private mediaRecorder: MediaRecorder | null = null;
     private recordedChunks: BlobPart[] = [];
     private recordingStartTime: Date | null = null;
+    
 
     // ================= OPTIONS ======================
     private options = (() => {
@@ -107,7 +113,27 @@ export class WebRTCClient {
                 };
 
                 this.dataChannel.onmessage = (msg) => {
-                    console.log("[A] Message:", msg.data);
+                    const text = new TextDecoder("utf-8").decode(msg.data);
+                    console.log("[A] Message:", text);
+                    // Try to parse JSON-like payloads and call onData callback
+                    try {
+                        let parsed: any = null;
+                        try {
+                            parsed = JSON.parse(text);
+                        } catch (e) {
+                            // Fallback: replace single quotes with double quotes for python-style dicts
+                            const maybeJson = text.replace(/\'/g, '"');
+                            parsed = JSON.parse(maybeJson);
+                        }
+
+                        if (parsed && this.onData) {
+                            this.onData(parsed);
+                        }
+                    } catch (e) {
+                        if (this.onData) {
+                            this.onData({ raw: text });
+                        }
+                    }
                 };
             }
         });

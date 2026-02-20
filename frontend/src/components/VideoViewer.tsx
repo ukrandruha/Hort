@@ -139,7 +139,6 @@ useEffect(() => {
       // отримуємо дані кожен кадр (~60 fps)
       gp.current.onUpdate = (s) => {
 
-        // sendDataArray(pack7(s));
         //console.log(s);
         clientRef.current?.SetDataGamePad(s);
 

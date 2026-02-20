@@ -21,6 +21,10 @@ export interface GamepadState {
   ch6: number;
   ch7: number;
   ch8: number;
+  b1: number;
+  b2: number;
+  b3: number;
+  b4: number;
 
 }
 
@@ -71,6 +75,8 @@ export class GamepadReader {
 
 const axes: number[] = Array.from(gp.axes ?? []) as number[];
 
+const buttons: number[] = Array.from(gp.buttons ?? []) as any;
+
 const raw = {
   ch1: Number(axes[this.axisMap.ch1].toFixed(3) ?? 0),
   ch2: Number(axes[this.axisMap.ch2].toFixed(3) ?? 0),
@@ -80,6 +86,10 @@ const raw = {
   ch6: Number(axes[this.axisMap.ch6].toFixed(3) ?? 0),
   ch7: Number(axes[this.axisMap.ch7].toFixed(3) ?? 0),
   ch8: Number(axes[this.axisMap.ch8].toFixed(3) ?? 0),
+  b1: Number((buttons[0]?.value ?? 0).toFixed(3)),
+  b2: Number((buttons[1]?.value ?? 0).toFixed(3)),
+  b3: Number((buttons[2]?.value ?? 0).toFixed(3)),
+  b4: Number((buttons[3]?.value ?? 0).toFixed(3)),
 };
 
         const dead = (x: number) => {
@@ -96,6 +106,10 @@ const raw = {
            ch6:  dead(raw.ch6),
            ch7:  dead(raw.ch7),
            ch8:  dead(raw.ch8),
+           b1: raw.b1,
+           b2: raw.b2,
+           b3: raw.b3,
+           b4: raw.b4,
 
          };
         this.prev = filtered;
@@ -115,6 +129,7 @@ const raw = {
         if (this.onUpdate) {
           this.onUpdate({
              ch1:0,ch2:0,ch3:0,ch4:0, ch5:0,ch6:0,ch7:0,ch8:0,
+             b1:0,b2:0,b3:0,b4:0,
           });
         }
       }

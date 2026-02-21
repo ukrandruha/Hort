@@ -3,35 +3,10 @@ import { api } from "../api/api";
 
 export default function EditRobotModal({ robot, onClose, onSave }) {
   const [name, setName] = useState(robot.name);
-  const [cameras, setCameras] = useState([]);
-  const [cameraId, setCameraId] = useState("");
-  const [loadingCameras, setLoadingCameras] = useState(true);
-
-  useEffect(() => {
-    loadCameras();
-  }, []);
-
-  async function loadCameras() {
-    try {
-      const res = await api.get(`api/robots/${robot.robotId}/cameras`);
-      const data = res.data ?? [];
-
-      setCameras(data);
-
-      // камера за замовченням — та, що active === true
-      const activeCamera = data.find((c) => c.active === true);
-      if (activeCamera) {
-        setCameraId(String(activeCamera.id));
-      }
-    } finally {
-      setLoadingCameras(false);
-    }
-  }
 
   function save() {
     onSave({
       name: name.trim(),
-      cameraId: cameraId ? Number(cameraId) : null,
     });
   }
 
@@ -48,28 +23,6 @@ export default function EditRobotModal({ robot, onClose, onSave }) {
           className="w-full p-2 mb-4 rounded bg-gray-700 text-white"
         />
 
-        {/* Camera select */}
-        <label className="block text-gray-300 mb-2">
-          Default camera
-        </label>
-
-        {loadingCameras ? (
-          <div className="text-gray-400 mb-4">Loading cameras…</div>
-        ) : (
-          <select
-            value={cameraId}
-            onChange={(e) => setCameraId(e.target.value)}
-            className="w-full p-2 mb-4 rounded bg-gray-700 text-white"
-          >
-            <option value="">— Not selected —</option>
-            {cameras.map((camera) => (
-              <option key={camera.id} value={camera.id}>
-                {camera.name} ({camera.port})
-              </option>
-            ))}
-          </select>
-        )}
-
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
@@ -80,8 +33,7 @@ export default function EditRobotModal({ robot, onClose, onSave }) {
 
           <button
             onClick={save}
-            disabled={loadingCameras}
-            className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700"
           >
             Save
           </button>

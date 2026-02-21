@@ -101,8 +101,6 @@ export default function RobotTable() {
 
     try {
       await api.patch(`/api/robots/${editRobot.robotId.trim()}`,  {name: data.name});
-      ///api/robots/:robotId/cameras/:cameraId/activate
-      await api.post(`/api/robots/${editRobot.robotId.trim()}/cameras/${data.cameraId}/activate`);
 
       setEditRobot(null);
       load();

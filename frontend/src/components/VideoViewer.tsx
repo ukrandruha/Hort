@@ -32,6 +32,9 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [recordStart, setRecordStart] = useState<number | null>(null);
     const [elapsed, setElapsed] = useState<string>("00:00");
     const intervalRef = useRef<number | null>(null);
+    const [cameras, setCameras] = useState<any[]>([]);
+    const [cameraId, setCameraId] = useState<string>("");
+    const [loadingCameras, setLoadingCameras] = useState(false);
 
 
 
@@ -119,6 +122,28 @@ useEffect(() => {
     window.removeEventListener("unload", onUnload);
   };
 }, []);
+
+useEffect(() => {
+  loadCameras();
+}, [robot?.robotId]);
+
+async function loadCameras() {
+  if (!robot?.robotId) return;
+  setLoadingCameras(true);
+  try {
+    const res = await api.get(`/api/robots/${robot.robotId}/cameras`);
+    const data = res.data ?? [];
+    setCameras(data);
+    const activeCamera = data.find((c: any) => c.active === true);
+    if (activeCamera) {
+      setCameraId(String(activeCamera.id));
+    } else {
+      setCameraId("");
+    }
+  } finally {
+    setLoadingCameras(false);
+  }
+}
 
 
     // ============================================
@@ -262,7 +287,36 @@ async function stopRecording()
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-160px, -50%)' }} className="h-8 w-px bg-gray-700" />
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(160px, -50%)' }} className="h-8 w-px bg-gray-700" />
 
-          <button
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-gray-300">Default camera</div>
+            {loadingCameras ? (
+              <div className="text-gray-500 text-sm">Loading…</div>
+            ) : (
+              <select
+                value={cameraId}
+                onChange={async (e) => {
+                  const value = e.target.value;
+                  setCameraId(value);
+                  if (!value) return;
+                  try {
+                    await api.post(`/api/robots/${robot.robotId}/cameras/${value}/activate`);
+                    await loadCameras();
+                  } catch (err) {
+                    alert("Failed to activate camera");
+                  }
+                }}
+                className="px-2 py-1 rounded bg-gray-800 text-gray-200 border border-gray-700"
+              >
+                <option value="">—</option>
+                {cameras.map((camera) => (
+                  <option key={camera.id} value={camera.id}>
+                    {camera.name} ({camera.port})
+                  </option>
+                ))}
+              </select>
+            )}
+            <div className="h-6 w-px bg-gray-700" />
+            <button
             onClick={() => {
               operatorDisconnect();
               onClose();
@@ -270,7 +324,8 @@ async function stopRecording()
             className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded"
           >
             Close
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* MAIN VIDEO AREA */}

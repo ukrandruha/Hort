@@ -288,7 +288,6 @@ async function stopRecording()
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(160px, -50%)' }} className="h-8 w-px bg-gray-700" />
 
           <div className="flex items-center gap-3">
-            {/* <div className="text-sm text-gray-300">Default camera</div> */}
             {loadingCameras ? (
               <div className="text-gray-500 text-sm">Loading…</div>
             ) : (
@@ -305,7 +304,7 @@ async function stopRecording()
                     alert("Failed to activate camera");
                   }
                 }}
-                className="px-2 py-1 rounded bg-gray-800 text-gray-200 border border-gray-700"
+                className="px-2 py-1 rounded bg-gray-800 text-gray-200 border border-gray-700 w-32"
               >
                 <option value="">—</option>
                 {cameras.map((camera) => (

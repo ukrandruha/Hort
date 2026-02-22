@@ -304,7 +304,7 @@ async function stopRecording()
                     alert("Failed to activate camera");
                   }
                 }}
-                className="px-2 py-1 rounded bg-gray-800 text-gray-200 border border-gray-700 w-32"
+                className="px-2 py-1 rounded bg-gray-800 text-gray-200 border border-gray-700 w-52"
               >
                 <option value="">—</option>
                 {cameras.map((camera) => (

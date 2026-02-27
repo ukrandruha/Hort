@@ -180,7 +180,7 @@ export class WebRTCClient {
                 pc.onconnectionstatechange = () => {
                     console.log("[B] state:", pc.connectionState);
                     if (pc.connectionState === "connected") {
-                        this.createSessions(this.roomName, this.userId);
+                        this.activateWebrtcSession(this.roomName);
                     }
                 };
             }
@@ -195,18 +195,13 @@ export class WebRTCClient {
         this.connB.connect(null);
     };
 
-    private async createSessions(robotId: string, userid: number | null) {
+    private async activateWebrtcSession(robotId: string) {
         try {
-            const connectData = {
-                "robotId": robotId,
-                "operatorId": userid
-            };
-            if (userid != null) {
-                await api.post(`/api/robots/robot-sessions/create`, connectData);
-            }
-
+            await api.post(`/api/robots/robot-sessions/activateWebrtc`, {
+                "robotId": robotId
+            });
         } catch (e) {
-            alert("Помилка створення сессії");
+            alert("Помилка активації WebRTC");
             console.error(e);
         }
     }
@@ -229,7 +224,20 @@ export class WebRTCClient {
             this.videoElement.srcObject = null;
         }
 
+        await this.deactivateWebrtcSession(this.roomName);
+
         //this.updateRobotWebRtcConnect(this.roomName, null);
+    }
+
+    private async deactivateWebrtcSession(robotId: string) {
+        try {
+            await api.post(`/api/robots/robot-sessions/deactivateWebrtc`, {
+                "robotId": robotId
+            });
+        } catch (e) {
+            alert("Помилка деактивації WebRTC");
+            console.error(e);
+        }
     }
     // =================================================
     // Set data GamePad

@@ -19,7 +19,7 @@ export async function getAllRobots(userId?: number) {
       sessions: {
         where: {
           status: {
-            in: ['ACTIVE', 'DISCONNECT_REQUESTED', 'REBOOT_DISCONNECT_REQUESTED'],
+            in: ['ACTIVE', 'ACTIVE_WEBRTC', 'DISCONNECT_REQUESTED', 'REBOOT_DISCONNECT_REQUESTED'],
           },
         },
         take: 1,
@@ -254,6 +254,50 @@ export async function editRobot(id: string, data:RobotUpdateData) {
         status: RobotSessionStatus.REBOOT_DISCONNECT_REQUESTED,
         disconnectReason: reason,
         disconnectedBy: requestedBy,
+      },
+    });
+  }
+
+  /**
+   * Promote session from ACTIVE to ACTIVE_WEBRTC
+   */
+  export async function activateWebrtcSession(params: { robotId: string }) {
+    const { robotId } = params;
+
+    const session = await prisma.robotSession.findFirst({
+      where: { robotId: robotId, status: RobotSessionStatus.ACTIVE },
+    });
+
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    return prisma.robotSession.update({
+      where: { id: session.id },
+      data: {
+        status: RobotSessionStatus.ACTIVE_WEBRTC,
+      },
+    });
+  }
+
+  /**
+   * Revert session from ACTIVE_WEBRTC to ACTIVE
+   */
+  export async function deactivateWebrtcSession(params: { robotId: string }) {
+    const { robotId } = params;
+
+    const session = await prisma.robotSession.findFirst({
+      where: { robotId: robotId, status: RobotSessionStatus.ACTIVE_WEBRTC },
+    });
+
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    return prisma.robotSession.update({
+      where: { id: session.id },
+      data: {
+        status: RobotSessionStatus.ACTIVE,
       },
     });
   }

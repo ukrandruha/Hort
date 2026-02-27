@@ -11,6 +11,8 @@ import {
   disconnectSession,
   confirmDisconnect,
   requestRebootSession,
+  activateWebrtcSession,
+  deactivateWebrtcSession,
   createMission,
   deleteMission,
   getMission,
@@ -177,6 +179,40 @@ app.delete<{ Params: { id: string } }>(
 
       try {
         const session = await requestRebootSession(param);
+        return reply.send(session);
+      } catch (err: any) {
+        return reply.code(400).send({ message: err.message });
+      }
+    },
+  )
+
+  /**
+   * Activate WebRTC session
+   */
+  app.post(
+    '/api/robots/robot-sessions/activateWebrtc',
+    async (req, reply) => {
+      const param = req.body as { robotId: string };
+
+      try {
+        const session = await activateWebrtcSession(param);
+        return reply.send(session);
+      } catch (err: any) {
+        return reply.code(400).send({ message: err.message });
+      }
+    },
+  )
+
+  /**
+   * Deactivate WebRTC session
+   */
+  app.post(
+    '/api/robots/robot-sessions/deactivateWebrtc',
+    async (req, reply) => {
+      const param = req.body as { robotId: string };
+
+      try {
+        const session = await deactivateWebrtcSession(param);
         return reply.send(session);
       } catch (err: any) {
         return reply.code(400).send({ message: err.message });

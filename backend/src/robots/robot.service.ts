@@ -19,7 +19,7 @@ export async function getAllRobots(userId?: number) {
       sessions: {
         where: {
           status: {
-            in: ['ACTIVE', 'ACTIVE_WEBRTC', 'DISCONNECT_REQUESTED', 'REBOOT_DISCONNECT_REQUESTED'],
+            in: ['ACTIVE_WEBRTC', 'DISCONNECT_REQUESTED'],
           },
         },
         take: 1,

@@ -13,6 +13,7 @@ import {
   requestRebootSession,
   activateWebrtcSession,
   deactivateWebrtcSession,
+  getRobotSessionStatusById,
   createMission,
   deleteMission,
   getMission,
@@ -125,7 +126,7 @@ app.delete<{ Params: { id: string } }>(
           param
         );
 
-        return reply.code(201).send(session);
+        return reply.code(201).send({ id: session.id });
       } catch (err: any) {
         return reply.code(400).send({ message: err.message });
       }
@@ -216,6 +217,23 @@ app.delete<{ Params: { id: string } }>(
         return reply.send(session);
       } catch (err: any) {
         return reply.code(400).send({ message: err.message });
+      }
+    },
+  )
+
+  /**
+   * Get robot session status by session id
+   */
+  app.get<{ Params: { sessionId: string } }>(
+    '/api/robots/robot-sessions/:sessionId/status',
+    async (req, reply) => {
+      const { sessionId } = req.params;
+
+      try {
+        const session = await getRobotSessionStatusById(sessionId);
+        return reply.send(session);
+      } catch (err: any) {
+        return reply.code(404).send({ message: err.message });
       }
     },
   )

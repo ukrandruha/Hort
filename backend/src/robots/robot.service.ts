@@ -352,6 +352,19 @@ export async function deleteMission(missionId: string)
   });
 }
 
+export async function getRobotSessionStatusById(sessionId: string) {
+  const session = await prisma.robotSession.findUnique({
+    where: { id: sessionId },
+    select: { status: true },
+  });
+
+  if (!session) {
+    throw new Error('Session not found');
+  }
+
+  return session;
+}
+
   export async function createMission(
   robotId: string,
   name: string,

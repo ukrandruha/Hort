@@ -265,11 +265,18 @@ export async function editRobot(id: string, data:RobotUpdateData) {
     const { robotId } = params;
 
     const session = await prisma.robotSession.findFirst({
-      where: { robotId: robotId, status: RobotSessionStatus.ACTIVE },
+      where: {
+        robotId: robotId,
+        status: { in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC] },
+      },
     });
 
     if (!session) {
       throw new Error('Session not found');
+    }
+
+    if (session.status === RobotSessionStatus.ACTIVE_WEBRTC) {
+      return session;
     }
 
     return prisma.robotSession.update({
@@ -287,11 +294,18 @@ export async function editRobot(id: string, data:RobotUpdateData) {
     const { robotId } = params;
 
     const session = await prisma.robotSession.findFirst({
-      where: { robotId: robotId, status: RobotSessionStatus.ACTIVE_WEBRTC },
+      where: {
+        robotId: robotId,
+        status: { in: [RobotSessionStatus.ACTIVE_WEBRTC, RobotSessionStatus.ACTIVE] },
+      },
     });
 
     if (!session) {
       throw new Error('Session not found');
+    }
+
+    if (session.status === RobotSessionStatus.ACTIVE) {
+      return session;
     }
 
     return prisma.robotSession.update({

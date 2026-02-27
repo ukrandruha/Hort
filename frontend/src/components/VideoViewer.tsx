@@ -107,7 +107,7 @@ useEffect(() => {
     if (!connected) return;
 
     navigator.sendBeacon(
-      "/api/robots/robot-sessions/disconnect",
+      "/api/robots/robot-sessions/deactivateWebrtc",
       JSON.stringify({
         robotId: robot.robotId,
         disconnectedBy: userId.toString(),
@@ -213,7 +213,7 @@ async function loadCameras() {
           "disconnectedBy": userId.toString(),
           "force": false
         };
-        await api.post(`api/robots/robot-sessions/disconnect`, disconnectData);
+        await api.post(`api/robots/robot-sessions/deactivateWebrtc`, disconnectData);
 
       }
     }

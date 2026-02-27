@@ -11,8 +11,8 @@ datasource db {
 // ENUMS
 
 enum RobotSessionStatus {
-  ACTIVE,
-  ACTIVE_WEBRTC,
+  ACTIVE
+  ACTIVE_WEBRTC
   DISCONNECT_REQUESTED
   DISCONNECTED
   EXPIRED

@@ -141,6 +141,24 @@ export default function RobotTable() {
     }
   }
 
+  async function requestReboot(robotId: string) {
+    if (!userId) {
+      alert("User ID not available");
+      return;
+    }
+
+    try {
+      const rebootData = {
+        robotId: robotId,
+        reason: "admin",
+        requestedBy: userId.toString(),
+      };
+      await api.post(`/api/robots/robot-sessions/requestReboot`, rebootData);
+    } catch (e) {
+      alert(String(e));
+    }
+  }
+
 
 
 
@@ -362,6 +380,7 @@ async function  parseQgcWaypoints(
            Mission
           </button>
 
+
           <button
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white"
             onClick={() => {
@@ -372,6 +391,18 @@ async function  parseQgcWaypoints(
           >
             Disconect
           </button>
+
+          <button
+            className="w-full text-left px-4 py-2 hover:bg-gray-700"
+            onClick={() => {
+              requestReboot(r.robotId);
+              setOpenMenuId(null);
+            }}
+          >
+            Reboot
+          </button>
+
+
         </div>
       )}
     </>

@@ -10,6 +10,7 @@ import {
   createSession,
   disconnectSession,
   confirmDisconnect,
+  requestRebootSession,
   createMission,
   deleteMission,
   getMission,
@@ -159,6 +160,23 @@ app.delete<{ Params: { id: string } }>(
       try {
         const session = await confirmDisconnect(param.robotId);
 
+        return reply.send(session);
+      } catch (err: any) {
+        return reply.code(400).send({ message: err.message });
+      }
+    },
+  )
+
+  /**
+   * Request reboot for robot session
+   */
+  app.post(
+    '/api/robots/robot-sessions/requestReboot',
+    async (req, reply) => {
+      const param = req.body as { robotId: string; reason?: string; requestedBy: string };
+
+      try {
+        const session = await requestRebootSession(param);
         return reply.send(session);
       } catch (err: any) {
         return reply.code(400).send({ message: err.message });

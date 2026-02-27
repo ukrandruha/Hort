@@ -19,7 +19,7 @@ export async function getAllRobots(userId?: number) {
       sessions: {
         where: {
           status: {
-            in: ['ACTIVE', 'DISCONNECT_REQUESTED'],
+            in: ['ACTIVE', 'DISCONNECT_REQUESTED', 'REBOOT_DISCONNECT_REQUESTED'],
           },
         },
         take: 1,
@@ -222,6 +222,38 @@ export async function editRobot(id: string, data:RobotUpdateData) {
       data: {
         status: RobotSessionStatus.DISCONNECTED,
         disconnectAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Request reboot session (graceful reboot)
+   */
+  export async function requestRebootSession(params: {
+    robotId: string;
+    reason?: string;
+    requestedBy: string;
+  }) {
+    const { robotId, reason, requestedBy } = params;
+
+    const session = await prisma.robotSession.findFirst({
+      where: { robotId: robotId, status: RobotSessionStatus.ACTIVE },
+    });
+
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    if (session.status === RobotSessionStatus.REBOOT_DISCONNECT_REQUESTED) {
+      return session;
+    }
+
+    return prisma.robotSession.update({
+      where: { id: session.id },
+      data: {
+        status: RobotSessionStatus.REBOOT_DISCONNECT_REQUESTED,
+        disconnectReason: reason,
+        disconnectedBy: requestedBy,
       },
     });
   }

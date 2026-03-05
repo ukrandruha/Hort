@@ -140,17 +140,17 @@ export async function editRobot(id: string, data:RobotUpdateData) {
     const { robotId, operatorId} = params;
 
 
-    // ensure no active session
-    const activeSession = await prisma.robotSession.findFirst({
-      where: {
-        robotId,
-        status: RobotSessionStatus.ACTIVE,
-      },
-    });
+    // // ensure no active session
+    // const activeSession = await prisma.robotSession.findFirst({
+    //   where: {
+    //     robotId,
+    //     status: RobotSessionStatus.ACTIVE,
+    //   },
+    // });
 
-    if (activeSession) {
-      throw new Error('Robot already has an active session');
-    }
+    // if (activeSession) {
+    //   throw new Error('Robot already has an active session');
+    // }
 
     return prisma.robotSession.create({
       data: {

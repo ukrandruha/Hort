@@ -35,6 +35,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [cameras, setCameras] = useState<any[]>([]);
     const [cameraId, setCameraId] = useState<string>("");
     const [loadingCameras, setLoadingCameras] = useState(false);
+    const [showMap, setShowMap] = useState(false);
+    const [showJoysticks, setShowJoysticks] = useState(false);
 
 
 
@@ -337,14 +339,42 @@ async function stopRecording()
           />
 
           {/* MAP PIP */}
-          <div
-            className="
-            absolute bottom-6 right-6 
-            w-72 h-56 rounded-lg overflow-hidden shadow-xl 
-            border border-gray-700 bg-gray-900"
-          >
-            <DroneMap robot={robot} />
+          {showMap && (
+            <div
+              className="
+              absolute bottom-6 right-6 
+              w-72 h-56 rounded-lg overflow-hidden shadow-xl 
+              border border-gray-700 bg-gray-900"
+            >
+              <DroneMap robot={robot} />
+            </div>
+          )}
+
+          {/* Floating controls (right side) */}
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40">
+            <button
+              onClick={() => setShowMap((prev) => !prev)}
+              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
+              title={showMap ? "Hide map" : "Show map"}
+              aria-label={showMap ? "Hide map" : "Show map"}
+            >
+              🗺️
+            </button>
+            <button
+              onClick={() => setShowJoysticks((prev) => !prev)}
+              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
+              title={showJoysticks ? "Hide joysticks" : "Show joysticks"}
+              aria-label={showJoysticks ? "Hide joysticks" : "Show joysticks"}
+            >
+              🎮
+            </button>
           </div>
+
+          {showJoysticks && (
+            <div className="absolute bottom-6 left-6 text-gray-300 text-sm bg-gray-900/80 border border-gray-700 rounded px-3 py-2">
+              On-screen joysticks (placeholder)
+            </div>
+          )}
         </div>
 
         {/* FOOTER BUTTONS */}

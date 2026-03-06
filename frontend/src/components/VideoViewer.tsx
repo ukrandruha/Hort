@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Joystick, JoystickShape } from "react-joystick-component";
 import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import { GamepadReader } from "../utils/Gamepad";
@@ -37,6 +38,18 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
     const [showJoysticks, setShowJoysticks] = useState(false);
+
+    const handleJoystickStart = (side: "left" | "right") => () => {
+      console.log(`[Joystick ${side}] Started`);
+    };
+
+    const handleJoystickMove = (side: "left" | "right") => (event: any) => {
+      console.log(`[Joystick ${side}] Moved`, event);
+    };
+
+    const handleJoystickStop = (side: "left" | "right") => () => {
+      console.log(`[Joystick ${side}] Stopped`);
+    };
 
 
 
@@ -342,7 +355,7 @@ async function stopRecording()
           {showMap && (
             <div
               className="
-              absolute bottom-6 right-6 
+              absolute top-6 right-6 
               w-72 h-56 rounded-lg overflow-hidden shadow-xl 
               border border-gray-700 bg-gray-900"
             >
@@ -371,9 +384,26 @@ async function stopRecording()
           </div>
 
           {showJoysticks && (
-            <div className="absolute bottom-6 left-6 text-gray-300 text-sm bg-gray-900/80 border border-gray-700 rounded px-3 py-2">
-              On-screen joysticks (placeholder)
-            </div>
+            <>
+              <div className="absolute bottom-6 left-6 z-40">
+                <Joystick
+                  controlPlaneShape={JoystickShape.AxisX}
+                  start={handleJoystickStart("left")}
+                  throttle={50}
+                  move={handleJoystickMove("left")}
+                  stop={handleJoystickStop("left")}
+                />
+              </div>
+              <div className="absolute bottom-6 right-6 z-40">
+                <Joystick
+                  controlPlaneShape={JoystickShape.AxisY}
+                  start={handleJoystickStart("right")}
+                  throttle={50}
+                  move={handleJoystickMove("right")}
+                  stop={handleJoystickStop("right")}
+                />
+              </div>
+            </>
           )}
         </div>
 

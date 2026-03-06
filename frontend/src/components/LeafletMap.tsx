@@ -159,12 +159,18 @@ export default function LeafletMap({
   useEffect(() => {
     async function loadMission() {
       const { data } = await api.get(`api/robots/${robotId}/missions`);
-      const sorted = [...data[0].points].sort((a, b) => a.order - b.order);
+      const firstMission = Array.isArray(data) ? data[0] : null;
+      const missionPoints = Array.isArray(firstMission?.points)
+        ? firstMission.points
+        : [];
+      const sorted = [...missionPoints].sort((a, b) => a.order - b.order);
       setPoints(sorted);
       if (sorted.length > 0) {
         setStartPoint((prev) =>
           prev ?? ([sorted[0].lat, sorted[0].lng] as [number, number])
         );
+      } else {
+        setStartPoint(null);
       }
     }
 

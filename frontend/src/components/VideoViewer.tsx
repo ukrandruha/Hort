@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Joystick, JoystickShape } from "react-joystick-component";
 import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
-import { GamepadReader } from "../utils/Gamepad";
+import { GamepadReader, type GamepadState } from "../utils/Gamepad";
 import { useAuth } from "../auth/AuthContext";
 import { api } from "../api/api";
 import { forwardRef, useImperativeHandle } from "react";
@@ -38,17 +38,46 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
     const [showJoysticks, setShowJoysticks] = useState(false);
+    const lastGamepadStateRef = useRef<GamepadState>({
+      ch1: 0,
+      ch2: 0,
+      ch3: 0,
+      ch4: 0,
+      ch5: 0,
+      ch6: 0,
+      ch7: 0,
+      ch8: 0,
+      b1: 0,
+      b2: 0,
+      b3: 0,
+      b4: 0,
+    });
 
-    const handleJoystickStart = (side: "left" | "right") => () => {
-      console.log(`[Joystick ${side}] Started`);
+    const sendGamepadState = (partial: Partial<GamepadState>) => {
+      const next = { ...lastGamepadStateRef.current, ...partial };
+      lastGamepadStateRef.current = next;
+      clientRef.current?.SetDataGamePad(next);
     };
 
+    const handleJoystickStart = () => {};
+
     const handleJoystickMove = (side: "left" | "right") => (event: any) => {
-      console.log(`[Joystick ${side}] Moved`, event);
+      if (!event) return;
+      if (side === "left") {
+        const x = typeof event.x === "number" ? event.x : 0;
+        sendGamepadState({ ch2: x });
+      } else {
+        const y = typeof event.y === "number" ? event.y : 0;
+        sendGamepadState({ ch1: y });
+      }
     };
 
     const handleJoystickStop = (side: "left" | "right") => () => {
-      console.log(`[Joystick ${side}] Stopped`);
+      if (side === "left") {
+        sendGamepadState({ ch2: 0 });
+      } else {
+        sendGamepadState({ ch1: 0 });
+      }
     };
 
 
@@ -180,6 +209,7 @@ async function loadCameras() {
       gp.current.onUpdate = (s) => {
 
         //console.log(s);
+        lastGamepadStateRef.current = s;
         clientRef.current?.SetDataGamePad(s);
 
 

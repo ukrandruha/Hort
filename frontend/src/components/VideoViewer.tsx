@@ -38,7 +38,6 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
     const [showJoysticks, setShowJoysticks] = useState(false);
-    const showJoysticksRef = useRef(false);
     const lastGamepadStateRef = useRef<GamepadState>({
       ch1: 0,
       ch2: 0,
@@ -97,10 +96,6 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         prev.b4 !== next.b4
       );
     };
-
-    useEffect(() => {
-      showJoysticksRef.current = showJoysticks;
-    }, [showJoysticks]);
 
 
 
@@ -231,9 +226,6 @@ async function loadCameras() {
       gp.current.onUpdate = (s) => {
 
         //console.log(s);
-        if (showJoysticksRef.current) {
-          return;
-        }
         if (!hasGamepadChanged(lastGamepadStateRef.current, s)) {
           return;
         }
@@ -447,6 +439,7 @@ async function stopRecording()
                 <Joystick
                   controlPlaneShape={JoystickShape.AxisX}
                   start={handleJoystickStart("left")}
+                  throttle={50}
                   move={handleJoystickMove("left")}
                   stop={handleJoystickStop("left")}
                 />
@@ -455,6 +448,7 @@ async function stopRecording()
                 <Joystick
                   controlPlaneShape={JoystickShape.AxisY}
                   start={handleJoystickStart("right")}
+                  throttle={50}
                   move={handleJoystickMove("right")}
                   stop={handleJoystickStop("right")}
                 />

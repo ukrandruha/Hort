@@ -12,7 +12,7 @@ interface Robot {
   robotId: string;
   name: string | null;
   status: string | null;
-  battery: number | null;
+  version: string | null;
   cpu: number | null;
   memory: number | null;
   disk: number | null;
@@ -281,7 +281,7 @@ async function  parseQgcWaypoints(
             <th className="py-3 px-4">Name</th>
             <th className="py-3 px-4">RobotId</th>
             <th className="py-3 px-4">Status</th>
-            <th className="py-3 px-4">Battery</th>
+            <th className="py-3 px-4">Version</th>
             <th className="py-3 px-4">CPU</th>
             <th className="py-3 px-4">Memory</th>
             <th className="py-3 px-4">Disk</th>
@@ -309,7 +309,7 @@ async function  parseQgcWaypoints(
                 <td className={`py-2 px-4 ${cloudColor}`}>
                   ● {isOffline ? "Offline" : "Online"}
                 </td>
-                <td className="py-2 px-4">{r.battery ?? "-"}%</td>
+                <td className="py-2 px-4">{r.version ?? "-"}</td>
 
                 <td className={`py-2 px-4 ${getStatusColor(r.cpu ?? 0)}`}>
                   {r.cpu ?? "-"}%

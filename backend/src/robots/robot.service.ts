@@ -88,6 +88,7 @@ export async function updateRobotStatus(data:RobotUpdateData) {
   return prisma.robot.upsert({
     where: { robotId: data.robotId },
     update: { 
+      version: data.version ?? undefined,
       status: data.status ?? undefined,
       battery: data.battery ?? undefined,
       cpu: data.cpu ?? undefined,
@@ -100,6 +101,7 @@ export async function updateRobotStatus(data:RobotUpdateData) {
     create: {
       robotId: data.robotId,
       name: data.name,
+      Version: data.Version,
       status: data.status,
       battery: data.battery,
       cpu: data.cpu,

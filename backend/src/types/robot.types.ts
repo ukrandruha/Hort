@@ -2,6 +2,7 @@
   export interface RobotUpdateData {
   robotId: string;
   name?: string;
+  version?: string;
   status?: string;
   battery?: number;
   cpu?: number;

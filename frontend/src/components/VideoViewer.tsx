@@ -38,6 +38,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
     const [showJoysticks, setShowJoysticks] = useState(false);
+    const showJoysticksRef = useRef(false);
     const lastGamepadStateRef = useRef<GamepadState>({
       ch1: 0,
       ch2: 0,
@@ -79,6 +80,27 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         sendGamepadState({ ch1: 0 });
       }
     };
+
+    const hasGamepadChanged = (prev: GamepadState, next: GamepadState) => {
+      return (
+        prev.ch1 !== next.ch1 ||
+        prev.ch2 !== next.ch2 ||
+        prev.ch3 !== next.ch3 ||
+        prev.ch4 !== next.ch4 ||
+        prev.ch5 !== next.ch5 ||
+        prev.ch6 !== next.ch6 ||
+        prev.ch7 !== next.ch7 ||
+        prev.ch8 !== next.ch8 ||
+        prev.b1 !== next.b1 ||
+        prev.b2 !== next.b2 ||
+        prev.b3 !== next.b3 ||
+        prev.b4 !== next.b4
+      );
+    };
+
+    useEffect(() => {
+      showJoysticksRef.current = showJoysticks;
+    }, [showJoysticks]);
 
 
 
@@ -209,6 +231,12 @@ async function loadCameras() {
       gp.current.onUpdate = (s) => {
 
         //console.log(s);
+        if (showJoysticksRef.current) {
+          return;
+        }
+        if (!hasGamepadChanged(lastGamepadStateRef.current, s)) {
+          return;
+        }
         lastGamepadStateRef.current = s;
         clientRef.current?.SetDataGamePad(s);
 
@@ -419,7 +447,6 @@ async function stopRecording()
                 <Joystick
                   controlPlaneShape={JoystickShape.AxisX}
                   start={handleJoystickStart("left")}
-                  throttle={50}
                   move={handleJoystickMove("left")}
                   stop={handleJoystickStop("left")}
                 />
@@ -428,7 +455,6 @@ async function stopRecording()
                 <Joystick
                   controlPlaneShape={JoystickShape.AxisY}
                   start={handleJoystickStart("right")}
-                  throttle={50}
                   move={handleJoystickMove("right")}
                   stop={handleJoystickStop("right")}
                 />

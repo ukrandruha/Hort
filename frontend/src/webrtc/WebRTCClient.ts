@@ -260,7 +260,7 @@ export class WebRTCClient {
             state.ch4, state.ch5, state.ch6, state.ch7,state.ch8,
             state.b1, state.b2, state.b3, state.b4,
         ];
-
+        console.log(state.ch1, state.ch2);
         const buf = new Uint8Array(Math.ceil((values.length * 10) / 8));
         let acc = 0;
         let accBits = 0;

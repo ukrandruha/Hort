@@ -101,7 +101,7 @@ export async function updateRobotStatus(data:RobotUpdateData) {
     create: {
       robotId: data.robotId,
       name: data.name,
-      Version: data.Version,
+      version: data.version,
       status: data.status,
       battery: data.battery,
       cpu: data.cpu,

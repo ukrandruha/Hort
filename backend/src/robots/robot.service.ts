@@ -90,7 +90,7 @@ export async function updateRobotStatus(data:RobotUpdateData) {
     update: { 
       version: data.version ?? undefined,
       status: data.status ?? undefined,
-      battery: data.battery ?? undefined,
+      battery: data.battery ?? undefined,    
       cpu: data.cpu ?? undefined,
       memory: data.memory ?? undefined,
       disk: data.disk ?? undefined,
@@ -154,13 +154,19 @@ export async function editRobot(id: string, data:RobotUpdateData) {
     //   throw new Error('Robot already has an active session');
     // }
 
-    return prisma.robotSession.create({
-      data: {
-        robotId,
-        operatorId,
-        status: RobotSessionStatus.ACTIVE,
-        lastHeartbeatAt: new Date(),
-      },
+    return prisma.$transaction(async (tx) => {
+      await tx.robotSession.deleteMany({
+        where: { robotId },
+      });
+
+      return tx.robotSession.create({
+        data: {
+          robotId,
+          operatorId,
+          status: RobotSessionStatus.ACTIVE,
+          lastHeartbeatAt: new Date(),
+        },
+      });
     });
   }
 

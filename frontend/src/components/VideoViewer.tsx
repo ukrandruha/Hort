@@ -38,6 +38,19 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
     const [showJoysticks, setShowJoysticks] = useState(false);
+    const [showChannels, setShowChannels] = useState(false);
+    const showJoysticksRef = useRef(false);
+    const [channelState, setChannelState] = useState({
+      ch5: 0,
+      ch6: 0,
+      ch7: 0,
+      ch8: 0,
+      b1: 0,
+      b2: 0,
+      b3: 0,
+      b4: 0,
+    });
+    const channelStateRef = useRef(channelState);
     const lastGamepadStateRef = useRef<GamepadState>({
       ch1: 0,
       ch2: 0,
@@ -54,7 +67,11 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     });
 
     const sendGamepadState = (partial: Partial<GamepadState>) => {
-      const next = { ...lastGamepadStateRef.current, ...partial };
+      const next = {
+        ...lastGamepadStateRef.current,
+        ...channelStateRef.current,
+        ...partial,
+      };
       lastGamepadStateRef.current = next;
       clientRef.current?.SetDataGamePad(next);
     };
@@ -80,6 +97,19 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       }
     };
 
+    const setChannelValue = (
+      key: "ch5" | "ch6" | "ch7" | "ch8" | "b1" | "b2" | "b3" | "b4",
+      value: number
+    ) => {
+      setChannelState((prev) => {
+        if (prev[key] === value) return prev;
+        const next = { ...prev, [key]: value };
+        channelStateRef.current = next;
+        sendGamepadState({ [key]: value } as Partial<GamepadState>);
+        return next;
+      });
+    };
+
     const hasGamepadChanged = (prev: GamepadState, next: GamepadState) => {
       return (
         prev.ch1 !== next.ch1 ||
@@ -96,6 +126,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         prev.b4 !== next.b4
       );
     };
+
+    useEffect(() => {
+      showJoysticksRef.current = showJoysticks;
+    }, [showJoysticks]);
 
 
 
@@ -226,6 +260,9 @@ async function loadCameras() {
       gp.current.onUpdate = (s) => {
 
         //console.log(s);
+        if (showJoysticksRef.current) {
+          return;
+        }
         if (!hasGamepadChanged(lastGamepadStateRef.current, s)) {
           return;
         }
@@ -405,7 +442,7 @@ async function stopRecording()
           {showMap && (
             <div
               className="
-              absolute top-6 right-6 
+              absolute top-6 left-6 
               w-72 h-56 rounded-lg overflow-hidden shadow-xl 
               border border-gray-700 bg-gray-900"
             >
@@ -431,6 +468,154 @@ async function stopRecording()
             >
               🎮
             </button>
+            <button
+              onClick={() => setShowChannels((prev) => !prev)}
+              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
+              title={showChannels ? "Hide channels" : "Show channels"}
+              aria-label={showChannels ? "Hide channels" : "Show channels"}
+            >
+              🎛️
+            </button>
+          </div>
+
+          <div
+            className={`absolute left-1/2 top-24 -translate-x-1/2 w-80 bg-gray-900/95 border border-gray-700 rounded-lg shadow-xl p-4 z-40 transition-all duration-200 ${
+              showChannels
+                ? "opacity-100 translate-y-0 pointer-events-auto"
+                : "opacity-0 -translate-y-3 pointer-events-none"
+            }`}
+          >
+            <div className="text-gray-200 font-semibold mb-3">Channels</div>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-4 items-center gap-2">
+                <div className="text-gray-300">CH5</div>
+                {[-1, 0, 1].map((v) => (
+                  <button
+                    key={`ch5-${v}`}
+                    onClick={() => setChannelValue("ch5", v)}
+                    className={`px-2 py-1 rounded border text-sm ${
+                      channelState.ch5 === v
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-2">
+                <div className="text-gray-300">CH6</div>
+                {[-1, 0, 1].map((v) => (
+                  <button
+                    key={`ch6-${v}`}
+                    onClick={() => setChannelValue("ch6", v)}
+                    className={`px-2 py-1 rounded border text-sm ${
+                      channelState.ch6 === v
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-2">
+                <div className="text-gray-300">CH7</div>
+                {[-1, 0, 1].map((v) => (
+                  <button
+                    key={`ch7-${v}`}
+                    onClick={() => setChannelValue("ch7", v)}
+                    className={`px-2 py-1 rounded border text-sm ${
+                      channelState.ch7 === v
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-4 items-center gap-2">
+                <div className="text-gray-300">CH8</div>
+                {[-1, 0, 1].map((v) => (
+                  <button
+                    key={`ch8-${v}`}
+                    onClick={() => setChannelValue("ch8", v)}
+                    className={`px-2 py-1 rounded border text-sm ${
+                      channelState.ch8 === v
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 items-center gap-2">
+                <div className="text-gray-300">CH9</div>
+                {[0, 1].map((v) => (
+                  <button
+                    key={`ch9-${v}`}
+                    onClick={() => setChannelValue("b1", v)}
+                    className={`px-2 py-1 rounded border text-sm ${
+                      channelState.b1 === v
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 items-center gap-2">
+                <div className="text-gray-300">CH10</div>
+                {[0, 1].map((v) => (
+                  <button
+                    key={`ch10-${v}`}
+                    onClick={() => setChannelValue("b2", v)}
+                    className={`px-2 py-1 rounded border text-sm ${
+                      channelState.b2 === v
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 items-center gap-2">
+                <div className="text-gray-300">CH11</div>
+                {[0, 1].map((v) => (
+                  <button
+                    key={`ch11-${v}`}
+                    onClick={() => setChannelValue("b3", v)}
+                    className={`px-2 py-1 rounded border text-sm ${
+                      channelState.b3 === v
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 items-center gap-2">
+                <div className="text-gray-300">CH12</div>
+                {[0, 1].map((v) => (
+                  <button
+                    key={`ch12-${v}`}
+                    onClick={() => setChannelValue("b4", v)}
+                    className={`px-2 py-1 rounded border text-sm ${
+                      channelState.b4 === v
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {showJoysticks && (

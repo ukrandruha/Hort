@@ -296,6 +296,7 @@ async function  parseQgcWaypoints(
           {robots.map((r) => {
             const lastSeenDate = new Date(r.updatedAt);
             const isOffline = Date.now() - lastSeenDate.getTime() > 10000;
+            const isWebRtcOff = Date.now() - lastSeenDate.getTime() > 30000;
             const cloudColor = isOffline ? "text-red-500" : "text-green-400";
 
             const requestdisconect = r.sessionStatus === "DISCONNECT_REQUESTED";
@@ -331,7 +332,7 @@ async function  parseQgcWaypoints(
                   {new Date(r.updatedAt).toLocaleString()}
                 </td>
                 <td className={`py-2 px-4 ${operatorColor}`}>
-                  {r.operatorEmail ?? "-"}
+                  {isWebRtcOff ? "-" : r.operatorEmail ?? "-"}
                 </td>
 
 

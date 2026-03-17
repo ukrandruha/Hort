@@ -488,7 +488,7 @@ async function stopRecording()
             <div className="text-gray-200 font-semibold mb-3">Channels</div>
             <div className="grid grid-cols-1 gap-3">
               <div className="grid grid-cols-4 items-center gap-2">
-                <div className="text-gray-300">CH5</div>
+                <div className="text-gray-300">Arm</div>
                 {[-1, 0, 1].map((v) => (
                   <button
                     key={`ch5-${v}`}
@@ -504,7 +504,7 @@ async function stopRecording()
                 ))}
               </div>
               <div className="grid grid-cols-4 items-center gap-2">
-                <div className="text-gray-300">CH6</div>
+                <div className="text-gray-300">video</div>
                 {[-1, 0, 1].map((v) => (
                   <button
                     key={`ch6-${v}`}
@@ -536,7 +536,7 @@ async function stopRecording()
                 ))}
               </div>
               <div className="grid grid-cols-4 items-center gap-2">
-                <div className="text-gray-300">CH8</div>
+                <div className="text-gray-300">brake</div>
                 {[-1, 0, 1].map((v) => (
                   <button
                     key={`ch8-${v}`}
@@ -552,7 +552,7 @@ async function stopRecording()
                 ))}
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
-                <div className="text-gray-300">CH9</div>
+                <div className="text-gray-300">IR</div>
                 {[-1, 1].map((v) => (
                   <button
                     key={`ch9-${v}`}
@@ -568,7 +568,7 @@ async function stopRecording()
                 ))}
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
-                <div className="text-gray-300">CH10</div>
+                <div className="text-gray-300">Light</div>
                 {[-1, 1].map((v) => (
                   <button
                     key={`ch10-${v}`}
@@ -584,7 +584,7 @@ async function stopRecording()
                 ))}
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
-                <div className="text-gray-300">CH11</div>
+                <div className="text-gray-300">revers</div>
                 {[-1, 1].map((v) => (
                   <button
                     key={`ch11-${v}`}

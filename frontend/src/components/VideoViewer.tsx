@@ -45,10 +45,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       ch6: 0,
       ch7: 0,
       ch8: 0,
-      b1: 0,
-      b2: 0,
-      b3: 0,
-      b4: 0,
+      b1: -1,
+      b2: -1,
+      b3: -1,
+      b4: -1,
     });
     const channelStateRef = useRef(channelState);
     const lastGamepadStateRef = useRef<GamepadState>({
@@ -60,10 +60,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       ch6: 0,
       ch7: 0,
       ch8: 0,
-      b1: 0,
-      b2: 0,
-      b3: 0,
-      b4: 0,
+      b1: -1,
+      b2: -1,
+      b3: -1,
+      b4: -1,
     });
 
     const sendGamepadState = (partial: Partial<GamepadState>) => {
@@ -553,7 +553,7 @@ async function stopRecording()
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-gray-300">CH9</div>
-                {[0, 1].map((v) => (
+                {[-1, 1].map((v) => (
                   <button
                     key={`ch9-${v}`}
                     onClick={() => setChannelValue("b1", v)}
@@ -569,7 +569,7 @@ async function stopRecording()
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-gray-300">CH10</div>
-                {[0, 1].map((v) => (
+                {[-1, 1].map((v) => (
                   <button
                     key={`ch10-${v}`}
                     onClick={() => setChannelValue("b2", v)}
@@ -585,7 +585,7 @@ async function stopRecording()
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-gray-300">CH11</div>
-                {[0, 1].map((v) => (
+                {[-1, 1].map((v) => (
                   <button
                     key={`ch11-${v}`}
                     onClick={() => setChannelValue("b3", v)}
@@ -601,7 +601,7 @@ async function stopRecording()
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
                 <div className="text-gray-300">CH12</div>
-                {[0, 1].map((v) => (
+                {[-1, 1].map((v) => (
                   <button
                     key={`ch12-${v}`}
                     onClick={() => setChannelValue("b4", v)}

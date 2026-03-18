@@ -39,6 +39,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showMap, setShowMap] = useState(false);
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
+    const [pingMs, setPingMs] = useState<number | null>(null);
     const showJoysticksRef = useRef(false);
     const [channelState, setChannelState] = useState({
       ch5: 0,
@@ -150,6 +151,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       client.onData = (d: any) => {
         setOverlayData(d);
       };
+      client.onPing = (ms) => {
+        setPingMs(ms);
+        console.log(`[WebRTC] ping: ${ms ?? "—"} ms`);
+      };
       await client.start();
 
       setConnected(true);
@@ -183,6 +188,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
 
       setConnected(false);
+      setPingMs(null);
 
     }
 
@@ -479,10 +485,10 @@ async function stopRecording()
           </div>
 
           <div
-            className={`absolute left-1/2 top-24 -translate-x-1/2 w-80 bg-gray-900/95 border border-gray-700 rounded-lg shadow-xl p-4 z-40 transition-all duration-200 ${
+            className={`absolute left-6 top-24 w-80 bg-gray-900/95 border border-gray-700 rounded-lg shadow-xl p-4 z-40 transition-[opacity,transform] duration-300 ease-out ${
               showChannels
                 ? "opacity-100 translate-y-0 pointer-events-auto"
-                : "opacity-0 -translate-y-3 pointer-events-none"
+                : "opacity-0 -translate-y-6 pointer-events-none"
             }`}
           >
             <div className="text-gray-200 font-semibold mb-3">Channels</div>
@@ -640,6 +646,14 @@ async function stopRecording()
               </div>
             </>
           )}
+
+          <div
+            className={`absolute left-6 ${
+              showJoysticks ? "bottom-28" : "bottom-6"
+            } z-40 text-gray-200/70 text-sm font-mono pointer-events-none`}
+          >
+            ping: {pingMs ?? "—"} ms
+          </div>
         </div>
 
         {/* FOOTER BUTTONS */}

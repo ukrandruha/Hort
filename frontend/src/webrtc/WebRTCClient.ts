@@ -11,6 +11,7 @@ import { api } from "../api/api";
 export class WebRTCClient {
     // Optional callback invoked when structured data arrives from robot
     public onData: ((data: any) => void) | null = null;
+    public onPing: ((ms: number | null) => void) | null = null;
 
     private videoElement: HTMLVideoElement | null = null;
 
@@ -30,6 +31,7 @@ export class WebRTCClient {
     private mediaRecorder: MediaRecorder | null = null;
     private recordedChunks: BlobPart[] = [];
     private recordingStartTime: Date | null = null;
+    private pingIntervalId: number | null = null;
     
 
     // ================= OPTIONS ======================
@@ -181,6 +183,7 @@ export class WebRTCClient {
                     console.log("[B] state:", pc.connectionState);
                     if (pc.connectionState === "connected") {
                         this.activateWebrtcSession(this.roomName);
+                        this.startPingStats(pc);
                     }
                 };
             }
@@ -188,6 +191,7 @@ export class WebRTCClient {
 
         this.connB.on("disconnect", () => {
             console.warn("[B] Disconnected");
+            this.stopPingStats();
             //this.updateRobotWebRtcConnect(this.roomName, null);
             //     this.connB = null;
         });
@@ -216,6 +220,7 @@ export class WebRTCClient {
 
         if (this.connA) await this.connA.disconnect();
         if (this.connB) await this.connB.disconnect();
+        this.stopPingStats();
 
         this.connA = null;
         this.connB = null;
@@ -227,6 +232,38 @@ export class WebRTCClient {
         await this.deactivateWebrtcSession(this.roomName);
 
         //this.updateRobotWebRtcConnect(this.roomName, null);
+    }
+
+    private startPingStats(pc: RTCPeerConnection) {
+        this.stopPingStats();
+        this.pingIntervalId = window.setInterval(async () => {
+            try {
+                const stats = await pc.getStats();
+                let rttMs: number | null = null;
+
+                for (const stat of stats.values()) {
+                    if (stat.type !== "candidate-pair") continue;
+                    const pair = stat as RTCIceCandidatePairStats;
+                    const isSelected = (pair as any).selected || (pair as any).nominated;
+                    if (!isSelected || pair.state !== "succeeded") continue;
+                    if (typeof pair.currentRoundTripTime === "number") {
+                        rttMs = Math.round(pair.currentRoundTripTime * 1000);
+                    }
+                    break;
+                }
+
+                if (this.onPing) this.onPing(rttMs);
+            } catch (e) {
+                console.warn("[WebRTC] Failed to read stats", e);
+            }
+        }, 1000);
+    }
+
+    private stopPingStats() {
+        if (this.pingIntervalId) {
+            window.clearInterval(this.pingIntervalId);
+            this.pingIntervalId = null;
+        }
     }
 
     private async deactivateWebrtcSession(robotId: string) {

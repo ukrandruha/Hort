@@ -647,11 +647,7 @@ async function stopRecording()
             </>
           )}
 
-          <div
-            className={`absolute left-6 ${
-              showJoysticks ? "bottom-28" : "bottom-6"
-            } z-40 text-gray-200/70 text-sm font-mono pointer-events-none`}
-          >
+          <div className="absolute right-6 top-6 z-40 text-gray-200/70 text-sm font-mono pointer-events-none">
             ping: {pingMs ?? "—"} ms
           </div>
         </div>

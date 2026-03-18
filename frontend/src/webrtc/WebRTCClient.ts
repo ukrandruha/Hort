@@ -256,7 +256,7 @@ export class WebRTCClient {
             } catch (e) {
                 console.warn("[WebRTC] Failed to read stats", e);
             }
-        }, 1000);
+        }, 500);
     }
 
     private stopPingStats() {

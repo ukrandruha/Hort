@@ -14,7 +14,7 @@ export async function getAllRobots(userId?: number) {
         },
       },
     } : undefined,
-    orderBy: { name: 'desc' },
+    orderBy: { name: 'asc' },
     include: {
       sessions: {
         where: {

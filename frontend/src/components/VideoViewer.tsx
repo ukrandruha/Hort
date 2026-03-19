@@ -40,6 +40,11 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
     const [pingMs, setPingMs] = useState<number | null>(null);
+    const [packetLoss, setPacketLoss] = useState<{
+      lost: number | null;
+      received: number | null;
+      pct: number | null;
+    }>({ lost: null, received: null, pct: null });
     const showJoysticksRef = useRef(false);
     const [channelState, setChannelState] = useState({
       ch5: 0,
@@ -155,6 +160,13 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         setPingMs(ms);
         console.log(`[WebRTC] ping: ${ms ?? "—"} ms`);
       };
+      client.onStats = (s) => {
+        setPacketLoss({
+          lost: s.packetsLost,
+          received: s.packetsReceived,
+          pct: s.lossPct,
+        });
+      };
       await client.start();
 
       setConnected(true);
@@ -189,6 +201,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
       setConnected(false);
       setPingMs(null);
+      setPacketLoss({ lost: null, received: null, pct: null });
 
     }
 
@@ -647,8 +660,13 @@ async function stopRecording()
             </>
           )}
 
-          <div className="absolute right-6 top-6 z-40 text-gray-200/70 text-sm font-mono pointer-events-none">
-            ping: {pingMs ?? "—"} ms
+          <div className="absolute right-6 top-6 z-40 text-gray-200/70 text-sm font-mono pointer-events-none text-left">
+            <div>ping: {pingMs ?? "—"} ms</div>
+            <div className="text-gray-200/70 text-sm font-mono">
+              loss:{" "}
+              {packetLoss.lost ?? "—"}
+              {packetLoss.pct !== null ? ` (${packetLoss.pct}%)` : ""}
+            </div>
           </div>
         </div>
 

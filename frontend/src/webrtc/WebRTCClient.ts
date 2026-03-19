@@ -12,6 +12,12 @@ export class WebRTCClient {
     // Optional callback invoked when structured data arrives from robot
     public onData: ((data: any) => void) | null = null;
     public onPing: ((ms: number | null) => void) | null = null;
+    public onStats: ((stats: {
+        pingMs: number | null;
+        packetsLost: number | null;
+        packetsReceived: number | null;
+        lossPct: number | null;
+    }) => void) | null = null;
 
     private videoElement: HTMLVideoElement | null = null;
 
@@ -240,6 +246,9 @@ export class WebRTCClient {
             try {
                 const stats = await pc.getStats();
                 let rttMs: number | null = null;
+                let packetsLost: number | null = null;
+                let packetsReceived: number | null = null;
+                let lossPct: number | null = null;
 
                 for (const stat of stats.values()) {
                     if (stat.type !== "candidate-pair") continue;
@@ -252,7 +261,28 @@ export class WebRTCClient {
                     break;
                 }
 
+                for (const stat of stats.values()) {
+                    if (stat.type !== "inbound-rtp") continue;
+                    const inbound = stat as RTCInboundRtpStreamStats;
+                    if (inbound.isRemote) continue;
+                    if (inbound.kind !== "video") continue;
+
+                    const lost = typeof inbound.packetsLost === "number" ? inbound.packetsLost : 0;
+                    const received = typeof inbound.packetsReceived === "number" ? inbound.packetsReceived : 0;
+
+                    packetsLost = (packetsLost ?? 0) + lost;
+                    packetsReceived = (packetsReceived ?? 0) + received;
+                }
+
+                if (packetsLost !== null || packetsReceived !== null) {
+                    const total = (packetsLost ?? 0) + (packetsReceived ?? 0);
+                    lossPct = total > 0 ? Math.round(((packetsLost ?? 0) / total) * 1000) / 10 : 0;
+                }
+
                 if (this.onPing) this.onPing(rttMs);
+                if (this.onStats) {
+                    this.onStats({ pingMs: rttMs, packetsLost, packetsReceived, lossPct });
+                }
             } catch (e) {
                 console.warn("[WebRTC] Failed to read stats", e);
             }

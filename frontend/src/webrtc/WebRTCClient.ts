@@ -16,7 +16,10 @@ export class WebRTCClient {
         pingMs: number | null;
         packetsLost: number | null;
         packetsReceived: number | null;
+        packetsLostInterval: number | null;
+        packetsReceivedInterval: number | null;
         lossPct: number | null;
+        fps: number | null;
     }) => void) | null = null;
 
     private videoElement: HTMLVideoElement | null = null;
@@ -38,6 +41,8 @@ export class WebRTCClient {
     private recordedChunks: BlobPart[] = [];
     private recordingStartTime: Date | null = null;
     private pingIntervalId: number | null = null;
+    private lossWindow: Array<{ ts: number; lost: number; received: number }> = [];
+    private lastLossSample: { ts: number; lost: number; received: number } | null = null;
     
 
     // ================= OPTIONS ======================
@@ -249,6 +254,9 @@ export class WebRTCClient {
                 let packetsLost: number | null = null;
                 let packetsReceived: number | null = null;
                 let lossPct: number | null = null;
+                let packetsLostInterval: number | null = null;
+                let packetsReceivedInterval: number | null = null;
+                let fps: number | null = null;
 
                 for (const stat of stats.values()) {
                     if (stat.type !== "candidate-pair") continue;
@@ -269,19 +277,57 @@ export class WebRTCClient {
 
                     const lost = typeof inbound.packetsLost === "number" ? inbound.packetsLost : 0;
                     const received = typeof inbound.packetsReceived === "number" ? inbound.packetsReceived : 0;
+                    const inboundFps =
+                        typeof (inbound as any).framesPerSecond === "number"
+                            ? (inbound as any).framesPerSecond
+                            : null;
 
                     packetsLost = (packetsLost ?? 0) + lost;
                     packetsReceived = (packetsReceived ?? 0) + received;
+                    if (inboundFps !== null) {
+                        fps = fps === null ? inboundFps : Math.max(fps, inboundFps);
+                    }
                 }
 
                 if (packetsLost !== null || packetsReceived !== null) {
                     const total = (packetsLost ?? 0) + (packetsReceived ?? 0);
                     lossPct = total > 0 ? Math.round(((packetsLost ?? 0) / total) * 1000) / 10 : 0;
+
+                    // Loss over last 10 seconds (cumulative within window)
+                    const now = Date.now();
+                    if (this.lastLossSample) {
+                        const lostDelta = Math.max(0, (packetsLost ?? 0) - this.lastLossSample.lost);
+                        const recvDelta = Math.max(0, (packetsReceived ?? 0) - this.lastLossSample.received);
+                        this.lossWindow.push({ ts: now, lost: lostDelta, received: recvDelta });
+                        const cutoff = now - 10_000;
+                        while (this.lossWindow.length > 0 && this.lossWindow[0].ts < cutoff) {
+                            this.lossWindow.shift();
+                        }
+                        const lostSum = this.lossWindow.reduce((acc, s) => acc + s.lost, 0);
+                        const recvSum = this.lossWindow.reduce((acc, s) => acc + s.received, 0);
+                        packetsLostInterval = lostSum;
+                        packetsReceivedInterval = recvSum;
+                        const totalSum = lostSum + recvSum;
+                        lossPct = totalSum > 0 ? Math.round((lostSum / totalSum) * 1000) / 10 : 0;
+                    }
+                    this.lastLossSample = {
+                        ts: now,
+                        lost: packetsLost ?? 0,
+                        received: packetsReceived ?? 0,
+                    };
                 }
 
                 if (this.onPing) this.onPing(rttMs);
                 if (this.onStats) {
-                    this.onStats({ pingMs: rttMs, packetsLost, packetsReceived, lossPct });
+                    this.onStats({
+                        pingMs: rttMs,
+                        packetsLost,
+                        packetsReceived,
+                        packetsLostInterval,
+                        packetsReceivedInterval,
+                        lossPct,
+                        fps: fps !== null ? Math.round(fps * 10) / 10 : null,
+                    });
                 }
             } catch (e) {
                 console.warn("[WebRTC] Failed to read stats", e);
@@ -294,6 +340,8 @@ export class WebRTCClient {
             window.clearInterval(this.pingIntervalId);
             this.pingIntervalId = null;
         }
+        this.lossWindow = [];
+        this.lastLossSample = null;
     }
 
     private async deactivateWebrtcSession(robotId: string) {

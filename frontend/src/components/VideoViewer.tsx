@@ -44,7 +44,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       lost: number | null;
       received: number | null;
       pct: number | null;
-    }>({ lost: null, received: null, pct: null });
+      fps: number | null;
+    }>({ lost: null, received: null, pct: null, fps: null });
     const showJoysticksRef = useRef(false);
     const [channelState, setChannelState] = useState({
       ch5: 0,
@@ -162,9 +163,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       };
       client.onStats = (s) => {
         setPacketLoss({
-          lost: s.packetsLost,
-          received: s.packetsReceived,
+          lost: s.packetsLostInterval,
+          received: s.packetsReceivedInterval,
           pct: s.lossPct,
+          fps: s.fps,
         });
       };
       await client.start();
@@ -201,7 +203,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
       setConnected(false);
       setPingMs(null);
-      setPacketLoss({ lost: null, received: null, pct: null });
+      setPacketLoss({ lost: null, received: null, pct: null, fps: null });
 
     }
 
@@ -663,9 +665,12 @@ async function stopRecording()
           <div className="absolute right-6 top-6 z-40 text-gray-200/70 text-sm font-mono pointer-events-none text-left">
             <div>ping: {pingMs ?? "—"} ms</div>
             <div className="text-gray-200/70 text-sm font-mono">
-              loss:{" "}
+              loss/10s:{" "}
               {packetLoss.lost ?? "—"}
               {packetLoss.pct !== null ? ` (${packetLoss.pct}%)` : ""}
+            </div>
+            <div className="text-gray-200/70 text-sm font-mono">
+              fps: {packetLoss.fps ?? "—"}
             </div>
           </div>
         </div>

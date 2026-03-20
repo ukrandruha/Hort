@@ -24,20 +24,73 @@ export async function syncRobotCameras(
       throw new Error(`Robot ${robotId} not registered`);
     }
 
-    // Видалити старі камери перед синхронізацією
-    await tx.robotCamera.deleteMany({
+    const normalized = cameras
+      .map((c) => ({
+        name: (c.name ?? "").trim(),
+        port: (c.port ?? "").trim(),
+      }))
+      .filter((c) => c.port.length > 0);
+
+    // Якщо в payload прийшли дублікати портів, залишаємо останній.
+    const incomingByPort = new Map<string, { name: string; port: string }>();
+    for (const camera of normalized) {
+      incomingByPort.set(camera.port, camera);
+    }
+
+    const incoming = Array.from(incomingByPort.values());
+    const incomingPorts = incoming.map((c) => c.port);
+
+    const existing: Array<{ id: number; port: string; name: string }> = await tx.robotCamera.findMany({
       where: { robotId },
+      select: {
+        id: true,
+        port: true,
+        name: true,
+      },
     });
 
-    // Вставити актуальні камери
-    if (cameras.length > 0) {
+    const existingByPort = new Map<string, { id: number; port: string; name: string }>(
+      existing.map((c) => [c.port, c]),
+    );
+
+    // 1) Видалити камери, яких більше немає в списку cameras.
+    if (incomingPorts.length === 0) {
+      await tx.robotCamera.deleteMany({ where: { robotId } });
+    } else {
+      await tx.robotCamera.deleteMany({
+        where: {
+          robotId,
+          port: { notIn: incomingPorts },
+        },
+      });
+    }
+
+    // 2) Додати нові камери зі списку cameras.
+    const toCreate = incoming.filter((c) => !existingByPort.has(c.port));
+    if (toCreate.length > 0) {
       await tx.robotCamera.createMany({
-        data: cameras.map(c => ({
+        data: toCreate.map((c) => ({
           robotId,
           name: c.name,
           port: c.port,
         })),
       });
+    }
+
+    // 3) Оновити назву для камер, що вже існують.
+    const toUpdate = incoming.filter((c) => {
+      const prev = existingByPort.get(c.port);
+      return !!prev && prev.name !== c.name;
+    });
+    if (toUpdate.length > 0) {
+      await Promise.all(
+        toUpdate.map((c) =>
+          tx.robotCamera.update({
+            where: { robotId_port: { robotId, port: c.port } },
+            data: { name: c.name },
+          }),
+        ),
+      );
     }
 
     return true;

@@ -28,6 +28,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
 
     const [connected, setConnected] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(false);
     const [videoRecord, setvideoRecord] = useState(false);
     const [overlayData, setOverlayData] = useState<any>(null);
     const [recordStart, setRecordStart] = useState<number | null>(null);
@@ -40,6 +41,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
     const [pingMs, setPingMs] = useState<number | null>(null);
+    const [isVideoConnected, setIsVideoConnected] = useState(false);
     const [packetLoss, setPacketLoss] = useState<{
       lost: number | null;
       received: number | null;
@@ -144,8 +146,9 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     // CONNECT CAMERA
     // ============================================
     async function connectCamera() {
+      if (connected || isConnecting) return;
       if (!videoRef.current) return;
-     
+      setIsConnecting(true);
 
       console.log("[UI] Connecting camera…");
 
@@ -159,7 +162,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       };
       client.onPing = (ms) => {
         setPingMs(ms);
-        console.log(`[WebRTC] ping: ${ms ?? "—"} ms`);
+        //console.log(`[WebRTC] ping: ${ms ?? "—"} ms`);
       };
       client.onStats = (s) => {
         setPacketLoss({
@@ -169,12 +172,27 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
           fps: s.fps,
         });
       };
-      await client.start();
-
-      setConnected(true);
-
-      setupGamePadListeners();
-      
+      client.onVideoConnectionStateChange = (isConnectedNow) => {
+        setIsVideoConnected(isConnectedNow);
+      };
+      try {
+        await client.start();
+        setConnected(true);
+        setupGamePadListeners();
+      } catch (e) {
+        console.error("[UI] Failed to connect camera", e);
+        try {
+          await client.stop();
+        } catch (stopError) {
+          console.warn("[UI] Failed to cleanup after connect error", stopError);
+        }
+        if (clientRef.current === client) {
+          clientRef.current = null;
+        }
+        alert("Помилка підключення камери");
+      } finally {
+        setIsConnecting(false);
+      }
     }
     function fullScreen() {
 
@@ -202,6 +220,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
 
       setConnected(false);
+      setIsConnecting(false);
+      setIsVideoConnected(false);
       setPingMs(null);
       setPacketLoss({ lost: null, received: null, pct: null, fps: null });
 
@@ -342,6 +362,7 @@ async function loadCameras() {
     }
 function startRecording() 
 {
+    if (!isVideoConnected) return;
     if (clientRef.current) {
       setvideoRecord(true);
       clientRef.current.startRecording();
@@ -681,9 +702,14 @@ async function stopRecording()
           {!connected && (
             <button
               onClick={connectCamera}
-              className="px-4 py-2 bg-blue-700 rounded hover:bg-blue-800"
+              disabled={isConnecting}
+              className={`px-4 py-2 rounded ${
+                isConnecting
+                  ? "bg-blue-900 cursor-not-allowed opacity-60"
+                  : "bg-blue-700 hover:bg-blue-800"
+              }`}
             >
-              Connect camera
+              {isConnecting ? "Connecting..." : "Connect camera"}
             </button>
           )}
 
@@ -695,14 +721,14 @@ async function stopRecording()
               Disconnect camera
             </button>
           )}
-{!videoRecord && (
+{isVideoConnected && !videoRecord && (
           <button 
           onClick={startRecording}
           className="px-4 py-2 bg-gray-400 rounded hover:bg-red-800">
             🔴 REC
           </button>
 )}
- {videoRecord && (
+ {isVideoConnected && videoRecord && (
             <button
               onClick={stopRecording}
               className="px-4 py-2 bg-gray-400 rounded hover:bg-yellow-700"

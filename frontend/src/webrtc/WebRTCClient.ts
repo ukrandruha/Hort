@@ -1,6 +1,5 @@
 import type { AyameAddStreamEvent, Connection } from "@open-ayame/ayame-web-sdk";
 import { createConnection, defaultOptions } from "@open-ayame/ayame-web-sdk";
-import { signal } from "@preact/signals";
 
 import type { GamepadState } from "../utils/Gamepad.js";
 import { api } from "../api/api";
@@ -12,6 +11,7 @@ export class WebRTCClient {
     // Optional callback invoked when structured data arrives from robot
     public onData: ((data: any) => void) | null = null;
     public onPing: ((ms: number | null) => void) | null = null;
+    public onVideoConnectionStateChange: ((connected: boolean) => void) | null = null;
     public onStats: ((stats: {
         pingMs: number | null;
         packetsLost: number | null;
@@ -24,11 +24,14 @@ export class WebRTCClient {
 
     private videoElement: HTMLVideoElement | null = null;
 
-    private signalingUrl = "wss://andrii.razoom-print.com/signaling";
+    private signalingUrl = (import.meta.env.VITE_WEBRTC_SIGNALING_URL as string | undefined) ?? "";
     private roomIdPrefix = "ukrandruha@";
     private roomName = "";
     private userId = -1;
-    private signalingKey = "ULFkmZABRVve9QbejPrC_wnjKkyeJDtmN69OkYGnxe1vO1Rx";
+    private signalingKey = (import.meta.env.VITE_WEBRTC_SIGNALING_KEY as string | undefined) ?? "";
+    private turnUrl = (import.meta.env.VITE_WEBRTC_TURN_URL as string | undefined) ?? "";
+    private turnUsername = (import.meta.env.VITE_WEBRTC_TURN_USERNAME as string | undefined) ?? "";
+    private turnCredential = (import.meta.env.VITE_WEBRTC_TURN_CREDENTIAL as string | undefined) ?? "";
 
     private clientId = crypto.randomUUID();
     private debug = true;
@@ -43,6 +46,8 @@ export class WebRTCClient {
     private pingIntervalId: number | null = null;
     private lossWindow: Array<{ ts: number; lost: number; received: number }> = [];
     private lastLossSample: { ts: number; lost: number; received: number } | null = null;
+    private sessionActivated = false;
+    private activationInFlight: Promise<void> | null = null;
     
 
     // ================= OPTIONS ======================
@@ -58,9 +63,9 @@ export class WebRTCClient {
         opt.iceServers = [
             { urls: "stun:stun.l.google.com:19302" },
             {
-                urls: "turn:andrii.razoom-print.com:3478?transport=udp",
-                username: "webrtc",
-                credential: "password123"
+                urls: this.turnUrl,
+                username: this.turnUsername,
+                credential: this.turnCredential
             }
         ];
 
@@ -82,9 +87,9 @@ export class WebRTCClient {
     // =================================================
     async start() {
         console.log(`[WebRTC] Starting for robot ${this.robotId}`);
+        this.validateConfig();
 
-        await this.connectA();
-        await this.connectB();
+        await Promise.all([this.connectA(), this.connectB()]);
 
         console.log("[WebRTC] Both connections established");
     }
@@ -93,7 +98,9 @@ export class WebRTCClient {
     // CONNECTION A — DataChannel
     // =================================================
     private connectA = async () => {
+        this.stopConnectionA();
         const roomId = `${this.roomIdPrefix}${this.roomName}-Data`;
+        const connectTimeoutMs = 15_000;
 
         this.connA = createConnection(
             this.signalingUrl,
@@ -102,67 +109,69 @@ export class WebRTCClient {
             this.debug
         );
 
-        this.connA.on("open", async () => {
-            if (!this.connA) return;
+        const connected = new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const done = (fn: () => void) => {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timeoutId);
+                fn();
+            };
+            const timeoutId = window.setTimeout(() => {
+                done(() => reject(new Error("[A] Timed out while connecting data channel")));
+            }, connectTimeoutMs);
 
-            const pc = this.connA.peerConnection;
-            if (pc) {
-                pc.onconnectionstatechange = () => {
-                    console.log("[A] state:", pc.connectionState);
-                };
-            }
-
-            // Create DataChannel
-            this.dataChannel = await this.connA.createDataChannel("robot-control", {
-                ordered: false,
-                maxRetransmits: 0,
+            this.connA?.on("disconnect", () => {
+                done(() => reject(new Error("[A] Disconnected before data channel opened")));
             });
 
-            if (this.dataChannel) {
-                console.log("[A] DataChannel created");
+            this.connA?.on("open", async () => {
+                if (!this.connA) return;
 
-                this.dataChannel.onopen = () => {
-                    console.log("[A] DataChannel open");
-                };
+                const pc = this.connA.peerConnection;
+                if (pc) {
+                    pc.onconnectionstatechange = () => {
+                        console.log("[A] state:", pc.connectionState);
+                    };
+                }
 
-                this.dataChannel.onmessage = (msg) => {
-                    const text = new TextDecoder("utf-8").decode(msg.data);
-                    console.log("[A] Message:", text);
-                    // Try to parse JSON-like payloads and call onData callback
-                    try {
-                        let parsed: any = null;
-                        try {
-                            parsed = JSON.parse(text);
-                        } catch (e) {
-                            // Fallback: replace single quotes with double quotes for python-style dicts
-                            const maybeJson = text.replace(/\'/g, '"');
-                            parsed = JSON.parse(maybeJson);
-                        }
+                // Create DataChannel
+                this.dataChannel = await this.connA.createDataChannel("robot-control", {
+                    ordered: false,
+                    maxRetransmits: 0,
+                });
 
-                        if (parsed && this.onData) {
-                            this.onData(parsed);
-                        }
-                    } catch (e) {
-                        if (this.onData) {
-                            this.onData({ raw: text });
-                        }
-                    }
-                };
-            }
+                if (this.dataChannel) {
+                    console.log("[A] DataChannel created");
+
+                    this.dataChannel.onopen = () => {
+                        console.log("[A] DataChannel open");
+                        done(resolve);
+                    };
+
+                    this.dataChannel.onmessage = async (msg) => {
+                        const text = await this.decodeDataChannelMessage(msg.data);
+                        if (text === null) return;
+                        console.log("[A] Message:", text);
+                        this.handleIncomingData(text);
+                    };
+                } else {
+                    done(() => reject(new Error("[A] Failed to create data channel")));
+                }
+            });
         });
 
-        // this.connA.on("disconnect", () => {
-        //     console.warn("[A] Disconnected");
-        //     this.connA = null;
-        // });
         this.connA.connect(null);
+        await connected;
     };
 
     // =================================================
     // CONNECTION B — Video Stream
     // =================================================
     private connectB = async () => {
+        this.stopConnectionB();
         const roomId = `${this.roomIdPrefix}${this.roomName}-VideoA`;
+        const connectTimeoutMs = 20_000;
 
         this.connB = createConnection(
             this.signalingUrl,
@@ -177,38 +186,68 @@ export class WebRTCClient {
             }
         });
 
-        this.connB.on("open", () => {
-            const pc = this.connB?.peerConnection;
+        const connected = new Promise<void>((resolve, reject) => {
+            let settled = false;
+            const done = (fn: () => void) => {
+                if (settled) return;
+                settled = true;
+                window.clearTimeout(timeoutId);
+                fn();
+            };
+            const timeoutId = window.setTimeout(() => {
+                done(() => reject(new Error("[B] Timed out while connecting media stream")));
+            }, connectTimeoutMs);
 
-
-            if (pc) {
-                try {
-
-
-                } catch (e) {
-                    alert(e);
-                    console.error(e);
+            this.connB?.on("disconnect", () => {
+                console.warn("[B] Disconnected");
+                this.stopPingStats();
+                if (this.onVideoConnectionStateChange) this.onVideoConnectionStateChange(false);
+                if (!settled) {
+                    done(() => reject(new Error("[B] Disconnected before connected state")));
                 }
+            });
 
-                pc.onconnectionstatechange = () => {
-                    console.log("[B] state:", pc.connectionState);
+            this.connB?.on("open", () => {
+                const pc = this.connB?.peerConnection;
+                if (pc) {
+                    pc.onconnectionstatechange = () => {
+                        console.log("[B] state:", pc.connectionState);
+                        if (this.onVideoConnectionStateChange) {
+                            this.onVideoConnectionStateChange(pc.connectionState === "connected");
+                        }
+                        if (pc.connectionState === "connected") {
+                            void this.ensureSessionActivated(this.roomName);
+                            this.startPingStats(pc);
+                            done(resolve);
+                        }
+                    };
                     if (pc.connectionState === "connected") {
-                        this.activateWebrtcSession(this.roomName);
+                        void this.ensureSessionActivated(this.roomName);
                         this.startPingStats(pc);
+                        done(resolve);
                     }
-                };
-            }
-        });
-
-        this.connB.on("disconnect", () => {
-            console.warn("[B] Disconnected");
-            this.stopPingStats();
-            //this.updateRobotWebRtcConnect(this.roomName, null);
-            //     this.connB = null;
+                } else {
+                    done(() => reject(new Error("[B] PeerConnection not available after open")));
+                }
+            });
         });
 
         this.connB.connect(null);
+        await connected;
     };
+
+    private async ensureSessionActivated(robotId: string) {
+        if (this.sessionActivated) return;
+        if (this.activationInFlight) return this.activationInFlight;
+        this.activationInFlight = this.activateWebrtcSession(robotId)
+            .then(() => {
+                this.sessionActivated = true;
+            })
+            .finally(() => {
+                this.activationInFlight = null;
+            });
+        return this.activationInFlight;
+    }
 
     private async activateWebrtcSession(robotId: string) {
         try {
@@ -229,9 +268,10 @@ export class WebRTCClient {
     async stop() {
         console.log("[WebRTC] Stopping...");
 
-        if (this.connA) await this.connA.disconnect();
-        if (this.connB) await this.connB.disconnect();
+        this.stopConnectionA();
+        this.stopConnectionB();
         this.stopPingStats();
+        if (this.onVideoConnectionStateChange) this.onVideoConnectionStateChange(false);
 
         this.connA = null;
         this.connB = null;
@@ -240,7 +280,11 @@ export class WebRTCClient {
             this.videoElement.srcObject = null;
         }
 
-        await this.deactivateWebrtcSession(this.roomName);
+        if (this.sessionActivated || this.activationInFlight) {
+            await this.deactivateWebrtcSession(this.roomName);
+            this.sessionActivated = false;
+            this.activationInFlight = null;
+        }
 
         //this.updateRobotWebRtcConnect(this.roomName, null);
     }
@@ -344,6 +388,70 @@ export class WebRTCClient {
         this.lastLossSample = null;
     }
 
+    private stopConnectionA() {
+        const conn = this.connA;
+        this.connA = null;
+        this.dataChannel = null;
+        if (conn) {
+            void conn.disconnect().catch((e) => {
+                console.warn("[A] Failed to disconnect", e);
+            });
+        }
+    }
+
+    private stopConnectionB() {
+        const conn = this.connB;
+        this.connB = null;
+        if (conn) {
+            void conn.disconnect().catch((e) => {
+                console.warn("[B] Failed to disconnect", e);
+            });
+        }
+    }
+
+    private validateConfig() {
+        const missing: string[] = [];
+        if (!this.signalingUrl) missing.push("VITE_WEBRTC_SIGNALING_URL");
+        if (!this.signalingKey) missing.push("VITE_WEBRTC_SIGNALING_KEY");
+        if (!this.turnUrl) missing.push("VITE_WEBRTC_TURN_URL");
+        if (!this.turnUsername) missing.push("VITE_WEBRTC_TURN_USERNAME");
+        if (!this.turnCredential) missing.push("VITE_WEBRTC_TURN_CREDENTIAL");
+
+        if (missing.length > 0) {
+            throw new Error(`[WebRTC] Missing required env vars: ${missing.join(", ")}`);
+        }
+    }
+
+    private async decodeDataChannelMessage(data: string | Blob | ArrayBuffer | ArrayBufferView): Promise<string | null> {
+        if (typeof data === "string") return data;
+        if (data instanceof Blob) return data.text();
+        if (data instanceof ArrayBuffer) return new TextDecoder("utf-8").decode(new Uint8Array(data));
+        if (ArrayBuffer.isView(data)) return new TextDecoder("utf-8").decode(data);
+        return null;
+    }
+
+    private handleIncomingData(text: string) {
+        // Try to parse JSON-like payloads and call onData callback
+        try {
+            let parsed: any = null;
+            try {
+                parsed = JSON.parse(text);
+            } catch (e) {
+                // Fallback: replace single quotes with double quotes for python-style dicts
+                const maybeJson = text.replace(/\'/g, '"');
+                parsed = JSON.parse(maybeJson);
+            }
+
+            if (parsed && this.onData) {
+                this.onData(parsed);
+            }
+        } catch (e) {
+            if (this.onData) {
+                this.onData({ raw: text });
+            }
+        }
+    }
+
     private async deactivateWebrtcSession(robotId: string) {
         try {
             await api.post(`/api/robots/robot-sessions/deactivateWebrtc`, {
@@ -375,7 +483,7 @@ export class WebRTCClient {
             state.ch4, state.ch5, state.ch6, state.ch7,state.ch8,
             state.b1, state.b2, state.b3, state.b4,
         ];
-        console.log(state.ch1, state.ch2, state.b1, state.b2, state.b3, state.b4);
+        //console.log(state.ch1, state.ch2, state.b1, state.b2, state.b3, state.b4);
         const buf = new Uint8Array(Math.ceil((values.length * 10) / 8));
         let acc = 0;
         let accBits = 0;

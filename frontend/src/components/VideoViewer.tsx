@@ -417,7 +417,8 @@ async function stopRecording()
               {overlayData ? (
                 overlayData.raw ? String(overlayData.raw) : (
                   overlayData.v !== undefined ? [
-                    `v: ${overlayData.v}`,
+                    `B1: ${overlayData.v}v`,
+                    `B2: ${overlayData.v2}v`,
                     `i: ${overlayData.i}`,
                     `p: ${overlayData.p}`,
                     `wh: ${overlayData.wh}`,

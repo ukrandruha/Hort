@@ -449,7 +449,7 @@ async function stopRecording()
                     `i: ${overlayData.i}`,
                     //`p: ${overlayData.p}`,
                     //`wh: ${overlayData.wh}`,
-                    `S: ${overlayData.gps?.satellites_visible ?? "—"}`,
+                    `Sat: ${overlayData.gps?.satellites_visible ?? "—"}`,
                   ].join("  ") : JSON.stringify(overlayData)
                 )
               ) : null}

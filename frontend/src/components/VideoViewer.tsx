@@ -38,6 +38,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [cameraId, setCameraId] = useState<string>("");
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
+    const [mapTarget, setMapTarget] = useState<[number, number] | null>(null);
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
     const [pingMs, setPingMs] = useState<number | null>(null);
@@ -136,6 +137,22 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       );
     };
 
+    const hasEnoughSatellites = (gps: any): gps is {
+      lat: number;
+      lon: number;
+      satellites_visible: number;
+      fix_type: number;
+    } => {
+      if (!gps) return false;
+      const lat = Number(gps.lat);
+      const lon = Number(gps.lon);
+      const satellites = Number(gps.satellites_visible);
+      const fixType = Number(gps.fix_type);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) return false;
+      if (lat === 0 && lon === 0) return false;
+      return satellites >= 4 && fixType >= 2;
+    };
+
     useEffect(() => {
       showJoysticksRef.current = showJoysticks;
     }, [showJoysticks]);
@@ -165,6 +182,9 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       // receive parsed data from robot and show in header
       client.onData = (d: any) => {
         setOverlayData(d);
+        if (hasEnoughSatellites(d?.gps)) {
+          setMapTarget([d.gps.lat, d.gps.lon]);
+        }
       };
       client.onPing = (ms) => {
         setPingMs(ms);
@@ -228,6 +248,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setConnected(false);
       setIsConnecting(false);
       setIsVideoConnected(false);
+      setMapTarget(null);
       setPingMs(null);
       setPacketLoss({ lost: null, received: null, pct: null, fps: null });
 
@@ -426,8 +447,9 @@ async function stopRecording()
                     `B1: ${overlayData.v}v`,
                     `B2: ${overlayData.v2}v`,
                     `i: ${overlayData.i}`,
-                    `p: ${overlayData.p}`,
-                    `wh: ${overlayData.wh}`,
+                    //`p: ${overlayData.p}`,
+                    //`wh: ${overlayData.wh}`,
+                    `S: ${overlayData.gps?.satellites_visible ?? "—"}`,
                   ].join("  ") : JSON.stringify(overlayData)
                 )
               ) : null}
@@ -495,7 +517,7 @@ async function stopRecording()
               w-72 h-56 rounded-lg overflow-hidden shadow-xl 
               border border-gray-700 bg-gray-900"
             >
-              <DroneMap robot={robot} />
+              <DroneMap robot={robot} gpsTarget={mapTarget} />
             </div>
           )}
 

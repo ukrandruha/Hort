@@ -132,9 +132,11 @@ function MovingDrone({ position }: { position: [number, number] }) {
 export default function LeafletMap({
   robotId,
   fullscreen,
+  gpsTarget,
 }: {
-  robotId: number;
+  robotId: string;
   fullscreen: boolean;
+  gpsTarget?: [number, number] | null;
 }) {
   const [pos, setPos] = useState<[number, number]>([
     48.4629585,
@@ -181,6 +183,13 @@ export default function LeafletMap({
     hasReachedStartRef.current = false;
     setShowStartLine(true);
   }, [startPoint]);
+
+  useEffect(() => {
+    if (!gpsTarget) return;
+    const [lat, lng] = gpsTarget;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    setPos([lat, lng]);
+  }, [gpsTarget]);
 
 
 

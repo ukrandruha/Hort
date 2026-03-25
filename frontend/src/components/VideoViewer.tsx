@@ -140,6 +140,12 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       showJoysticksRef.current = showJoysticks;
     }, [showJoysticks]);
 
+    useEffect(() => {
+      if (!showJoysticks) {
+        setShowChannels(false);
+      }
+    }, [showJoysticks]);
+
 
 
     // ============================================
@@ -511,19 +517,21 @@ async function stopRecording()
             >
               🎮
             </button>
-            <button
-              onClick={() => setShowChannels((prev) => !prev)}
-              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
-              title={showChannels ? "Hide channels" : "Show channels"}
-              aria-label={showChannels ? "Hide channels" : "Show channels"}
-            >
-              🎛️
-            </button>
+            {showJoysticks && (
+              <button
+                onClick={() => setShowChannels((prev) => !prev)}
+                className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
+                title={showChannels ? "Hide channels" : "Show channels"}
+                aria-label={showChannels ? "Hide channels" : "Show channels"}
+              >
+                🎛️
+              </button>
+            )}
           </div>
 
           <div
             className={`absolute left-6 top-24 w-80 bg-gray-900/95 border border-gray-700 rounded-lg shadow-xl p-4 z-40 transition-[opacity,transform] duration-300 ease-out ${
-              showChannels
+              showJoysticks && showChannels
                 ? "opacity-100 translate-y-0 pointer-events-auto"
                 : "opacity-0 -translate-y-6 pointer-events-none"
             }`}

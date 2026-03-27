@@ -141,16 +141,14 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       lat: number;
       lon: number;
       satellites_visible: number;
-      fix_type: number;
     } => {
       if (!gps) return false;
       const lat = Number(gps.lat);
       const lon = Number(gps.lon);
       const satellites = Number(gps.satellites_visible);
-      const fixType = Number(gps.fix_type);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return false;
       if (lat === 0 && lon === 0) return false;
-      return satellites >= 4 && fixType >= 2;
+      return satellites >= 4;
     };
 
     useEffect(() => {
@@ -450,6 +448,7 @@ async function stopRecording()
                     //`p: ${overlayData.p}`,
                     //`wh: ${overlayData.wh}`,
                     `Sat: ${overlayData.gps?.satellites_visible ?? "—"}`,
+                    `\\ ${overlayData.gps?.hdop ?? "—"}`
                   ].join("  ") : JSON.stringify(overlayData)
                 )
               ) : null}

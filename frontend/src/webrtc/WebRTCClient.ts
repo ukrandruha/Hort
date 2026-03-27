@@ -37,6 +37,8 @@ export class WebRTCClient {
     private debug = true;
 
     private dataChannel: RTCDataChannel | null = null;
+    private dataChannelTelem: RTCDataChannel | null = null;
+
     private connA: Connection | null = null;
     private connB: Connection | null = null;
 
@@ -207,7 +209,8 @@ export class WebRTCClient {
                 }
             });
 
-            this.connB?.on("open", () => {
+            this.connB?.on("open", async () => {
+                if (!this.connB) return;
                 const pc = this.connB?.peerConnection;
                 if (pc) {
                     pc.onconnectionstatechange = () => {
@@ -226,9 +229,36 @@ export class WebRTCClient {
                         this.startPingStats(pc);
                         done(resolve);
                     }
+
+                    
                 } else {
                     done(() => reject(new Error("[B] PeerConnection not available after open")));
                 }
+
+                // Create DataChannel
+                this.dataChannelTelem = await this.connB.createDataChannel("robot-telemetr", {
+                    ordered: false,
+                    maxRetransmits: 0,
+                });
+
+                if (this.dataChannelTelem) {
+                    console.log("[B] DataChannel created");
+
+                    this.dataChannelTelem.onopen = () => {
+                        console.log("[A] DataChannel open");
+                        done(resolve);
+                    };
+
+                    this.dataChannelTelem.onmessage = async (msg) => {
+                        const text = await this.decodeDataChannelMessage(msg.data);
+                        if (text === null) return;
+                        console.log("[B] Message:", text);
+                        this.handleIncomingData(text);
+                    };
+                } else {
+                    done(() => reject(new Error("[A] Failed to create data channel")));
+                }
+
             });
         });
 

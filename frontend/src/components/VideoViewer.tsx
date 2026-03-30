@@ -121,20 +121,21 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     };
 
     const hasGamepadChanged = (prev: GamepadState, next: GamepadState) => {
-      return (
-        prev.ch1 !== next.ch1 ||
-        prev.ch2 !== next.ch2 ||
-        prev.ch3 !== next.ch3 ||
-        prev.ch4 !== next.ch4 ||
-        prev.ch5 !== next.ch5 ||
-        prev.ch6 !== next.ch6 ||
-        prev.ch7 !== next.ch7 ||
-        prev.ch8 !== next.ch8 ||
-        prev.b1 !== next.b1 ||
-        prev.b2 !== next.b2 ||
-        prev.b3 !== next.b3 ||
-        prev.b4 !== next.b4
-      );
+      return true;
+      // return (
+      //   prev.ch1 !== next.ch1 ||
+      //   prev.ch2 !== next.ch2 ||
+      //   prev.ch3 !== next.ch3 ||
+      //   prev.ch4 !== next.ch4 ||
+      //   prev.ch5 !== next.ch5 ||
+      //   prev.ch6 !== next.ch6 ||
+      //   prev.ch7 !== next.ch7 ||
+      //   prev.ch8 !== next.ch8 ||
+      //   prev.b1 !== next.b1 ||
+      //   prev.b2 !== next.b2 ||
+      //   prev.b3 !== next.b3 ||
+      //   prev.b4 !== next.b4
+      // );
     };
 
     const hasEnoughSatellites = (gps: any): gps is {

@@ -184,7 +184,12 @@ export async function editRobot(id: string, data:RobotUpdateData) {
     const { robotId, reason, disconnectedBy, force } = params;
 
     const session = await prisma.robotSession.findFirst({
-      where: { robotId: robotId, status: RobotSessionStatus.ACTIVE },
+      where: {
+        robotId: robotId,
+        status: {
+          in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC],
+        },
+      },
     });
 
     if (!session) {
@@ -245,7 +250,12 @@ export async function editRobot(id: string, data:RobotUpdateData) {
     const { robotId, reason, requestedBy } = params;
 
     const session = await prisma.robotSession.findFirst({
-      where: { robotId: robotId, status: RobotSessionStatus.ACTIVE },
+      where: {
+        robotId: robotId,
+        status: {
+          in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC],
+        },
+      },
     });
 
     if (!session) {

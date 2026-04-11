@@ -122,7 +122,7 @@ export default function RobotTable() {
     }
   }
 
-  async function requestDisconect(robotId: string) {
+  async function requestDisconnect(robotId: string) {
     if (!userId) {
       alert("User ID not available");
       return;
@@ -135,7 +135,7 @@ export default function RobotTable() {
         disconnectedBy: userId.toString(),
         force: true
       };
-      await api.post(`api/robots/robot-sessions/disconnect`, disconnectData);
+      await api.post(`/api/robots/robot-sessions/disconnect`, disconnectData);
     } catch (e) {
       alert(String(e));
     }
@@ -299,8 +299,8 @@ async function  parseQgcWaypoints(
             const isWebRtcOff = Date.now() - lastSeenDate.getTime() > 30000;
             const cloudColor = isOffline ? "text-red-500" : "text-green-400";
 
-            const requestdisconect = r.sessionStatus === "DISCONNECT_REQUESTED";
-            const operatorColor = requestdisconect ? "text-yellow-400" : "text-green-400";
+            const disconnectRequested = r.sessionStatus === "DISCONNECT_REQUESTED";
+            const operatorColor = disconnectRequested ? "text-yellow-400" : "text-green-400";
 
             return (
               <tr key={r.robotId} className="border-b border-gray-700">
@@ -386,11 +386,11 @@ async function  parseQgcWaypoints(
             className="w-full text-left px-4 py-2 text-red-400 hover:bg-red-600 hover:text-white"
             onClick={() => {
              // deleteRobot(r.robotId);
-              requestDisconect(r.robotId)
+              requestDisconnect(r.robotId)
               setOpenMenuId(null);
             }}
           >
-            Disconect
+            Disconnect
           </button>
 
           <button

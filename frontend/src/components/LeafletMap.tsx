@@ -228,7 +228,7 @@ export default function LeafletMap({
   return (
     <LeafletMapBase
       center={pos}
-      zoom={13}
+      zoom={21}
       scrollWheelZoom={fullscreen}
       style={{ width: "100%", height: "100%" }}
     >

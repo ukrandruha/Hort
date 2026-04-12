@@ -185,10 +185,10 @@ export async function editRobot(id: string, data:RobotUpdateData) {
 
     const session = await prisma.robotSession.findFirst({
       where: {
-        robotId: robotId,
-        status: {
-          in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC],
-        },
+        robotId: robotId
+        // status: {
+        //   in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC],
+        // },
       },
     });
 
@@ -251,10 +251,10 @@ export async function editRobot(id: string, data:RobotUpdateData) {
 
     const session = await prisma.robotSession.findFirst({
       where: {
-        robotId: robotId,
-        status: {
-          in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC],
-        },
+        robotId: robotId
+        // status: {
+        //   in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC],
+        // },
       },
     });
 
@@ -284,8 +284,8 @@ export async function editRobot(id: string, data:RobotUpdateData) {
 
     const session = await prisma.robotSession.findFirst({
       where: {
-        robotId: robotId,
-        status: { in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC] },
+        robotId: robotId
+        //status: { in: [RobotSessionStatus.ACTIVE, RobotSessionStatus.ACTIVE_WEBRTC] },
       },
     });
 
@@ -313,8 +313,8 @@ export async function editRobot(id: string, data:RobotUpdateData) {
 
     const session = await prisma.robotSession.findFirst({
       where: {
-        robotId: robotId,
-        status: { in: [RobotSessionStatus.ACTIVE_WEBRTC, RobotSessionStatus.ACTIVE] },
+        robotId: robotId
+        //status: { in: [RobotSessionStatus.ACTIVE_WEBRTC, RobotSessionStatus.ACTIVE] },
       },
     });
 

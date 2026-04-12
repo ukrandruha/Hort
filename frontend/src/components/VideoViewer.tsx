@@ -38,6 +38,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [cameraId, setCameraId] = useState<string>("");
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
+    const [mapInMainView, setMapInMainView] = useState(false);
     const [mapTarget, setMapTarget] = useState<[number, number] | null>(null);
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
@@ -266,6 +267,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setIsConnecting(false);
       setIsVideoConnected(false);
       setMapTarget(null);
+      setMapInMainView(false);
       setPingMs(null);
       setPacketLoss({ lost: null, received: null, pct: null, fps: null });
 
@@ -524,16 +526,30 @@ async function stopRecording()
             ref={videoRef}
             autoPlay
             playsInline
-            className="absolute inset-0 w-full h-full object-contain"
+            className={`absolute object-contain ${
+              showMap && mapInMainView
+                ? "top-6 left-[49px] w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 z-[1200] cursor-pointer"
+                : "inset-0 w-full h-full"
+            }`}
+            onClick={showMap && mapInMainView ? () => setMapInMainView(false) : undefined}
+            title={showMap && mapInMainView ? "Show video in main view" : undefined}
           />
 
+          {showMap && mapInMainView && (
+            <div className="absolute inset-0 z-10">
+              <DroneMap robot={robot} gpsTarget={mapTarget} />
+            </div>
+          )}
+
           {/* MAP PIP */}
-          {showMap && (
+          {showMap && !mapInMainView && (
             <div
               className="
-              absolute top-6 left-6 
+              absolute top-6 left-[49px] 
               w-72 h-56 rounded-lg overflow-hidden shadow-xl 
-              border border-gray-700 bg-gray-900"
+              border border-gray-700 bg-gray-900 z-30 cursor-pointer"
+              onClick={() => setMapInMainView(true)}
+              title="Show map in main view"
             >
               <DroneMap robot={robot} gpsTarget={mapTarget} />
             </div>
@@ -542,7 +558,15 @@ async function stopRecording()
           {/* Floating controls (right side) */}
           <div className="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-40">
             <button
-              onClick={() => setShowMap((prev) => !prev)}
+              onClick={() =>
+                setShowMap((prev) => {
+                  const next = !prev;
+                  if (!next) {
+                    setMapInMainView(false);
+                  }
+                  return next;
+                })
+              }
               className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
               title={showMap ? "Hide map" : "Show map"}
               aria-label={showMap ? "Hide map" : "Show map"}

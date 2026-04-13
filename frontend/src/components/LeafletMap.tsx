@@ -38,6 +38,35 @@ function createCircleIcon(color: string) {
   });
 }
 
+function createDroneHeadingIcon(heading: number | null) {
+  const rotation = Number.isFinite(heading) ? heading ?? 0 : 0;
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: rotate(${rotation}deg);
+        transform-origin: 50% 50%;
+      ">
+        <div style="
+          width: 0;
+          height: 0;
+          border-left: 9px solid transparent;
+          border-right: 9px solid transparent;
+          border-bottom: 18px solid #27ae60;
+          filter: drop-shadow(0 0 4px rgba(0,0,0,0.6));
+        "></div>
+      </div>
+    `,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
+}
+
 function createPointIcon(number: number) {
   return L.divIcon({
     className: "",
@@ -107,10 +136,16 @@ function StartLineManager({
   return null;
 }
 
-function MovingDrone({ position }: { position: [number, number] }) {
-  //const markerRef = useRef<L.Marker | null>(null);
-    const markerRef = useRef(null);
-    
+function MovingDrone({
+  position,
+  heading,
+}: {
+  position: [number, number];
+  heading: number | null;
+}) {
+  const markerRef = useRef<L.Marker | null>(null);
+  const markerIcon = useMemo(() => createDroneHeadingIcon(heading), [heading]);
+
   useEffect(() => {
     if (markerRef.current) {
       markerRef.current.setLatLng(position);
@@ -123,7 +158,7 @@ function MovingDrone({ position }: { position: [number, number] }) {
   return     <Marker
       ref={markerRef}
       position={position}
-      icon={createCircleIcon("#27ae60")}
+      icon={markerIcon}
       zIndexOffset={1000}
     />;
 }
@@ -133,10 +168,12 @@ export default function LeafletMap({
   robotId,
   fullscreen,
   gpsTarget,
+  heading = null,
 }: {
   robotId: string;
   fullscreen: boolean;
   gpsTarget?: [number, number] | null;
+  heading?: number | null;
 }) {
   const [pos, setPos] = useState<[number, number]>([
     48.4629585,
@@ -235,7 +272,7 @@ export default function LeafletMap({
       <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
       {/* DRONE */}
-      <MovingDrone position={pos}  />
+      <MovingDrone position={pos} heading={heading} />
 
        <MapFollower target={pos} />
        <StartLineManager

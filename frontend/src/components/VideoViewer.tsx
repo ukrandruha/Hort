@@ -40,6 +40,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showMap, setShowMap] = useState(false);
     const [mapInMainView, setMapInMainView] = useState(false);
     const [mapTarget, setMapTarget] = useState<[number, number] | null>(null);
+    const [mapHeading, setMapHeading] = useState<number | null>(null);
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
     const [pingMs, setPingMs] = useState<number | null>(null);
@@ -203,6 +204,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         if (hasEnoughSatellites(d?.gps)) {
           setMapTarget([d.gps.lat, d.gps.lon]);
         }
+        const heading = Number(d?.gps?.compas);
+        if (Number.isFinite(heading)) {
+          setMapHeading(((heading % 360) + 360) % 360);
+        }
       };
       client.onPing = (ms) => {
         setPingMs(ms);
@@ -267,6 +272,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setIsConnecting(false);
       setIsVideoConnected(false);
       setMapTarget(null);
+      setMapHeading(null);
       setMapInMainView(false);
       setPingMs(null);
       setPacketLoss({ lost: null, received: null, pct: null, fps: null });
@@ -537,7 +543,7 @@ async function stopRecording()
 
           {showMap && mapInMainView && (
             <div className="absolute inset-0 z-10">
-              <DroneMap robot={robot} gpsTarget={mapTarget} />
+              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} />
             </div>
           )}
 
@@ -551,7 +557,7 @@ async function stopRecording()
               onClick={() => setMapInMainView(true)}
               title="Show map in main view"
             >
-              <DroneMap robot={robot} gpsTarget={mapTarget} />
+              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} />
             </div>
           )}
 

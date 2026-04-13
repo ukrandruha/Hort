@@ -594,10 +594,10 @@ async function stopRecording()
           </div>
 
           <div
-            className={`absolute left-6 top-24 w-80 bg-gray-900/95 border border-gray-700 rounded-lg shadow-xl p-4 z-40 transition-[opacity,transform] duration-300 ease-out ${
+            className={`absolute left-1/2 top-1/2 w-80 bg-gray-900/75 border border-gray-700 rounded-lg shadow-xl p-4 z-40 transition-[opacity,transform] duration-300 ease-out ${
               showJoysticks && showChannels
-                ? "opacity-100 translate-y-0 pointer-events-auto"
-                : "opacity-0 -translate-y-6 pointer-events-none"
+                ? "opacity-100 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+                : "opacity-0 -translate-x-1/2 -translate-y-[60%] pointer-events-none"
             }`}
           >
             <div className="text-gray-200 font-semibold mb-3">Channels</div>
@@ -608,10 +608,10 @@ async function stopRecording()
                   <button
                     key={`ch5-${v}`}
                     onClick={() => setChannelValue("ch5", v)}
-                    className={`px-2 py-1 rounded border text-sm ${
+                    className={`px-2 h-[25px] rounded border text-sm flex items-center justify-center ${
                       channelState.ch5 === v
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 border-blue-500/80 text-white"
+                        : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:bg-gray-700/80"
                     }`}
                   >
                     {v}
@@ -624,10 +624,10 @@ async function stopRecording()
                   <button
                     key={`ch6-${v}`}
                     onClick={() => setChannelValue("ch6", v)}
-                    className={`px-2 py-1 rounded border text-sm ${
+                    className={`px-2 h-[25px] rounded border text-sm flex items-center justify-center ${
                       channelState.ch6 === v
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 border-blue-500/80 text-white"
+                        : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:bg-gray-700/80"
                     }`}
                   >
                     {v}
@@ -640,10 +640,10 @@ async function stopRecording()
                   <button
                     key={`ch7-${v}`}
                     onClick={() => setChannelValue("ch7", v)}
-                    className={`px-2 py-1 rounded border text-sm ${
+                    className={`px-2 h-[25px] rounded border text-sm flex items-center justify-center ${
                       channelState.ch7 === v
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 border-blue-500/80 text-white"
+                        : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:bg-gray-700/80"
                     }`}
                   >
                     {v}
@@ -656,10 +656,10 @@ async function stopRecording()
                   <button
                     key={`ch8-${v}`}
                     onClick={() => setChannelValue("ch8", v)}
-                    className={`px-2 py-1 rounded border text-sm ${
+                    className={`px-2 h-[25px] rounded border text-sm flex items-center justify-center ${
                       channelState.ch8 === v
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 border-blue-500/80 text-white"
+                        : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:bg-gray-700/80"
                     }`}
                   >
                     {v}
@@ -672,10 +672,10 @@ async function stopRecording()
                   <button
                     key={`ch9-${v}`}
                     onClick={() => setChannelValue("b1", v)}
-                    className={`px-2 py-1 rounded border text-sm ${
+                    className={`px-2 h-[25px] rounded border text-sm flex items-center justify-center ${
                       channelState.b1 === v
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 border-blue-500/80 text-white"
+                        : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:bg-gray-700/80"
                     }`}
                   >
                     {v}
@@ -688,10 +688,10 @@ async function stopRecording()
                   <button
                     key={`ch10-${v}`}
                     onClick={() => setChannelValue("b2", v)}
-                    className={`px-2 py-1 rounded border text-sm ${
+                    className={`px-2 h-[25px] rounded border text-sm flex items-center justify-center ${
                       channelState.b2 === v
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 border-blue-500/80 text-white"
+                        : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:bg-gray-700/80"
                     }`}
                   >
                     {v}
@@ -704,10 +704,10 @@ async function stopRecording()
                   <button
                     key={`ch11-${v}`}
                     onClick={() => setChannelValue("b3", v)}
-                    className={`px-2 py-1 rounded border text-sm ${
+                    className={`px-2 h-[25px] rounded border text-sm flex items-center justify-center ${
                       channelState.b3 === v
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 border-blue-500/80 text-white"
+                        : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:bg-gray-700/80"
                     }`}
                   >
                     {v}
@@ -720,10 +720,10 @@ async function stopRecording()
                   <button
                     key={`ch12-${v}`}
                     onClick={() => setChannelValue("b4", v)}
-                    className={`px-2 py-1 rounded border text-sm ${
+                    className={`px-2 h-[25px] rounded border text-sm flex items-center justify-center ${
                       channelState.b4 === v
-                        ? "bg-blue-600 border-blue-500 text-white"
-                        : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        ? "bg-blue-600/80 border-blue-500/80 text-white"
+                        : "bg-gray-800/80 border-gray-700/80 text-gray-300 hover:bg-gray-700/80"
                     }`}
                   >
                     {v}

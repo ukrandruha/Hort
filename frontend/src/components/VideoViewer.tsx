@@ -45,6 +45,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
     const [isSavingHome, setIsSavingHome] = useState(false);
+    const [showRthPath, setShowRthPath] = useState(false);
     const [pingMs, setPingMs] = useState<number | null>(null);
     const [isVideoConnected, setIsVideoConnected] = useState(false);
     const [packetLoss, setPacketLoss] = useState<{
@@ -187,6 +188,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
     useEffect(() => {
       setSavedHomeTarget(null);
+      setShowRthPath(false);
     }, [robot?.robotId]);
 
     const clearHomeLongPress = () => {
@@ -329,6 +331,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setMapTarget(null);
       setSavedHomeTarget(null);
       setMapHeading(null);
+      setShowRthPath(false);
       setMapInMainView(false);
       setPingMs(null);
       setPacketLoss({ lost: null, received: null, pct: null, fps: null });
@@ -599,7 +602,7 @@ async function stopRecording()
 
           {showMap && mapInMainView && (
             <div className="absolute inset-0 z-10">
-              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} homeTarget={savedHomeTarget} />
+              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} homeTarget={savedHomeTarget} showRthPath={showRthPath} />
             </div>
           )}
 
@@ -613,7 +616,7 @@ async function stopRecording()
               onClick={() => setMapInMainView(true)}
               title="Show map in main view"
             >
-              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} homeTarget={savedHomeTarget} />
+              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} homeTarget={savedHomeTarget} showRthPath={showRthPath} />
             </div>
           )}
 
@@ -670,6 +673,18 @@ async function stopRecording()
               aria-label="Save Home position"
             >
               🏠
+            </button>
+            <button
+              onClick={() => setShowRthPath((prev) => !prev)}
+              className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg ${
+                showRthPath
+                  ? "bg-green-700/90 border-green-600"
+                  : "bg-gray-900/90 border-gray-700 hover:bg-gray-800"
+              }`}
+              title={showRthPath ? "Disable RTH path" : "Enable RTH path"}
+              aria-label={showRthPath ? "Disable RTH path" : "Enable RTH path"}
+            >
+              RTH
             </button>
           </div>
 

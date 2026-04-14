@@ -171,12 +171,14 @@ export default function LeafletMap({
   gpsTarget,
   heading = null,
   homeTarget = null,
+  showRthPath = false,
 }: {
   robotId: string;
   fullscreen: boolean;
   gpsTarget?: [number, number] | null;
   heading?: number | null;
   homeTarget?: [number, number] | null;
+  showRthPath?: boolean;
 }) {
   const [pos, setPos] = useState<[number, number]>([
     48.4629585,
@@ -297,7 +299,7 @@ export default function LeafletMap({
     <LeafletMapBase
       center={pos}
       zoom={21}
-      scrollWheelZoom={fullscreen}
+      scrollWheelZoom={true}
       style={{ width: "100%", height: "100%" }}
     >
       <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
@@ -309,7 +311,7 @@ export default function LeafletMap({
       {homePos && (
         <CircleMarker
           center={homePos}
-          radius={2.5}
+          radius={8}
           pathOptions={{
             color: "#27ae60",
             fillColor: "#27ae60",
@@ -320,15 +322,29 @@ export default function LeafletMap({
       )}
 
        <MapFollower target={pos} />
-       <StartLineManager
-        pos={pos}
-        startPoint={startPoint}
-        hasReachedStartRef={hasReachedStartRef}
-        setShowStartLine={setShowStartLine}
-      />
+      {!showRthPath && (
+        <StartLineManager
+          pos={pos}
+          startPoint={startPoint}
+          hasReachedStartRef={hasReachedStartRef}
+          setShowStartLine={setShowStartLine}
+        />
+      )}
+
+      {/* RTH PATH */}
+      {showRthPath && homePos && (
+        <Polyline
+          positions={[pos, homePos]}
+          pathOptions={{
+            color: "#27ae60",
+            weight: 3,
+            dashArray: "8 8",
+          }}
+        />
+      )}
 
       {/* MAIN ROUTE */}
-      {routeLatLngs.length > 1 && (
+      {!showRthPath && routeLatLngs.length > 1 && (
         <Polyline
           positions={routeLatLngs}
           pathOptions={{
@@ -340,7 +356,7 @@ export default function LeafletMap({
       )}
 
       {/* START CONNECTION */}
-      {showStartLine && startPoint && (
+      {!showRthPath && showStartLine && startPoint && (
         <Polyline
           positions={[pos, startPoint]}
           pathOptions={{
@@ -352,7 +368,7 @@ export default function LeafletMap({
       )}
 
       {/* POINT MARKERS */}
-      {points.map((p) => (
+      {!showRthPath && points.map((p) => (
         <Marker
           key={p.id}
           position={[p.lat, p.lng]}

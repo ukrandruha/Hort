@@ -12,6 +12,7 @@ import {
   TileLayer,
   Marker,
   Polyline,
+  CircleMarker,
 } from "react-leaflet";
 import L from "leaflet";
 import { api } from "../api/api";
@@ -169,16 +170,19 @@ export default function LeafletMap({
   fullscreen,
   gpsTarget,
   heading = null,
+  homeTarget = null,
 }: {
   robotId: string;
   fullscreen: boolean;
   gpsTarget?: [number, number] | null;
   heading?: number | null;
+  homeTarget?: [number, number] | null;
 }) {
   const [pos, setPos] = useState<[number, number]>([
     48.4629585,
     35.0321044,
   ]);
+  const [homePos, setHomePos] = useState<[number, number] | null>(null);
 
   const [points, setPoints] = useState<
     { id: number; lat: number; lng: number; order: number }[]
@@ -190,8 +194,28 @@ export default function LeafletMap({
  
   useEffect(() => {
     setStartPoint(null);
+    setHomePos(null);
     hasReachedStartRef.current = false;
     setShowStartLine(true);
+  }, [robotId]);
+
+  useEffect(() => {
+    async function loadHomePosition() {
+      try {
+        const { data } = await api.get(`/api/robots/${robotId}`);
+        const lat = Number(data?.lat);
+        const lng = Number(data?.lng);
+        if (Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0)) {
+          setHomePos([lat, lng]);
+        } else {
+          setHomePos(null);
+        }
+      } catch (e) {
+        console.warn("[Map] Failed to load home position", e);
+      }
+    }
+
+    loadHomePosition();
   }, [robotId]);
 
   /* ===== LOAD MISSION ===== */
@@ -227,6 +251,13 @@ export default function LeafletMap({
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
     setPos([lat, lng]);
   }, [gpsTarget]);
+
+  useEffect(() => {
+    if (!homeTarget) return;
+    const [lat, lng] = homeTarget;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    setHomePos([lat, lng]);
+  }, [homeTarget]);
 
 
 
@@ -273,6 +304,20 @@ export default function LeafletMap({
 
       {/* DRONE */}
       <MovingDrone position={pos} heading={heading} />
+
+      {/* HOME POSITION */}
+      {homePos && (
+        <CircleMarker
+          center={homePos}
+          radius={2.5}
+          pathOptions={{
+            color: "#27ae60",
+            fillColor: "#27ae60",
+            fillOpacity: 1,
+            weight: 1,
+          }}
+        />
+      )}
 
        <MapFollower target={pos} />
        <StartLineManager

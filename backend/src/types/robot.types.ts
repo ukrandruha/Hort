@@ -16,4 +16,12 @@
   };
 }
 
+export interface RobotPositionUpdateData {
+  robotId: string;
+  position: {
+    lat: number;
+    lng: number;
+  };
+}
+
 

@@ -40,9 +40,11 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showMap, setShowMap] = useState(false);
     const [mapInMainView, setMapInMainView] = useState(false);
     const [mapTarget, setMapTarget] = useState<[number, number] | null>(null);
+    const [savedHomeTarget, setSavedHomeTarget] = useState<[number, number] | null>(null);
     const [mapHeading, setMapHeading] = useState<number | null>(null);
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
+    const [isSavingHome, setIsSavingHome] = useState(false);
     const [pingMs, setPingMs] = useState<number | null>(null);
     const [isVideoConnected, setIsVideoConnected] = useState(false);
     const [packetLoss, setPacketLoss] = useState<{
@@ -52,6 +54,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       fps: number | null;
     }>({ lost: null, received: null, pct: null, fps: null });
     const showJoysticksRef = useRef(false);
+    const homePressTimerRef = useRef<number | null>(null);
     const [channelState, setChannelState] = useState({
       ch5: 0,
       ch6: 0,
@@ -182,6 +185,58 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       }
     }, [showJoysticks]);
 
+    useEffect(() => {
+      setSavedHomeTarget(null);
+    }, [robot?.robotId]);
+
+    const clearHomeLongPress = () => {
+      if (homePressTimerRef.current !== null) {
+        window.clearTimeout(homePressTimerRef.current);
+        homePressTimerRef.current = null;
+      }
+    };
+
+    const saveHomePosition = async () => {
+      if (isSavingHome) return;
+      if (!mapTarget) {
+        alert("Немає поточної GPS позиції");
+        return;
+      }
+
+      setIsSavingHome(true);
+      try {
+        await api.post("/api/robots/update-position", {
+          robotId: robot.robotId,
+          position: {
+            lat: mapTarget[0],
+            lng: mapTarget[1],
+          },
+        });
+        setSavedHomeTarget([mapTarget[0], mapTarget[1]]);
+        alert("Home позицію збережено");
+      } catch (e) {
+        console.error("[UI] Failed to update home position", e);
+        alert("Помилка збереження Home позиції");
+      } finally {
+        setIsSavingHome(false);
+      }
+    };
+
+    const startHomeLongPress = () => {
+      if (isSavingHome || !mapTarget) return;
+      clearHomeLongPress();
+      homePressTimerRef.current = window.setTimeout(() => {
+        homePressTimerRef.current = null;
+        void saveHomePosition();
+      }, 1200);
+    };
+
+    useEffect(() => {
+      return () => {
+        clearHomeLongPress();
+      };
+    }, []);
+
 
 
     // ============================================
@@ -272,6 +327,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setIsConnecting(false);
       setIsVideoConnected(false);
       setMapTarget(null);
+      setSavedHomeTarget(null);
       setMapHeading(null);
       setMapInMainView(false);
       setPingMs(null);
@@ -543,7 +599,7 @@ async function stopRecording()
 
           {showMap && mapInMainView && (
             <div className="absolute inset-0 z-10">
-              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} />
+              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} homeTarget={savedHomeTarget} />
             </div>
           )}
 
@@ -557,7 +613,7 @@ async function stopRecording()
               onClick={() => setMapInMainView(true)}
               title="Show map in main view"
             >
-              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} />
+              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} homeTarget={savedHomeTarget} />
             </div>
           )}
 
@@ -597,6 +653,24 @@ async function stopRecording()
                 🎛️
               </button>
             )}
+            <button
+              onPointerDown={startHomeLongPress}
+              onPointerUp={clearHomeLongPress}
+              onPointerLeave={clearHomeLongPress}
+              onPointerCancel={clearHomeLongPress}
+              disabled={!mapTarget || isSavingHome}
+              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={
+                mapTarget
+                  ? isSavingHome
+                    ? "Saving Home..."
+                    : "Hold 1.2s to save Home position"
+                  : "No GPS position"
+              }
+              aria-label="Save Home position"
+            >
+              🏠
+            </button>
           </div>
 
           <div

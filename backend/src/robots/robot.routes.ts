@@ -1,7 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import {RobotUpdateData} from "../types/robot.types.js";
+import { RobotPositionUpdateData, RobotUpdateData } from "../types/robot.types.js";
 import { 
   updateRobotStatus, 
+  updateRobotCoordinates,
   getAllRobots, 
   getRobot,
   editRobot,
@@ -32,6 +33,15 @@ export async function robotRoutes(app: FastifyInstance) {
       return { success: true, robot };
     } catch (err) {
       reply.code(400).send({ error: "Update failed: " + (err instanceof Error ? err.message : String(err)) });
+    }
+  });
+
+  app.post("/api/robots/update-position", async (req, reply) => {
+    try {
+      const robot = await updateRobotCoordinates(req.body as RobotPositionUpdateData);
+      return { success: true, robot };
+    } catch (err) {
+      reply.code(400).send({ error: "Position update failed: " + (err instanceof Error ? err.message : String(err)) });
     }
   });
 

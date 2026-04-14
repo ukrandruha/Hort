@@ -1,5 +1,5 @@
 import { prisma } from "../db/prisma.js";
-import {RobotUpdateData} from "../types/robot.types.js";
+import { RobotPositionUpdateData, RobotUpdateData } from "../types/robot.types.js";
 import { RobotSessionStatus } from '@prisma/client';
 import { validateRobotId, validateCoordinates } from "../utils/validation.js";
 
@@ -80,11 +80,6 @@ export async function getRobot(robotId: string, userId?: number) {
 export async function updateRobotStatus(data:RobotUpdateData) {
   validateRobotId(data.robotId);
   
-  // Валідація координат якщо вони є
-  if (data.position) {
-    validateCoordinates(data.position.lat, data.position.lng);
-  }
-  
   return prisma.robot.upsert({
     where: { robotId: data.robotId },
     update: { 
@@ -95,8 +90,6 @@ export async function updateRobotStatus(data:RobotUpdateData) {
       memory: data.memory ?? undefined,
       disk: data.disk ?? undefined,
       temperature: data.temperature ?? undefined,
-      lat: data.position?.lat,
-      lng: data.position?.lng,
     },
     create: {
       robotId: data.robotId,
@@ -108,8 +101,24 @@ export async function updateRobotStatus(data:RobotUpdateData) {
       memory: data.memory,
       disk: data.disk,
       temperature: data.temperature,
-      lat: data.position?.lat,
-      lng: data.position?.lng,
+    },
+  });
+}
+
+export async function updateRobotCoordinates(data: RobotPositionUpdateData) {
+  validateRobotId(data.robotId);
+  validateCoordinates(data.position.lat, data.position.lng);
+
+  return prisma.robot.upsert({
+    where: { robotId: data.robotId },
+    update: {
+      lat: data.position.lat,
+      lng: data.position.lng,
+    },
+    create: {
+      robotId: data.robotId,
+      lat: data.position.lat,
+      lng: data.position.lng,
     },
   });
 }

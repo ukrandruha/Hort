@@ -6,11 +6,13 @@ export default function DroneMap({
   fullscreen = false,
   gpsTarget = null,
   heading = null,
+  homeTarget = null,
 }: {
   robot: any;
   fullscreen?: boolean;
   gpsTarget?: [number, number] | null;
   heading?: number | null;
+  homeTarget?: [number, number] | null;
 }) {
   return (
     <LeafletMap
@@ -18,6 +20,7 @@ export default function DroneMap({
       robotId={robot.robotId}
       gpsTarget={gpsTarget}
       heading={heading}
+      homeTarget={homeTarget}
     />
   );
 }

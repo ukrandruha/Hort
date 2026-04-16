@@ -3,6 +3,7 @@ import { Joystick, JoystickShape } from "react-joystick-component";
 import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import { GamepadReader, type GamepadState } from "../utils/Gamepad";
+import { haversineKm } from "../utils/math";
 import { useAuth } from "../auth/AuthContext";
 import { api } from "../api/api";
 import { forwardRef, useImperativeHandle } from "react";
@@ -41,6 +42,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [mapInMainView, setMapInMainView] = useState(false);
     const [mapTarget, setMapTarget] = useState<[number, number] | null>(null);
     const [savedHomeTarget, setSavedHomeTarget] = useState<[number, number] | null>(null);
+    const [backendHomeTarget, setBackendHomeTarget] = useState<[number, number] | null>(null);
     const [mapHeading, setMapHeading] = useState<number | null>(null);
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
@@ -188,7 +190,37 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
     useEffect(() => {
       setSavedHomeTarget(null);
+      setBackendHomeTarget(null);
       setShowRthPath(false);
+    }, [robot?.robotId]);
+
+    useEffect(() => {
+      let canceled = false;
+
+      async function loadHomePosition() {
+        if (!robot?.robotId) return;
+        try {
+          const { data } = await api.get(`/api/robots/${robot.robotId}`);
+          const lat = Number(data?.lat);
+          const lng = Number(data?.lng);
+          if (canceled) return;
+          if (Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0)) {
+            setBackendHomeTarget([lat, lng]);
+          } else {
+            setBackendHomeTarget(null);
+          }
+        } catch (e) {
+          if (!canceled) {
+            setBackendHomeTarget(null);
+          }
+        }
+      }
+
+      loadHomePosition();
+
+      return () => {
+        canceled = true;
+      };
     }, [robot?.robotId]);
 
     const clearHomeLongPress = () => {
@@ -215,6 +247,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
           },
         });
         setSavedHomeTarget([mapTarget[0], mapTarget[1]]);
+        setBackendHomeTarget([mapTarget[0], mapTarget[1]]);
         alert("Home позицію збережено");
       } catch (e) {
         console.error("[UI] Failed to update home position", e);
@@ -527,15 +560,25 @@ async function stopRecording()
             <div className="text-gray-300 text-sm text-center whitespace-pre">
               {overlayData ? (
                 overlayData.raw ? String(overlayData.raw) : (
-                  overlayData.v !== undefined ? [
-                    `B1: ${overlayData.v}v`,
-                    `B2: ${overlayData.v2}v`,
-                    `i: ${overlayData.i}`,
-                    //`p: ${overlayData.p}`,
-                    //`wh: ${overlayData.wh}`,
-                    `Sat: ${overlayData.gps?.satellites_visible ?? "—"}`,
-                    `\\ ${overlayData.gps?.hdop ?? "—"}`
-                  ].join("  ") : JSON.stringify(overlayData)
+                  overlayData.v !== undefined ? (() => {
+                    const homeTargetForDistance = savedHomeTarget ?? backendHomeTarget;
+                    const gpsLat = Number(overlayData.gps?.lat);
+                    const gpsLon = Number(overlayData.gps?.lon);
+                    const homeDist =
+                      homeTargetForDistance && Number.isFinite(gpsLat) && Number.isFinite(gpsLon)
+                        ? haversineKm(homeTargetForDistance[0], homeTargetForDistance[1], gpsLat, gpsLon)
+                        : null;
+                    return [
+                      `B1: ${overlayData.v}v`,
+                      `B2: ${overlayData.v2}v`,
+                      `i: ${overlayData.i}`,
+                      //`p: ${overlayData.p}`,
+                      //`wh: ${overlayData.wh}`,
+                      `Sat: ${overlayData.gps?.satellites_visible ?? "—"}`,
+                      `\\ ${overlayData.gps?.hdop ?? "—"}`,
+                      homeDist !== null ? `H-${homeDist.toFixed(2)} km` : null,
+                    ].filter(Boolean).join("  ");
+                  })() : JSON.stringify(overlayData)
                 )
               ) : null}
             </div>

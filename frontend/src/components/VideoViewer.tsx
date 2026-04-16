@@ -565,7 +565,10 @@ async function stopRecording()
                     const gpsLat = Number(overlayData.gps?.lat);
                     const gpsLon = Number(overlayData.gps?.lon);
                     const homeDist =
-                      homeTargetForDistance && Number.isFinite(gpsLat) && Number.isFinite(gpsLon)
+                      homeTargetForDistance &&
+                      homeTargetForDistance[0] > 0 && homeTargetForDistance[1] > 0 &&
+                      Number.isFinite(gpsLat) && Number.isFinite(gpsLon) &&
+                      gpsLat > 0 && gpsLon > 0
                         ? haversineKm(homeTargetForDistance[0], homeTargetForDistance[1], gpsLat, gpsLon)
                         : null;
                     return [
@@ -876,7 +879,7 @@ async function stopRecording()
               <div className="absolute bottom-6 left-6 z-40">
                 <Joystick
                   controlPlaneShape={JoystickShape.AxisX}
-                  start={handleJoystickStart("left")}
+                  start={handleJoystickStart}
                   throttle={50}
                   move={handleJoystickMove("left")}
                   stop={handleJoystickStop("left")}
@@ -885,7 +888,7 @@ async function stopRecording()
               <div className="absolute bottom-6 right-6 z-40">
                 <Joystick
                   controlPlaneShape={JoystickShape.AxisY}
-                  start={handleJoystickStart("right")}
+                  start={handleJoystickStart}
                   throttle={50}
                   move={handleJoystickMove("right")}
                   stop={handleJoystickStop("right")}

@@ -41,26 +41,26 @@ function createCircleIcon(color: string) {
 
 function createDroneHeadingIcon(heading: number | null) {
   const rotation = Number.isFinite(heading) ? heading ?? 0 : 0;
+  // Swallow-tail shape: nose at top (15,1), wings at (29,27) and (1,27),
+  // with a tail notch at (15,18) — gives a classic swallow-tail / arrowhead silhouette.
   return L.divIcon({
     className: "",
     html: `
       <div style="
         width: 30px;
         height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         transform: rotate(${rotation}deg);
         transform-origin: 50% 50%;
       ">
-        <div style="
-          width: 0;
-          height: 0;
-          border-left: 9px solid transparent;
-          border-right: 9px solid transparent;
-          border-bottom: 18px solid #27ae60;
-          filter: drop-shadow(0 0 4px rgba(0,0,0,0.6));
-        "></div>
+        <svg viewBox="0 0 30 30" width="30" height="30" xmlns="http://www.w3.org/2000/svg"
+             style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));">
+          <polygon
+            points="15,1 29,27 15,20 1,27"
+            fill="#27ae60"
+            stroke="rgba(0,0,0,0.4)"
+            stroke-width="0.8"
+          />
+        </svg>
       </div>
     `,
     iconSize: [30, 30],

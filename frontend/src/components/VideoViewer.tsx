@@ -553,6 +553,26 @@ async function stopRecording()
   }
         
 }
+
+    const getHomeDistanceKm = (data: any): number | null => {
+      const homeTargetForDistance = savedHomeTarget ?? backendHomeTarget;
+      const gpsLat = Number(data?.gps?.lat);
+      const gpsLon = Number(data?.gps?.lon);
+
+      if (
+        !homeTargetForDistance ||
+        homeTargetForDistance[0] <= 0 ||
+        homeTargetForDistance[1] <= 0 ||
+        !Number.isFinite(gpsLat) ||
+        !Number.isFinite(gpsLon) ||
+        gpsLat <= 0 ||
+        gpsLon <= 0
+      ) {
+        return null;
+      }
+
+      return haversineKm(homeTargetForDistance[0], homeTargetForDistance[1], gpsLat, gpsLon);
+    };
    
 
 
@@ -573,31 +593,39 @@ async function stopRecording()
             </div>
           </div>
 
+          {/* second section center: Sat + Home distance */}
+          <div
+            className="absolute top-0 h-14 flex items-center justify-center pointer-events-none"
+            style={{ left: 0, width: "calc(50% - 160px)" }}
+          >
+            <div className="text-gray-300 text-sm text-center whitespace-pre">
+              {overlayData && !overlayData.raw ? (() => {
+                const satellites = overlayData.gps?.satellites_visible ?? "—";
+                const hdop = overlayData.gps?.hdop ?? "—";
+                const homeDist = getHomeDistanceKm(overlayData);
+                const speed = Number(overlayData.gps?.speed);
+                return [
+                  `Sat: ${satellites}`,
+                  `\\ ${hdop}`,
+                  homeDist !== null ? `H-${homeDist.toFixed(2)} km` : null,
+                  Number.isFinite(speed) ? `Speed : ${speed.toFixed(2)} kmh` : null,
+                ].filter(Boolean).join("  ");
+              })() : null}
+            </div>
+          </div>
+
           {/* center overlay */}
           <div className="absolute left-0 right-0 top-0 h-14 flex items-center justify-center pointer-events-none">
             <div className="text-gray-300 text-sm text-center whitespace-pre">
               {overlayData ? (
                 overlayData.raw ? String(overlayData.raw) : (
                   overlayData.v !== undefined ? (() => {
-                    const homeTargetForDistance = savedHomeTarget ?? backendHomeTarget;
-                    const gpsLat = Number(overlayData.gps?.lat);
-                    const gpsLon = Number(overlayData.gps?.lon);
-                    const homeDist =
-                      homeTargetForDistance &&
-                      homeTargetForDistance[0] > 0 && homeTargetForDistance[1] > 0 &&
-                      Number.isFinite(gpsLat) && Number.isFinite(gpsLon) &&
-                      gpsLat > 0 && gpsLon > 0
-                        ? haversineKm(homeTargetForDistance[0], homeTargetForDistance[1], gpsLat, gpsLon)
-                        : null;
                     return [
                       `B1: ${overlayData.v}v`,
                       `B2: ${overlayData.v2}v`,
                       `i: ${overlayData.i}`,
                       //`p: ${overlayData.p}`,
                       //`wh: ${overlayData.wh}`,
-                      `Sat: ${overlayData.gps?.satellites_visible ?? "—"}`,
-                      `\\ ${overlayData.gps?.hdop ?? "—"}`,
-                      homeDist !== null ? `H-${homeDist.toFixed(2)} km` : null,
                     ].filter(Boolean).join("  ");
                   })() : JSON.stringify(overlayData)
                 )

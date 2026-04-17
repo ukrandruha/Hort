@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 import EditRobotModal from "./EditRobotModal";
 import FileSelectModal from "./FileSelect";
 import VideoViewer, { VideoViewerHandle } from "./VideoViewer";
+import { robotStore } from "../utils/robotStore";
 
 import { alert } from "./Alert/globalAlert";
 
@@ -45,11 +46,16 @@ export default function RobotTable() {
       const currentVideoRobot = videoRobotRef.current;
 
       setRobots(data);
+      robotStore.setMany(data);
 
       if (currentVideoRobot) {
         const current = data.find(
           (r: Robot) => r.robotId === currentVideoRobot.robotId,
         );
+        if (current) {
+          setVideoRobot(current);
+          videoRobotRef.current = current;
+        }
         if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
           // ✅ ВИКЛИК МЕТОДУ В VideoViewer
           videoViewerRef.current?.onDisconnectRequested();

@@ -4,6 +4,7 @@ import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import { GamepadReader, type GamepadState } from "../utils/Gamepad";
 import { haversineKm } from "../utils/math";
+import { robotStore } from "../utils/robotStore";
 import { useAuth } from "../auth/AuthContext";
 import { api } from "../api/api";
 import { forwardRef, useImperativeHandle } from "react";
@@ -40,6 +41,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
     const [mapInMainView, setMapInMainView] = useState(false);
+    const [currentRobot, setCurrentRobot] = useState<any>(robot);
     const [mapTarget, setMapTarget] = useState<[number, number] | null>(null);
     const [savedHomeTarget, setSavedHomeTarget] = useState<[number, number] | null>(null);
     const [backendHomeTarget, setBackendHomeTarget] = useState<[number, number] | null>(null);
@@ -183,6 +185,18 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     useEffect(() => {
       showJoysticksRef.current = showJoysticks;
     }, [showJoysticks]);
+
+    useEffect(() => {
+      setCurrentRobot(robot);
+    }, [robot]);
+
+    useEffect(() => {
+      if (!robot?.robotId) return;
+      const unsubscribe = robotStore.subscribe(robot.robotId, (nextRobot) => {
+        setCurrentRobot((prev: any) => ({ ...prev, ...nextRobot }));
+      });
+      return unsubscribe;
+    }, [robot?.robotId]);
 
     useEffect(() => {
       if (!showJoysticks) {
@@ -573,6 +587,9 @@ async function stopRecording()
 
       return haversineKm(homeTargetForDistance[0], homeTargetForDistance[1], gpsLat, gpsLon);
     };
+
+    const lastSeenAt = currentRobot?.updatedAt ? new Date(currentRobot.updatedAt).getTime() : 0;
+    const isRobotOffline = !lastSeenAt || Date.now() - lastSeenAt > 10000;
    
 
 
@@ -582,7 +599,10 @@ async function stopRecording()
         {/* HEADER */}
         <div className="h-14 bg-gray-900 border-b border-gray-700 flex items-center justify-between px-6 relative">
           <div className="flex items-center gap-4">
-            <div className="text-xl font-semibold text-gray-200">{robot.name}</div>
+            <div className="text-xl font-semibold text-gray-200 flex items-center gap-2">
+              <span>{currentRobot?.name ?? robot.name}</span>
+              <span>{isRobotOffline ? "🔴" : "🟢"}</span>
+            </div>
             <div className="h-6 w-px bg-gray-700" />
             <div className="text-sm text-gray-300">
               {videoRecord ? (

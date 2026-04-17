@@ -58,6 +58,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     }>({ lost: null, received: null, pct: null, fps: null });
     const showJoysticksRef = useRef(false);
     const homePressTimerRef = useRef<number | null>(null);
+    const channelsPanelRef = useRef<HTMLDivElement | null>(null);
+    const channelsToggleButtonRef = useRef<HTMLButtonElement | null>(null);
     const [channelState, setChannelState] = useState({
       ch5: 0,
       ch6: 0,
@@ -187,6 +189,22 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         setShowChannels(false);
       }
     }, [showJoysticks]);
+
+    useEffect(() => {
+      if (!showChannels) return;
+
+      const onPointerDown = (event: PointerEvent) => {
+        const target = event.target as Node;
+        if (channelsPanelRef.current?.contains(target)) return;
+        if (channelsToggleButtonRef.current?.contains(target)) return;
+        setShowChannels(false);
+      };
+
+      document.addEventListener("pointerdown", onPointerDown);
+      return () => {
+        document.removeEventListener("pointerdown", onPointerDown);
+      };
+    }, [showChannels]);
 
     useEffect(() => {
       setSavedHomeTarget(null);
@@ -694,6 +712,7 @@ async function stopRecording()
             </button>
             {showJoysticks && (
               <button
+                ref={channelsToggleButtonRef}
                 onClick={() => setShowChannels((prev) => !prev)}
                 className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
                 title={showChannels ? "Hide channels" : "Show channels"}
@@ -735,6 +754,7 @@ async function stopRecording()
           </div>
 
           <div
+            ref={channelsPanelRef}
             className={`absolute left-1/2 top-1/2 w-80 bg-gray-900/75 border border-gray-700 rounded-lg shadow-xl p-4 z-40 transition-[opacity,transform] duration-300 ease-out ${
               showJoysticks && showChannels
                 ? "opacity-100 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"

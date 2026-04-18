@@ -1,10 +1,12 @@
 import type { AyameAddStreamEvent, Connection } from "@open-ayame/ayame-web-sdk";
 import { createConnection, defaultOptions } from "@open-ayame/ayame-web-sdk";
+import { signal } from "@preact/signals";
 
 import type { GamepadState } from "../utils/Gamepad.js";
 import { api } from "../api/api";
 
-
+// Media stream signals
+export const localMediaStream = signal<MediaStream | null>(null);
 
 
 export class WebRTCClient {
@@ -91,7 +93,12 @@ export class WebRTCClient {
         console.log(`[WebRTC] Starting for robot ${this.robotId}`);
         this.validateConfig();
 
-        await Promise.all([this.connectA(), this.connectB()]);
+        try {
+            await Promise.all([this.connectA(), this.connectB()]);
+        } catch (error) {
+            await this.requestRebootForWebrtcError();
+            throw error;
+        }
 
         console.log("[WebRTC] Both connections established");
     }
@@ -175,6 +182,12 @@ export class WebRTCClient {
         const roomId = `${this.roomIdPrefix}${this.roomName}-VideoA`;
         const connectTimeoutMs = 20_000;
 
+        const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+        });
+        localMediaStream.value = stream;
+
         this.connB = createConnection(
             this.signalingUrl,
             roomId,
@@ -202,6 +215,15 @@ export class WebRTCClient {
 
             this.connB?.on("disconnect", () => {
                 console.warn("[B] Disconnected");
+
+            const stream = localMediaStream.value;
+                if (stream) {
+                    for (const track of stream.getTracks()) {
+                    track.stop();
+                    }
+                }
+                localMediaStream.value = null;
+
                 this.stopPingStats();
                 if (this.onVideoConnectionStateChange) this.onVideoConnectionStateChange(false);
                 if (!settled) {
@@ -490,6 +512,19 @@ export class WebRTCClient {
         } catch (e) {
             alert("Помилка деактивації WebRTC");
             console.error(e);
+        }
+    }
+
+    private async requestRebootForWebrtcError() {
+        try {
+            await api.post(`/api/robots/robot-sessions/requestReboot`, {
+                robotId: this.roomName,
+                status: "REBOOT_WERRTC_REQUESTED",
+                reason: "webrtc_connect_error",
+                requestedBy: this.userId.toString(),
+            });
+        } catch (e) {
+            console.error("[WebRTC] Failed to request reboot after connect error", e);
         }
     }
     // =================================================

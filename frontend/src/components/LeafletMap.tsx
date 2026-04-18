@@ -17,6 +17,7 @@ import {
 import L from "leaflet";
 import { api } from "../api/api";
 import { useMap } from "react-leaflet";
+import { robotStore } from "../utils/robotStore";
 
 /** ================= ICONS ================= **/
 
@@ -168,15 +169,11 @@ function MovingDrone({
 export default function LeafletMap({
   robotId,
   fullscreen,
-  gpsTarget,
-  heading = null,
   homeTarget = null,
   showRthPath = false,
 }: {
   robotId: string;
   fullscreen: boolean;
-  gpsTarget?: [number, number] | null;
-  heading?: number | null;
   homeTarget?: [number, number] | null;
   showRthPath?: boolean;
 }) {
@@ -185,6 +182,8 @@ export default function LeafletMap({
     35.0321044,
   ]);
   const [homePos, setHomePos] = useState<[number, number] | null>(null);
+  const [telemetryGpsTarget, setTelemetryGpsTarget] = useState<[number, number] | null>(null);
+  const [telemetryHeading, setTelemetryHeading] = useState<number | null>(null);
 
   const [points, setPoints] = useState<
     { id: number; lat: number; lng: number; order: number }[]
@@ -197,8 +196,29 @@ export default function LeafletMap({
   useEffect(() => {
     setStartPoint(null);
     setHomePos(null);
+    setTelemetryGpsTarget(null);
+    setTelemetryHeading(null);
     hasReachedStartRef.current = false;
     setShowStartLine(true);
+  }, [robotId]);
+
+  useEffect(() => {
+    if (!robotId) return;
+
+    const unsubscribe = robotStore.subscribeTelemetry(robotId, (telemetry) => {
+      const lat = Number(telemetry?.gps?.lat);
+      const lng = Number(telemetry?.gps?.lon);
+      if (Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0)) {
+        setTelemetryGpsTarget([lat, lng]);
+      }
+
+      const nextHeading = Number(telemetry?.gps?.compas);
+      if (Number.isFinite(nextHeading)) {
+        setTelemetryHeading(((nextHeading % 360) + 360) % 360);
+      }
+    });
+
+    return unsubscribe;
   }, [robotId]);
 
   useEffect(() => {
@@ -248,11 +268,11 @@ export default function LeafletMap({
   }, [startPoint]);
 
   useEffect(() => {
-    if (!gpsTarget) return;
-    const [lat, lng] = gpsTarget;
+    if (!telemetryGpsTarget) return;
+    const [lat, lng] = telemetryGpsTarget;
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
     setPos([lat, lng]);
-  }, [gpsTarget]);
+  }, [telemetryGpsTarget]);
 
   useEffect(() => {
     if (!homeTarget) return;
@@ -305,7 +325,7 @@ export default function LeafletMap({
       <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
       {/* DRONE */}
-      <MovingDrone position={pos} heading={heading} />
+      <MovingDrone position={pos} heading={telemetryHeading} />
 
       {/* HOME POSITION */}
       {homePos && (

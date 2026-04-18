@@ -8,9 +8,12 @@
   },
   "dependencies": {
     "@open-ayame/ayame-web-sdk": "^2025.1.1",
+    "@preact/signals": "2.9.0",
     "@types/webrtc": "^0.0.47",
     "axios": "^1.6.5",
     "leaflet": "^1.9.4",
+    "preact": "10.29.1",
+    "preact-iso": "2.11.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-joystick-component": "^6.2.1",
@@ -19,6 +22,7 @@
     "webrtc-adapter": "^9.0.3"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.21",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^5.1.1",

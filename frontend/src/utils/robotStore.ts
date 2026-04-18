@@ -3,11 +3,18 @@ type RobotSnapshot = {
   [key: string]: any;
 };
 
+type RobotTelemetry = {
+  [key: string]: any;
+};
+
 type RobotListener = (robot: RobotSnapshot) => void;
+type TelemetryListener = (telemetry: RobotTelemetry | null) => void;
 
 class RobotStore {
   private robots = new Map<string, RobotSnapshot>();
   private listeners = new Map<string, Set<RobotListener>>();
+  private telemetry = new Map<string, RobotTelemetry>();
+  private telemetryListeners = new Map<string, Set<TelemetryListener>>();
 
   setMany(robots: RobotSnapshot[]) {
     for (const robot of robots) {
@@ -25,6 +32,23 @@ class RobotStore {
 
   get(robotId: string) {
     return this.robots.get(robotId) ?? null;
+  }
+
+  setTelemetry(robotId: string, telemetry: RobotTelemetry | null) {
+    if (!robotId) return;
+
+    if (telemetry === null) {
+      this.telemetry.delete(robotId);
+      this.emitTelemetry(robotId, null);
+      return;
+    }
+
+    this.telemetry.set(robotId, telemetry);
+    this.emitTelemetry(robotId, telemetry);
+  }
+
+  getTelemetry(robotId: string) {
+    return this.telemetry.get(robotId) ?? null;
   }
 
   subscribe(robotId: string, listener: RobotListener) {
@@ -50,10 +74,36 @@ class RobotStore {
     };
   }
 
+  subscribeTelemetry(robotId: string, listener: TelemetryListener) {
+    if (!this.telemetryListeners.has(robotId)) {
+      this.telemetryListeners.set(robotId, new Set());
+    }
+
+    const set = this.telemetryListeners.get(robotId)!;
+    set.add(listener);
+
+    listener(this.getTelemetry(robotId));
+
+    return () => {
+      const listenersForRobot = this.telemetryListeners.get(robotId);
+      if (!listenersForRobot) return;
+      listenersForRobot.delete(listener);
+      if (listenersForRobot.size === 0) {
+        this.telemetryListeners.delete(robotId);
+      }
+    };
+  }
+
   private emit(robotId: string, robot: RobotSnapshot) {
     const listenersForRobot = this.listeners.get(robotId);
     if (!listenersForRobot) return;
     listenersForRobot.forEach((listener) => listener(robot));
+  }
+
+  private emitTelemetry(robotId: string, telemetry: RobotTelemetry | null) {
+    const listenersForRobot = this.telemetryListeners.get(robotId);
+    if (!listenersForRobot) return;
+    listenersForRobot.forEach((listener) => listener(telemetry));
   }
 }
 

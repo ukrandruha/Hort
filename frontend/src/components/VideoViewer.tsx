@@ -42,10 +42,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showMap, setShowMap] = useState(false);
     const [mapInMainView, setMapInMainView] = useState(false);
     const [currentRobot, setCurrentRobot] = useState<any>(robot);
-    const [mapTarget, setMapTarget] = useState<[number, number] | null>(null);
     const [savedHomeTarget, setSavedHomeTarget] = useState<[number, number] | null>(null);
     const [backendHomeTarget, setBackendHomeTarget] = useState<[number, number] | null>(null);
-    const [mapHeading, setMapHeading] = useState<number | null>(null);
     const [showJoysticks, setShowJoysticks] = useState(false);
     const [showChannels, setShowChannels] = useState(false);
     const [isSavingHome, setIsSavingHome] = useState(false);
@@ -182,6 +180,14 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       return satellites >= 4;
     };
 
+    const currentGpsTarget = hasEnoughSatellites(overlayData?.gps)
+      ? [overlayData.gps.lat, overlayData.gps.lon] as [number, number]
+      : null;
+    const currentHeadingRaw = Number(overlayData?.gps?.compas);
+    const currentHeading = Number.isFinite(currentHeadingRaw)
+      ? ((currentHeadingRaw % 360) + 360) % 360
+      : null;
+
     useEffect(() => {
       showJoysticksRef.current = showJoysticks;
     }, [showJoysticks]);
@@ -194,6 +200,14 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       if (!robot?.robotId) return;
       const unsubscribe = robotStore.subscribe(robot.robotId, (nextRobot) => {
         setCurrentRobot((prev: any) => ({ ...prev, ...nextRobot }));
+      });
+      return unsubscribe;
+    }, [robot?.robotId]);
+
+    useEffect(() => {
+      if (!robot?.robotId) return;
+      const unsubscribe = robotStore.subscribeTelemetry(robot.robotId, (telemetry) => {
+        setOverlayData(telemetry);
       });
       return unsubscribe;
     }, [robot?.robotId]);
@@ -224,6 +238,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setSavedHomeTarget(null);
       setBackendHomeTarget(null);
       setShowRthPath(false);
+      setOverlayData(null);
+      if (robot?.robotId) {
+        robotStore.setTelemetry(robot.robotId, null);
+      }
     }, [robot?.robotId]);
 
     useEffect(() => {
@@ -264,7 +282,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
 
     const saveHomePosition = async () => {
       if (isSavingHome) return;
-      if (!mapTarget) {
+      if (!currentGpsTarget) {
         alert("Немає поточної GPS позиції");
         return;
       }
@@ -274,12 +292,12 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         await api.post("/api/robots/update-position", {
           robotId: robot.robotId,
           position: {
-            lat: mapTarget[0],
-            lng: mapTarget[1],
+            lat: currentGpsTarget[0],
+            lng: currentGpsTarget[1],
           },
         });
-        setSavedHomeTarget([mapTarget[0], mapTarget[1]]);
-        setBackendHomeTarget([mapTarget[0], mapTarget[1]]);
+        setSavedHomeTarget([currentGpsTarget[0], currentGpsTarget[1]]);
+        setBackendHomeTarget([currentGpsTarget[0], currentGpsTarget[1]]);
         alert("Home позицію збережено");
       } catch (e) {
         console.error("[UI] Failed to update home position", e);
@@ -290,7 +308,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     };
 
     const startHomeLongPress = () => {
-      if (isSavingHome || !mapTarget) return;
+      if (isSavingHome || !currentGpsTarget) return;
       clearHomeLongPress();
       homePressTimerRef.current = window.setTimeout(() => {
         homePressTimerRef.current = null;
@@ -322,14 +340,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       client.setVideoElement(videoRef.current);
       // receive parsed data from robot and show in header
       client.onData = (d: any) => {
-        setOverlayData(d);
-        if (hasEnoughSatellites(d?.gps)) {
-          setMapTarget([d.gps.lat, d.gps.lon]);
-        }
-        const heading = Number(d?.gps?.compas);
-        if (Number.isFinite(heading)) {
-          setMapHeading(((heading % 360) + 360) % 360);
-        }
+        robotStore.setTelemetry(robot.robotId, d);
       };
       client.onPing = (ms) => {
         setPingMs(ms);
@@ -393,13 +404,13 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setConnected(false);
       setIsConnecting(false);
       setIsVideoConnected(false);
-      setMapTarget(null);
       setSavedHomeTarget(null);
-      setMapHeading(null);
       setShowRthPath(false);
       setMapInMainView(false);
       setPingMs(null);
       setPacketLoss({ lost: null, received: null, pct: null, fps: null });
+      setOverlayData(null);
+      robotStore.setTelemetry(robot.robotId, null);
 
     }
 
@@ -714,7 +725,7 @@ async function stopRecording()
 
           {showMap && mapInMainView && (
             <div className="absolute inset-0 z-10">
-              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} homeTarget={savedHomeTarget} showRthPath={showRthPath} />
+              <DroneMap robot={robot} homeTarget={savedHomeTarget} showRthPath={showRthPath} />
             </div>
           )}
 
@@ -728,7 +739,7 @@ async function stopRecording()
               onClick={() => setMapInMainView(true)}
               title="Show map in main view"
             >
-              <DroneMap robot={robot} gpsTarget={mapTarget} heading={mapHeading} homeTarget={savedHomeTarget} showRthPath={showRthPath} />
+              <DroneMap robot={robot} homeTarget={savedHomeTarget} showRthPath={showRthPath} />
             </div>
           )}
 
@@ -774,10 +785,10 @@ async function stopRecording()
               onPointerUp={clearHomeLongPress}
               onPointerLeave={clearHomeLongPress}
               onPointerCancel={clearHomeLongPress}
-              disabled={!mapTarget || isSavingHome}
+              disabled={!currentGpsTarget || isSavingHome}
               className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
               title={
-                mapTarget
+                currentGpsTarget
                   ? isSavingHome
                     ? "Saving Home..."
                     : "Hold 1.2s to save Home position"
@@ -984,9 +995,9 @@ async function stopRecording()
           {!connected && (
             <button
               onClick={connectCamera}
-              disabled={isConnecting}
+              disabled={isConnecting || isRobotOffline}
               className={`px-4 py-2 rounded ${
-                isConnecting
+                isConnecting || isRobotOffline
                   ? "bg-blue-900 cursor-not-allowed opacity-60"
                   : "bg-blue-700 hover:bg-blue-800"
               }`}

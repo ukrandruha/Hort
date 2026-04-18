@@ -12,6 +12,7 @@ import {
   disconnectSession,
   confirmDisconnect,
   requestRebootSession,
+  confirmRebootSession,
   activateWebrtcSession,
   deactivateWebrtcSession,
   getRobotSessionStatusById,
@@ -186,10 +187,35 @@ app.delete<{ Params: { id: string } }>(
   app.post(
     '/api/robots/robot-sessions/requestReboot',
     async (req, reply) => {
-      const param = req.body as { robotId: string; reason?: string; requestedBy: string };
+      const param = req.body as {
+        robotId: string;
+        status?: 'REBOOT_DISCONNECT_REQUESTED' | 'REBOOT_WERRTC_REQUESTED';
+        reason?: string;
+        requestedBy: string;
+      };
 
       try {
         const session = await requestRebootSession(param);
+        return reply.send(session);
+      } catch (err: any) {
+        return reply.code(400).send({ message: err.message });
+      }
+    },
+  )
+
+  /**
+   * Confirm reboot completion for robot or WebRTC service
+   */
+  app.post(
+    '/api/robots/robot-sessions/confirmReboot',
+    async (req, reply) => {
+      const param = req.body as {
+        robotId: string;
+        status?: 'ACTIVE' | 'ACTIVE_WEBRTC';
+      };
+
+      try {
+        const session = await confirmRebootSession(param);
         return reply.send(session);
       } catch (err: any) {
         return reply.code(400).send({ message: err.message });

@@ -253,10 +253,15 @@ export async function editRobot(id: string, data:RobotUpdateData) {
    */
   export async function requestRebootSession(params: {
     robotId: string;
+    status?: RobotSessionStatus;
     reason?: string;
     requestedBy: string;
   }) {
-    const { robotId, reason, requestedBy } = params;
+    const { robotId, status, reason, requestedBy } = params;
+    const targetStatus: RobotSessionStatus =
+      status === RobotSessionStatus.REBOOT_WERRTC_REQUESTED
+        ? RobotSessionStatus.REBOOT_WERRTC_REQUESTED
+        : RobotSessionStatus.REBOOT_DISCONNECT_REQUESTED;
 
     const session = await prisma.robotSession.findFirst({
       where: {
@@ -271,16 +276,54 @@ export async function editRobot(id: string, data:RobotUpdateData) {
       throw new Error('Session not found');
     }
 
-    if (session.status === RobotSessionStatus.REBOOT_DISCONNECT_REQUESTED) {
+    if (session.status === targetStatus) {
       return session;
     }
 
     return prisma.robotSession.update({
       where: { id: session.id },
       data: {
-        status: RobotSessionStatus.REBOOT_DISCONNECT_REQUESTED,
+        status: targetStatus,
         disconnectReason: reason,
         disconnectedBy: requestedBy,
+      },
+    });
+  }
+
+  /**
+   * Confirm reboot completion and move session to target state.
+   */
+  export async function confirmRebootSession(params: {
+    robotId: string;
+    status?: RobotSessionStatus;
+  }) {
+    const { robotId, status } = params;
+
+    const session = await prisma.robotSession.findFirst({
+      where: {
+        robotId,
+        status: {
+          in: [
+            RobotSessionStatus.REBOOT_DISCONNECT_REQUESTED,
+            RobotSessionStatus.REBOOT_WERRTC_REQUESTED,
+          ],
+        },
+      },
+    });
+
+    if (!session) {
+      throw new Error('Reboot-requested session not found');
+    }
+
+    const targetStatus: RobotSessionStatus =
+      status === RobotSessionStatus.ACTIVE_WEBRTC
+        ? RobotSessionStatus.ACTIVE_WEBRTC
+        : RobotSessionStatus.ACTIVE;
+
+    return prisma.robotSession.update({
+      where: { id: session.id },
+      data: {
+        status: targetStatus,
       },
     });
   }

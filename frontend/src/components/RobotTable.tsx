@@ -157,6 +157,7 @@ export default function RobotTable() {
       const rebootData = {
         robotId: robotId,
         reason: "admin",
+        status: "REBOOT_DISCONNECT_REQUESTED",
         requestedBy: userId.toString(),
       };
       await api.post(`/api/robots/robot-sessions/requestReboot`, rebootData);

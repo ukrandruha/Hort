@@ -42,8 +42,8 @@ export class WebRTCClient {
     private dataChannel: RTCDataChannel | null = null;
     private dataChannelTelem: RTCDataChannel | null = null;
 
-    private connA: Connection | null = null;
-    private connB: Connection | null = null;
+    //private connA: Connection | null = null;
+    //private connB: Connection | null = null;
 
     private mediaRecorder: MediaRecorder | null = null;
     private recordedChunks: BlobPart[] = [];
@@ -53,7 +53,9 @@ export class WebRTCClient {
     private lastLossSample: { ts: number; lost: number; received: number } | null = null;
     private sessionActivated = false;
     private activationInFlight: Promise<void> | null = null;
-    
+
+    private  ayameConnectionA = signal<Connection | null>(null);
+    private  ayameConnectionB = signal<Connection | null>(null);
 
     // ================= OPTIONS ======================
     private options = (() => {
@@ -111,11 +113,10 @@ export class WebRTCClient {
     // CONNECTION A — DataChannel
     // =================================================
     private connectA = async () => {
-        this.stopConnectionA();
+        //this.stopConnectionA();
         const roomId = `${this.roomIdPrefix}${this.roomName}-Data`;
         const connectTimeoutMs = 15_000;
-
-        this.connA = createConnection(
+        const conn  = createConnection(
             this.signalingUrl,
             roomId,
             this.options,
@@ -134,25 +135,45 @@ export class WebRTCClient {
                 done(() => reject(new Error("[A] Timed out while connecting data channel")));
             }, connectTimeoutMs);
 
-            this.connA?.on("disconnect", () => {
+            conn.on("disconnect", () => {
                 done(() => reject(new Error("[A] Disconnected before data channel opened")));
             });
 
-            this.connA?.on("open", async () => {
-                if (!this.connA) return;
+            conn.on("open", async () => {
+                if (!conn) return;
 
-                const pc = this.connA.peerConnection;
+                const pc = conn.peerConnection;
                 if (pc) {
                     pc.onconnectionstatechange = () => {
                         console.log("[A] state:", pc.connectionState);
                     };
+                } else {
+                    done(() => reject(new Error("[A] PeerConnection not available after open")));
+                    return;
                 }
 
                 // Create DataChannel
-                this.dataChannel = await this.connA.createDataChannel("robot-control", {
-                    ordered: false,
-                    maxRetransmits: 0,
-                });
+                try {
+                    this.dataChannel = await conn.createDataChannel("robot-control", {
+                        ordered: false,
+                        maxRetransmits: 0,
+                    });
+                } catch (channelError) {
+                    console.warn("[A] SDK createDataChannel failed, fallback to RTCPeerConnection.createDataChannel", channelError);
+                    this.dataChannel = null;
+                }
+
+                if (!this.dataChannel) {
+                    try {
+                        this.dataChannel = pc.createDataChannel("robot-control", {
+                            ordered: false,
+                            maxRetransmits: 0,
+                        });
+                    } catch (fallbackError) {
+                        done(() => reject(new Error(`[A] Failed to create data channel: ${String(fallbackError)}`)));
+                        return;
+                    }
+                }
 
                 if (this.dataChannel) {
                     console.log("[A] DataChannel created");
@@ -174,17 +195,18 @@ export class WebRTCClient {
             });
         });
 
-        this.connA.connect(null);
-        await connected;
+    await conn.connect(null);
+    this.ayameConnectionA.value = conn;
+    await connected;
     };
 
     // =================================================
     // CONNECTION B — Video Stream
     // =================================================
     private connectB = async () => {
-        this.stopConnectionB();
+        //this.stopConnectionB();
         const roomId = `${this.roomIdPrefix}${this.roomName}-VideoA`;
-        const connectTimeoutMs = 20_000;
+        const connectTimeoutMs = 30_000;
 
         const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -192,7 +214,7 @@ export class WebRTCClient {
         });
         localMediaStream.value = stream;
 
-        this.connB = createConnection(
+        const conn = createConnection(
             this.signalingUrl,
             roomId,
             this.options,
@@ -201,7 +223,7 @@ export class WebRTCClient {
             this.debug
         );
 
-        this.connB.on("addstream", (event: AyameAddStreamEvent) => {
+        conn.on("addstream", (event: AyameAddStreamEvent) => {
             if (this.videoElement) {
                 remoteMediaStream.value = event.stream;
                 this.videoElement.srcObject = remoteMediaStream.value;
@@ -225,7 +247,7 @@ export class WebRTCClient {
                 done(() => reject(new Error("[B] Timed out while connecting media stream")));
             }, connectTimeoutMs);
 
-            this.connB?.on("disconnect", () => {
+            conn.on("disconnect", () => {
                 console.warn("[B] Disconnected");
 
                 const stream = localMediaStream.value;
@@ -235,7 +257,6 @@ export class WebRTCClient {
                         }
                     }
                 localMediaStream.value = null;
-
                 this.stopPingStats();
                 if (this.onVideoConnectionStateChange) this.onVideoConnectionStateChange(false);
                 if (!settled) {
@@ -247,9 +268,9 @@ export class WebRTCClient {
                 }
             });
 
-            this.connB?.on("open", async () => {
-                if (!this.connB) return;
-                const pc = this.connB?.peerConnection;
+            conn.on("open", async () => {
+                if (!conn) return;
+                const pc = conn.peerConnection;
                 if (pc) {
                     pc.onconnectionstatechange = () => {
                         console.log("[B] state:", pc.connectionState);
@@ -271,20 +292,37 @@ export class WebRTCClient {
                     
                 } else {
                     done(() => reject(new Error("[B] PeerConnection not available after open")));
+                    return;
                 }
 
-                // Create DataChannel
-                this.dataChannelTelem = await this.connB.createDataChannel("robot-telemetr", {
-                    ordered: false,
-                    maxRetransmits: 0,
-                });
+                // Create telemetry DataChannel (optional; should not break video connect)
+                try {
+                    this.dataChannelTelem = await conn.createDataChannel("robot-telemetr", {
+                        ordered: false,
+                        maxRetransmits: 0,
+                    });
+                } catch (channelError) {
+                    console.warn("[B] SDK createDataChannel failed, fallback to RTCPeerConnection.createDataChannel", channelError);
+                    this.dataChannelTelem = null;
+                }
+
+                if (!this.dataChannelTelem) {
+                    try {
+                        this.dataChannelTelem = pc.createDataChannel("robot-telemetr", {
+                            ordered: false,
+                            maxRetransmits: 0,
+                        });
+                    } catch (fallbackError) {
+                        console.warn("[B] Failed to create telemetry data channel (non-fatal)", fallbackError);
+                        this.dataChannelTelem = null;
+                    }
+                }
 
                 if (this.dataChannelTelem) {
                     console.log("[B] DataChannel created");
 
                     this.dataChannelTelem.onopen = () => {
-                        console.log("[A] DataChannel open");
-                        done(resolve);
+                        console.log("[B] DataChannel open");
                     };
 
                     this.dataChannelTelem.onmessage = async (msg) => {
@@ -293,15 +331,16 @@ export class WebRTCClient {
                         console.log("[B] Message:", text);
                         this.handleIncomingData(text);
                     };
-                } else {
-                    done(() => reject(new Error("[A] Failed to create data channel")));
                 }
+
+                done(resolve);
 
             });
         });
 
-        this.connB.connect(stream);
-        await connected;
+                await conn.connect(stream);
+                this.ayameConnectionB.value = conn;
+                await connected;
     };
 
     private async ensureSessionActivated(robotId: string) {
@@ -336,25 +375,39 @@ export class WebRTCClient {
     async stop() {
         console.log("[WebRTC] Stopping...");
 
-        this.stopConnectionA();
-        this.stopConnectionB();
-        this.stopPingStats();
-        if (this.onVideoConnectionStateChange) this.onVideoConnectionStateChange(false);
+        // this.stopConnectionA();
+        // this.stopConnectionB();
+        const connA = this.ayameConnectionA.value;
+        if (!connA) {
+        return;
+        }
+        await connA.disconnect();
 
-        this.connA = null;
-        this.connB = null;
-        this.dataChannel = null;
-        if (this.videoElement) {
-            this.videoElement.srcObject = null;
+        const connB = this.ayameConnectionB.value;
+        if (!connB) {
+        return;
         }
-        const localStream = localMediaStream.value;
-        if (localStream) {
-            for (const track of localStream.getTracks()) {
-                track.stop();
-            }
-        }
-        localMediaStream.value = null;
-        remoteMediaStream.value = null;
+        await connB.disconnect();
+
+
+        this.stopPingStats();
+        if (this.onVideoConnectionStateChange) 
+            this.onVideoConnectionStateChange(false);
+
+        // this.connA = null;
+        // this.connB = null;
+        // this.dataChannel = null;
+        // if (this.videoElement) {
+        //     this.videoElement.srcObject = null;
+        // }
+        // const localStream = localMediaStream.value;
+        // if (localStream) {
+        //     for (const track of localStream.getTracks()) {
+        //         track.stop();
+        //     }
+        // }
+        // localMediaStream.value = null;
+        // remoteMediaStream.value = null;
 
         if (this.sessionActivated || this.activationInFlight) {
             await this.deactivateWebrtcSession(this.roomName);
@@ -464,26 +517,26 @@ export class WebRTCClient {
         this.lastLossSample = null;
     }
 
-    private stopConnectionA() {
-        const conn = this.connA;
-        this.connA = null;
-        this.dataChannel = null;
-        if (conn) {
-            void conn.disconnect().catch((e) => {
-                console.warn("[A] Failed to disconnect", e);
-            });
-        }
-    }
+    // private stopConnectionA() {
+    //     const conn = this.connA;
+    //     this.connA = null;
+    //     this.dataChannel = null;
+    //     if (conn) {
+    //         void conn.disconnect().catch((e) => {
+    //             console.warn("[A] Failed to disconnect", e);
+    //         });
+    //     }
+    // }
 
-    private stopConnectionB() {
-        const conn = this.connB;
-        this.connB = null;
-        if (conn) {
-            void conn.disconnect().catch((e) => {
-                console.warn("[B] Failed to disconnect", e);
-            });
-        }
-    }
+    // private stopConnectionB() {
+    //     const conn = this.connB;
+    //     this.connB = null;
+    //     if (conn) {
+    //         void conn.disconnect().catch((e) => {
+    //             console.warn("[B] Failed to disconnect", e);
+    //         });
+    //     }
+    // }
 
     private validateConfig() {
         const missing: string[] = [];
@@ -685,7 +738,7 @@ export class WebRTCClient {
 
     startRecording() {
 
-        const pc = this.connB?.peerConnection;
+        const pc = this.ayameConnectionB.value?.peerConnection;
         
         if (pc?.connectionState === "connected") {
             if (!this.videoElement) {

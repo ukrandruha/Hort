@@ -552,12 +552,12 @@ async function loadCameras() {
 
     async function operatorDisconnect() {
       if (connected) {
+        const activeClient = clientRef.current;
         try {
-          await clientRef.current?.requestRebootForWebrtc("manual_disconnect");
-        } catch (rebootError) {
-          console.warn("[UI] Failed to request WebRTC reboot on disconnect", rebootError);
+          await disconnectCamera();
+        } catch (disconnectError) {
+          console.warn("[UI] Disconnect camera failed", disconnectError);
         }
-        disconnectCamera();
         // "robotId": "1000000012a168a1","reason":"", "disconnectedBy": "4" , "force":false}
         const disconnectData = {
           "robotId": robot.robotId,
@@ -565,7 +565,17 @@ async function loadCameras() {
           "disconnectedBy": userId.toString(),
           "force": false
         };
-        await api.post(`api/robots/robot-sessions/deactivateWebrtc`, disconnectData);
+        try {
+          await api.post(`api/robots/robot-sessions/deactivateWebrtc`, disconnectData);
+        } catch (deactivateError) {
+          console.warn("[UI] Failed to deactivate WebRTC session", deactivateError);
+        }
+
+        try {
+          await activeClient?.requestRebootForWebrtc("manual_disconnect");
+        } catch (rebootError) {
+          console.warn("[UI] Failed to request WebRTC reboot on disconnect", rebootError);
+        }
 
       }
     }

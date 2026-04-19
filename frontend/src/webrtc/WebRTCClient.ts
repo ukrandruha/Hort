@@ -599,35 +599,12 @@ export class WebRTCClient {
             reason,
             requestedBy: this.userId.toString(),
         };
-        const legacyPayload = {
-            robotId: this.roomName,
-            reason: "REBOOT_WERRTC_REQUESTED",
-            requestedBy: this.userId.toString(),
-        };
 
         try {
             await api.post(`/api/robots/robot-sessions/requestReboot`, payload);
         } catch (e) {
             const message = this.extractApiErrorMessage(e);
             const isSessionNotFound = message.toLowerCase().includes("session not found");
-            const isWebrtcEnumMissing =
-                message.includes("22P02") &&
-                message.includes("RobotSessionStatus") &&
-                message.includes("REBOOT_WERRTC_REQUESTED");
-
-            if (isWebrtcEnumMissing) {
-                try {
-                    await api.post(`/api/robots/robot-sessions/requestReboot`, legacyPayload);
-                    console.warn("[WebRTC] requestReboot fallback: DB enum does not include REBOOT_WERRTC_REQUESTED yet");
-                    return;
-                } catch (fallbackError) {
-                    console.error("[WebRTC] Failed to request reboot with legacy fallback", {
-                        fallbackError,
-                        message: this.extractApiErrorMessage(fallbackError),
-                    });
-                    return;
-                }
-            }
 
             if (isSessionNotFound && this.userId > 0) {
                 try {
@@ -635,21 +612,7 @@ export class WebRTCClient {
                         robotId: this.roomName,
                         operatorId: this.userId,
                     });
-                    try {
-                        await api.post(`/api/robots/robot-sessions/requestReboot`, payload);
-                    } catch (retryError) {
-                        const retryMessage = this.extractApiErrorMessage(retryError);
-                        const retryEnumMissing =
-                            retryMessage.includes("22P02") &&
-                            retryMessage.includes("RobotSessionStatus") &&
-                            retryMessage.includes("REBOOT_WERRTC_REQUESTED");
-                        if (retryEnumMissing) {
-                            await api.post(`/api/robots/robot-sessions/requestReboot`, legacyPayload);
-                            console.warn("[WebRTC] requestReboot fallback after auto-create: DB enum does not include REBOOT_WERRTC_REQUESTED yet");
-                        } else {
-                            throw retryError;
-                        }
-                    }
+                    await api.post(`/api/robots/robot-sessions/requestReboot`, payload);
                     return;
                 } catch (retryError) {
                     console.error("[WebRTC] Failed to request reboot after session auto-create", {

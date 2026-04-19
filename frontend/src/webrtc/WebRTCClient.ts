@@ -7,6 +7,7 @@ import { api } from "../api/api";
 
 // Media stream signals
 export const localMediaStream = signal<MediaStream | null>(null);
+export const remoteMediaStream = signal<MediaStream | null>(null);
 
 
 export class WebRTCClient {
@@ -192,6 +193,8 @@ export class WebRTCClient {
             this.signalingUrl,
             roomId,
             this.options,
+            //this.options.video.direction = 'recvonly',
+            //this.options.audio.direction = 'sendrecv',
             this.debug
         );
 
@@ -515,17 +518,88 @@ export class WebRTCClient {
         }
     }
 
-    private async requestRebootForWebrtcError() {
+    public async requestRebootForWebrtcError(reason = "webrtc_connect_error") {
+        const payload = {
+            robotId: this.roomName,
+            status: "REBOOT_WERRTC_REQUESTED",
+            reason,
+            requestedBy: this.userId.toString(),
+        };
+        const legacyPayload = {
+            robotId: this.roomName,
+            reason: "REBOOT_WERRTC_REQUESTED",
+            requestedBy: this.userId.toString(),
+        };
+
         try {
-            await api.post(`/api/robots/robot-sessions/requestReboot`, {
-                robotId: this.roomName,
-                status: "REBOOT_WERRTC_REQUESTED",
-                reason: "webrtc_connect_error",
-                requestedBy: this.userId.toString(),
-            });
+            await api.post(`/api/robots/robot-sessions/requestReboot`, payload);
         } catch (e) {
-            console.error("[WebRTC] Failed to request reboot after connect error", e);
+            const message = this.extractApiErrorMessage(e);
+            const isSessionNotFound = message.toLowerCase().includes("session not found");
+            const isWebrtcEnumMissing =
+                message.includes("22P02") &&
+                message.includes("RobotSessionStatus") &&
+                message.includes("REBOOT_WERRTC_REQUESTED");
+
+            if (isWebrtcEnumMissing) {
+                try {
+                    await api.post(`/api/robots/robot-sessions/requestReboot`, legacyPayload);
+                    console.warn("[WebRTC] requestReboot fallback: DB enum does not include REBOOT_WERRTC_REQUESTED yet");
+                    return;
+                } catch (fallbackError) {
+                    console.error("[WebRTC] Failed to request reboot with legacy fallback", {
+                        fallbackError,
+                        message: this.extractApiErrorMessage(fallbackError),
+                    });
+                    return;
+                }
+            }
+
+            if (isSessionNotFound && this.userId > 0) {
+                try {
+                    await api.post(`/api/robots/robot-sessions/create`, {
+                        robotId: this.roomName,
+                        operatorId: this.userId,
+                    });
+                    try {
+                        await api.post(`/api/robots/robot-sessions/requestReboot`, payload);
+                    } catch (retryError) {
+                        const retryMessage = this.extractApiErrorMessage(retryError);
+                        const retryEnumMissing =
+                            retryMessage.includes("22P02") &&
+                            retryMessage.includes("RobotSessionStatus") &&
+                            retryMessage.includes("REBOOT_WERRTC_REQUESTED");
+                        if (retryEnumMissing) {
+                            await api.post(`/api/robots/robot-sessions/requestReboot`, legacyPayload);
+                            console.warn("[WebRTC] requestReboot fallback after auto-create: DB enum does not include REBOOT_WERRTC_REQUESTED yet");
+                        } else {
+                            throw retryError;
+                        }
+                    }
+                    return;
+                } catch (retryError) {
+                    console.error("[WebRTC] Failed to request reboot after session auto-create", {
+                        retryError,
+                        message: this.extractApiErrorMessage(retryError),
+                    });
+                    return;
+                }
+            }
+
+            console.error("[WebRTC] Failed to request reboot after connect error", {
+                error: e,
+                message,
+            });
         }
+    }
+
+    private extractApiErrorMessage(error: any): string {
+        return String(
+            error?.response?.data?.message ??
+            error?.response?.data?.error ??
+            error?.message ??
+            ""
+        );
     }
     // =================================================
     // Set data GamePad

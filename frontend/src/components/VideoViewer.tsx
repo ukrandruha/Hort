@@ -50,6 +50,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showRthPath, setShowRthPath] = useState(false);
     const [pingMs, setPingMs] = useState<number | null>(null);
     const [isVideoConnected, setIsVideoConnected] = useState(false);
+    const [isForcingWebrtcReboot, setIsForcingWebrtcReboot] = useState(false);
     const [packetLoss, setPacketLoss] = useState<{
       lost: number | null;
       received: number | null;
@@ -376,6 +377,22 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         setIsConnecting(false);
       }
     }
+
+    async function forceWebrtcRebootRequest() {
+      if (isForcingWebrtcReboot) return;
+      setIsForcingWebrtcReboot(true);
+      try {
+        const rebootClient = new WebRTCClient(robot.robotId, userId);
+        await rebootClient.requestRebootForWebrtcError("manual_webrtc_reboot_request");
+        alert("Запит на перезапуск WebRTC сервісу відправлено");
+      } catch (e) {
+        console.error("[UI] Failed to request manual WebRTC reboot", e);
+        alert("Помилка запиту перезапуску WebRTC сервісу");
+      } finally {
+        setIsForcingWebrtcReboot(false);
+      }
+    }
+
     function fullScreen() {
 
     }
@@ -993,17 +1010,30 @@ async function stopRecording()
         <div className="h-20 bg-gray-900 border-t border-gray-700 flex items-center gap-4 px-6">
 
           {!connected && (
-            <button
-              onClick={connectCamera}
-              disabled={isConnecting || isRobotOffline}
-              className={`px-4 py-2 rounded ${
-                isConnecting || isRobotOffline
-                  ? "bg-blue-900 cursor-not-allowed opacity-60"
-                  : "bg-blue-700 hover:bg-blue-800"
-              }`}
-            >
-              {isConnecting ? "Connecting..." : "Connect camera"}
-            </button>
+            <>
+              <button
+                onClick={connectCamera}
+                disabled={isConnecting || isRobotOffline}
+                className={`px-4 py-2 rounded ${
+                  isConnecting || isRobotOffline
+                    ? "bg-blue-900 cursor-not-allowed opacity-60"
+                    : "bg-blue-700 hover:bg-blue-800"
+                }`}
+              >
+                {isConnecting ? "Connecting..." : "Connect camera"}
+              </button>
+              <button
+                onClick={forceWebrtcRebootRequest}
+                disabled={isForcingWebrtcReboot}
+                className={`px-4 py-2 rounded ${
+                  isForcingWebrtcReboot
+                    ? "bg-orange-900 cursor-not-allowed opacity-60"
+                    : "bg-orange-700 hover:bg-orange-800"
+                }`}
+              >
+                {isForcingWebrtcReboot ? "Requesting..." : "Reboot WebRTC"}
+              </button>
+            </>
           )}
 
           {connected && (

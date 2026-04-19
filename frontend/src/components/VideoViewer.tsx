@@ -51,6 +51,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [pingMs, setPingMs] = useState<number | null>(null);
     const [isVideoConnected, setIsVideoConnected] = useState(false);
     const [isForcingWebrtcReboot, setIsForcingWebrtcReboot] = useState(false);
+    const [isDisconnectCooldown, setIsDisconnectCooldown] = useState(false);
     const [packetLoss, setPacketLoss] = useState<{
       lost: number | null;
       received: number | null;
@@ -59,6 +60,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     }>({ lost: null, received: null, pct: null, fps: null });
     const showJoysticksRef = useRef(false);
     const homePressTimerRef = useRef<number | null>(null);
+    const disconnectCooldownTimerRef = useRef<number | null>(null);
     const channelsPanelRef = useRef<HTMLDivElement | null>(null);
     const channelsToggleButtonRef = useRef<HTMLButtonElement | null>(null);
     const [channelState, setChannelState] = useState({
@@ -320,6 +322,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     useEffect(() => {
       return () => {
         clearHomeLongPress();
+        if (disconnectCooldownTimerRef.current !== null) {
+          window.clearTimeout(disconnectCooldownTimerRef.current);
+          disconnectCooldownTimerRef.current = null;
+        }
       };
     }, []);
 
@@ -551,7 +557,16 @@ async function loadCameras() {
     }
 
     async function operatorDisconnect() {
-      if (connected) {
+      if (connected && !isDisconnectCooldown) {
+        setIsDisconnectCooldown(true);
+        if (disconnectCooldownTimerRef.current !== null) {
+          window.clearTimeout(disconnectCooldownTimerRef.current);
+        }
+        disconnectCooldownTimerRef.current = window.setTimeout(() => {
+          setIsDisconnectCooldown(false);
+          disconnectCooldownTimerRef.current = null;
+        }, 5000) as unknown as number;
+
         const activeClient = clientRef.current;
         try {
           await disconnectCamera();
@@ -1028,14 +1043,18 @@ async function stopRecording()
             <>
               <button
                 onClick={connectCamera}
-                disabled={isConnecting || isRobotOffline}
+                disabled={isConnecting || isRobotOffline || isDisconnectCooldown}
                 className={`px-4 py-2 rounded ${
-                  isConnecting || isRobotOffline
+                  isConnecting || isRobotOffline || isDisconnectCooldown
                     ? "bg-blue-900 cursor-not-allowed opacity-60"
                     : "bg-blue-700 hover:bg-blue-800"
                 }`}
               >
-                {isConnecting ? "Connecting..." : "Connect camera"}
+                {isConnecting
+                  ? "Connecting..."
+                  : isDisconnectCooldown
+                    ? "Connect blocked..."
+                    : "Connect camera"}
               </button>
               <button
                 onClick={forceWebrtcRebootRequest}
@@ -1054,7 +1073,12 @@ async function stopRecording()
           {connected && (
             <button
               onClick={operatorDisconnect}
-              className="px-4 py-2 bg-yellow-600 rounded hover:bg-yellow-700"
+              disabled={isDisconnectCooldown}
+              className={`px-4 py-2 rounded ${
+                isDisconnectCooldown
+                  ? "bg-yellow-800 cursor-not-allowed opacity-60"
+                  : "bg-yellow-600 hover:bg-yellow-700"
+              }`}
             >
               Disconnect camera
             </button>

@@ -67,6 +67,7 @@ export class WebRTCClient {
         opt.audio = opt.audio ?? {};
         opt.video = opt.video ?? {};
         opt.audio.direction = "sendrecv";
+        opt.audio.enabled = true;
         opt.video.direction = "recvonly";
         opt.video.codecMimeType = "video/H264";
 
@@ -92,6 +93,27 @@ export class WebRTCClient {
         this.videoElement = video;
     }
 
+    public setConnectionBAudioEnabled(enabled: boolean) {
+        this.options.audio = this.options.audio ?? { direction: "sendrecv", enabled };
+        this.options.audio.enabled = enabled;
+
+        const stream = localMediaStream.value;
+        if (stream) {
+            for (const track of stream.getAudioTracks()) {
+                track.enabled = enabled;
+            }
+        }
+
+        if (this.videoElement) {
+            this.videoElement.muted = !enabled;
+            if (enabled && this.videoElement.srcObject) {
+                void this.videoElement.play().catch((playError) => {
+                    console.warn("[WebRTC] Failed to resume remote audio playback", playError);
+                });
+            }
+        }
+    }
+
     // =================================================
     // MAIN START
     // =================================================
@@ -110,7 +132,7 @@ export class WebRTCClient {
     }
 
     // =================================================
-    // CONNECTION A — DataChannel
+    // CONNECTION A — DataChannel CONTROL ROVER
     // =================================================
     private connectA = async () => {
         //this.stopConnectionA();
@@ -201,18 +223,24 @@ export class WebRTCClient {
     };
 
     // =================================================
-    // CONNECTION B — Video Stream
+    // CONNECTION B — Video Stream VIDEO,telemetry
     // =================================================
     private connectB = async () => {
         //this.stopConnectionB();
         const roomId = `${this.roomIdPrefix}${this.roomName}-VideoA`;
         const connectTimeoutMs = 30_000;
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-        });
-        localMediaStream.value = stream;
+        const audioEnabled = this.options.audio?.enabled !== false;
+        let stream: MediaStream | null = null;
+        if (audioEnabled) {
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: false,
+            });
+            localMediaStream.value = stream;
+        } else {
+            localMediaStream.value = null;
+        }
 
         const conn = createConnection(
             this.signalingUrl,
@@ -227,7 +255,7 @@ export class WebRTCClient {
             if (this.videoElement) {
                 remoteMediaStream.value = event.stream;
                 this.videoElement.srcObject = remoteMediaStream.value;
-                this.videoElement.muted = false;
+                this.videoElement.muted = this.options.audio?.enabled === false;
                 this.videoElement.playsInline = true;
                 void this.videoElement.play().catch((playError) => {
                     console.warn("[WebRTC] Remote media autoplay blocked", playError);

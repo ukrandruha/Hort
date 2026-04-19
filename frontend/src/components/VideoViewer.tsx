@@ -48,6 +48,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showChannels, setShowChannels] = useState(false);
     const [isSavingHome, setIsSavingHome] = useState(false);
     const [showRthPath, setShowRthPath] = useState(false);
+    const [isAudioEnabled, setIsAudioEnabled] = useState(false);
     const [pingMs, setPingMs] = useState<number | null>(null);
     const [isVideoConnected, setIsVideoConnected] = useState(false);
     const [isForcingWebrtcReboot, setIsForcingWebrtcReboot] = useState(false);
@@ -345,6 +346,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       clientRef.current = client;
 
       client.setVideoElement(videoRef.current);
+      client.setConnectionBAudioEnabled(isAudioEnabled);
       // receive parsed data from robot and show in header
       client.onData = (d: any) => {
         robotStore.setTelemetry(robot.robotId, d);
@@ -397,6 +399,12 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       } finally {
         setIsForcingWebrtcReboot(false);
       }
+    }
+
+    function toggleAudioEnabled() {
+      const next = !isAudioEnabled;
+      setIsAudioEnabled(next);
+      clientRef.current?.setConnectionBAudioEnabled(next);
     }
 
     function fullScreen() {
@@ -807,6 +815,18 @@ async function stopRecording()
               aria-label={showMap ? "Hide map" : "Show map"}
             >
               🗺️
+            </button>
+            <button
+              onClick={toggleAudioEnabled}
+              className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg text-[10px] leading-tight ${
+                isAudioEnabled
+                  ? "bg-green-700/90 border-green-600"
+                  : "bg-gray-900/90 border-gray-700 hover:bg-gray-800"
+              }`}
+              title={`Audio: ${isAudioEnabled ? "так" : "ні"}`}
+              aria-label={`Audio: ${isAudioEnabled ? "так" : "ні"}`}
+            >
+              Audio
             </button>
             <button
               onClick={() => setShowJoysticks((prev) => !prev)}

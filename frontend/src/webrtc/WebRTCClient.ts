@@ -100,7 +100,7 @@ export class WebRTCClient {
         try {
             await Promise.all([this.connectA(), this.connectB()]);
         } catch (error) {
-            await this.requestRebootForWebrtcError();
+            //await this.requestRebootForWebrtcError();
             throw error;
         }
 

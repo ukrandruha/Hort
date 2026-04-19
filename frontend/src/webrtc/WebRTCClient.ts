@@ -62,7 +62,10 @@ export class WebRTCClient {
         opt.clientId = this.clientId;
         opt.signalingKey = this.signalingKey;
 
+        opt.audio = opt.audio ?? {};
         opt.video = opt.video ?? {};
+        opt.audio.direction = "sendrecv";
+        opt.video.direction = "recvonly";
         opt.video.codecMimeType = "video/H264";
 
         opt.iceServers = [
@@ -200,7 +203,13 @@ export class WebRTCClient {
 
         this.connB.on("addstream", (event: AyameAddStreamEvent) => {
             if (this.videoElement) {
-                this.videoElement.srcObject = event.stream;
+                remoteMediaStream.value = event.stream;
+                this.videoElement.srcObject = remoteMediaStream.value;
+                this.videoElement.muted = false;
+                this.videoElement.playsInline = true;
+                void this.videoElement.play().catch((playError) => {
+                    console.warn("[WebRTC] Remote media autoplay blocked", playError);
+                });
             }
         });
 
@@ -219,18 +228,22 @@ export class WebRTCClient {
             this.connB?.on("disconnect", () => {
                 console.warn("[B] Disconnected");
 
-            const stream = localMediaStream.value;
-                if (stream) {
-                    for (const track of stream.getTracks()) {
-                    track.stop();
+                const stream = localMediaStream.value;
+                    if (stream) {
+                        for (const track of stream.getTracks()) {
+                        track.stop();
+                        }
                     }
-                }
                 localMediaStream.value = null;
 
                 this.stopPingStats();
                 if (this.onVideoConnectionStateChange) this.onVideoConnectionStateChange(false);
                 if (!settled) {
                     done(() => reject(new Error("[B] Disconnected before connected state")));
+                }
+                remoteMediaStream.value = null;
+                if (this.videoElement) {
+                    this.videoElement.srcObject = null;
                 }
             });
 
@@ -287,7 +300,7 @@ export class WebRTCClient {
             });
         });
 
-        this.connB.connect(null);
+        this.connB.connect(stream);
         await connected;
     };
 
@@ -334,6 +347,14 @@ export class WebRTCClient {
         if (this.videoElement) {
             this.videoElement.srcObject = null;
         }
+        const localStream = localMediaStream.value;
+        if (localStream) {
+            for (const track of localStream.getTracks()) {
+                track.stop();
+            }
+        }
+        localMediaStream.value = null;
+        remoteMediaStream.value = null;
 
         if (this.sessionActivated || this.activationInFlight) {
             await this.deactivateWebrtcSession(this.roomName);

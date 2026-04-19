@@ -102,7 +102,7 @@ export class WebRTCClient {
         try {
             await Promise.all([this.connectA(), this.connectB()]);
         } catch (error) {
-            //await this.requestRebootForWebrtcError();
+            //await this.requestRebootForWebrtc();
             throw error;
         }
 
@@ -592,7 +592,7 @@ export class WebRTCClient {
         }
     }
 
-    public async requestRebootForWebrtcError(reason = "webrtc_connect_error") {
+    public async requestRebootForWebrtc(reason = "webrtc_connect_error") {
         const payload = {
             robotId: this.roomName,
             status: "REBOOT_WERRTC_REQUESTED",

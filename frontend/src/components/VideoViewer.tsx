@@ -383,7 +383,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setIsForcingWebrtcReboot(true);
       try {
         const rebootClient = new WebRTCClient(robot.robotId, userId);
-        await rebootClient.requestRebootForWebrtcError("manual_webrtc_reboot_request");
+        await rebootClient.requestRebootForWebrtc("manual_webrtc_reboot_request");
         alert("Запит на перезапуск WebRTC сервісу відправлено");
       } catch (e) {
         console.error("[UI] Failed to request manual WebRTC reboot", e);
@@ -552,6 +552,11 @@ async function loadCameras() {
 
     async function operatorDisconnect() {
       if (connected) {
+        try {
+          await clientRef.current?.requestRebootForWebrtc("manual_disconnect");
+        } catch (rebootError) {
+          console.warn("[UI] Failed to request WebRTC reboot on disconnect", rebootError);
+        }
         disconnectCamera();
         // "robotId": "1000000012a168a1","reason":"", "disconnectedBy": "4" , "force":false}
         const disconnectData = {

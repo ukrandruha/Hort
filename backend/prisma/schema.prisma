@@ -138,3 +138,20 @@ model MissionPoint {
   @@unique([missionId, order])
   @@index([missionId])
 }
+
+model TcPosition {
+  id         Int      @id @default(autoincrement())
+  robotId    String
+  devicetime DateTime
+  latitude   Float
+  longitude  Float
+  altitude   Float?
+  speed      Float?
+  accuracy   Float?
+
+  robot Robot @relation(fields: [robotId], references: [robotId], onDelete: Cascade)
+
+  @@index([robotId])
+  @@index([devicetime])
+  @@map("tc_positions")
+}

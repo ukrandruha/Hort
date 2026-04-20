@@ -1,8 +1,10 @@
 import type { FastifyInstance } from "fastify";
-import { RobotPositionUpdateData, RobotUpdateData } from "../types/robot.types.js";
+import { RobotPositionUpdateData, RobotUpdateData, TcPositionCreateData } from "../types/robot.types.js";
 import { 
   updateRobotStatus, 
   updateRobotCoordinates,
+  createTcPosition,
+  getTcPositions,
   getAllRobots, 
   getRobot,
   editRobot,
@@ -45,6 +47,34 @@ export async function robotRoutes(app: FastifyInstance) {
       reply.code(400).send({ error: "Position update failed: " + (err instanceof Error ? err.message : String(err)) });
     }
   });
+
+  app.post("/api/robots/positions", async (req, reply) => {
+    try {
+      const position = await createTcPosition(req.body as TcPositionCreateData);
+      return { success: true, position };
+    } catch (err) {
+      reply.code(400).send({ error: "Position insert failed: " + (err instanceof Error ? err.message : String(err)) });
+    }
+  });
+
+  app.get<{ Params: { robotId: string }, Querystring: { datetime_begin: string; datetime_end: string } }>(
+    "/api/robots/:robotId/positions",
+    async (req, reply) => {
+      try {
+        const { robotId } = req.params;
+        const { datetime_begin, datetime_end } = req.query;
+
+        if (!datetime_begin || !datetime_end) {
+          return reply.code(400).send({ error: "Missing datetime_begin or datetime_end query parameters" });
+        }
+
+        const positions = await getTcPositions(robotId, datetime_begin, datetime_end);
+        return { success: true, positions };
+      } catch (err) {
+        reply.code(400).send({ error: "Position query failed: " + (err instanceof Error ? err.message : String(err)) });
+      }
+    }
+  );
 
   // app.post<{ Params: { idRobot: string, userconnect: number } }>("/api/robots/updatewebrtcclient", async (req, reply) => {
   //   try {

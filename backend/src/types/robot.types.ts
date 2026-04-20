@@ -24,4 +24,14 @@ export interface RobotPositionUpdateData {
   };
 }
 
+export interface TcPositionCreateData {
+  robotId: string;
+  devicetime: string | Date;
+  latitude: number;
+  longitude: number;
+  altitude?: number;
+  speed?: number;
+  accuracy?: number;
+}
+
 

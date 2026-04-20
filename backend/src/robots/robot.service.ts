@@ -1,5 +1,5 @@
 import { prisma } from "../db/prisma.js";
-import { RobotPositionUpdateData, RobotUpdateData } from "../types/robot.types.js";
+import { RobotPositionUpdateData, RobotUpdateData, TcPositionCreateData } from "../types/robot.types.js";
 import { RobotSessionStatus } from '@prisma/client';
 import { validateRobotId, validateCoordinates } from "../utils/validation.js";
 
@@ -125,6 +125,60 @@ export async function updateRobotCoordinates(data: RobotPositionUpdateData) {
       lat: data.position.lat,
       lng: data.position.lng,
     },
+  });
+}
+
+export async function createTcPosition(data: TcPositionCreateData) {
+  validateRobotId(data.robotId);
+  validateCoordinates(data.latitude, data.longitude);
+
+  const deviceTime = new Date(data.devicetime);
+  if (Number.isNaN(deviceTime.getTime())) {
+    throw new Error("Invalid devicetime");
+  }
+
+  return prisma.tcPosition.create({
+    data: {
+      robotId: data.robotId,
+      devicetime: deviceTime,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      altitude: data.altitude,
+      speed: data.speed,
+      accuracy: data.accuracy,
+    },
+  });
+}
+
+export async function getTcPositions(
+  robotId: string,
+  datetimeBegin: string | Date,
+  datetimeEnd: string | Date
+) {
+  validateRobotId(robotId);
+
+  const beginTime = new Date(datetimeBegin);
+  const endTime = new Date(datetimeEnd);
+
+  if (Number.isNaN(beginTime.getTime())) {
+    throw new Error("Invalid datetime_begin");
+  }
+  if (Number.isNaN(endTime.getTime())) {
+    throw new Error("Invalid datetime_end");
+  }
+  if (beginTime > endTime) {
+    throw new Error("datetime_begin must be before datetime_end");
+  }
+
+  return prisma.tcPosition.findMany({
+    where: {
+      robotId,
+      devicetime: {
+        gte: beginTime,
+        lte: endTime,
+      },
+    },
+    orderBy: { devicetime: 'asc' },
   });
 }
 

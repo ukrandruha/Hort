@@ -51,6 +51,7 @@ model Robot {
   sessions    RobotSession[]
   cameras RobotCamera[]
   missions Mission[]
+  positions TcPosition[]
 }
 
 model Tc_user_device {

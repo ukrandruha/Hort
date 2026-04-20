@@ -810,15 +810,15 @@ async function stopRecording()
                   return next;
                 })
               }
-              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
+              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 flex items-center justify-center"
               title={showMap ? "Hide map" : "Show map"}
               aria-label={showMap ? "Hide map" : "Show map"}
             >
-              🗺️
+              <img src="/map.svg" alt="map icon" className="w-6 h-6 invert" />
             </button>
             <button
               onClick={toggleAudioEnabled}
-              className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg text-[10px] leading-tight ${
+              className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg flex items-center justify-center ${
                 isAudioEnabled
                   ? "bg-green-700/90 border-green-600"
                   : "bg-gray-900/90 border-gray-700 hover:bg-gray-800"
@@ -826,25 +826,25 @@ async function stopRecording()
               title={`Audio: ${isAudioEnabled ? "так" : "ні"}`}
               aria-label={`Audio: ${isAudioEnabled ? "так" : "ні"}`}
             >
-              Audio
+              <img src={isAudioEnabled ? "/audio-on.svg" : "/audio-off.svg"} alt="audio" className="w-6 h-6 invert" />
             </button>
             <button
               onClick={() => setShowJoysticks((prev) => !prev)}
-              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
+              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 flex items-center justify-center"
               title={showJoysticks ? "Hide joysticks" : "Show joysticks"}
               aria-label={showJoysticks ? "Hide joysticks" : "Show joysticks"}
             >
-              🎮
+              <img src="/joystick.svg" alt="joystick" className="w-6 h-6 invert" />
             </button>
             {showJoysticks && (
               <button
                 ref={channelsToggleButtonRef}
                 onClick={() => setShowChannels((prev) => !prev)}
-                className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800"
+                className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 flex items-center justify-center"
                 title={showChannels ? "Hide channels" : "Show channels"}
                 aria-label={showChannels ? "Hide channels" : "Show channels"}
               >
-                🎛️
+                <img src="/control-panel.svg" alt="channels" className="w-6 h-6 invert" />
               </button>
             )}
             <button
@@ -853,7 +853,7 @@ async function stopRecording()
               onPointerLeave={clearHomeLongPress}
               onPointerCancel={clearHomeLongPress}
               disabled={!currentGpsTarget || isSavingHome}
-              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               title={
                 currentGpsTarget
                   ? isSavingHome
@@ -863,7 +863,7 @@ async function stopRecording()
               }
               aria-label="Save Home position"
             >
-              🏠
+              <img src="/home.svg" alt="home" className="w-6 h-6 invert" />
             </button>
             <button
               onClick={() => setShowRthPath((prev) => !prev)}

@@ -810,7 +810,11 @@ async function stopRecording()
                   return next;
                 })
               }
-              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 flex items-center justify-center"
+              className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg flex items-center justify-center ${
+                showMap
+                  ? "bg-green-700/90 border-green-600"
+                  : "bg-gray-900/90 border-gray-700 hover:bg-gray-800"
+              }`}
               title={showMap ? "Hide map" : "Show map"}
               aria-label={showMap ? "Hide map" : "Show map"}
             >
@@ -830,7 +834,11 @@ async function stopRecording()
             </button>
             <button
               onClick={() => setShowJoysticks((prev) => !prev)}
-              className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 flex items-center justify-center"
+              className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg flex items-center justify-center ${
+                showJoysticks
+                  ? "bg-green-700/90 border-green-600"
+                  : "bg-gray-900/90 border-gray-700 hover:bg-gray-800"
+              }`}
               title={showJoysticks ? "Hide joysticks" : "Show joysticks"}
               aria-label={showJoysticks ? "Hide joysticks" : "Show joysticks"}
             >
@@ -840,7 +848,11 @@ async function stopRecording()
               <button
                 ref={channelsToggleButtonRef}
                 onClick={() => setShowChannels((prev) => !prev)}
-                className="w-12 h-12 rounded-full bg-gray-900/90 border border-gray-700 text-gray-200 shadow-lg hover:bg-gray-800 flex items-center justify-center"
+                className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg flex items-center justify-center ${
+                  showChannels
+                    ? "bg-green-700/90 border-green-600"
+                    : "bg-gray-900/90 border-gray-700 hover:bg-gray-800"
+                }`}
                 title={showChannels ? "Hide channels" : "Show channels"}
                 aria-label={showChannels ? "Hide channels" : "Show channels"}
               >

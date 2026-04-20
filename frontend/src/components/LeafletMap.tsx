@@ -320,6 +320,7 @@ export default function LeafletMap({
       center={pos}
       zoom={21}
       scrollWheelZoom={true}
+      attributionControl={false}
       style={{ width: "100%", height: "100%" }}
     >
       <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />

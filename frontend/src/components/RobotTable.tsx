@@ -34,12 +34,16 @@ export default function RobotTable() {
 
   const videoViewerRef = useRef<VideoViewerHandle | null>(null);
   const videoRobotRef = useRef<any>(null);
+  const isLoadingRef = useRef(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const role = getRole();
   const userId = getUserId();
 
   async function load() {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
+
     try {
       const res = await api.get("/api/robots/");
       const data = res.data;
@@ -53,8 +57,16 @@ export default function RobotTable() {
           (r: Robot) => r.robotId === currentVideoRobot.robotId,
         );
         if (current) {
-          setVideoRobot(current);
-          videoRobotRef.current = current;
+          const shouldUpdateVideoRobot =
+            currentVideoRobot.robotId !== current.robotId ||
+            currentVideoRobot.updatedAt !== current.updatedAt ||
+            currentVideoRobot.sessionStatus !== current.sessionStatus ||
+            currentVideoRobot.operatorEmail !== current.operatorEmail;
+
+          if (shouldUpdateVideoRobot) {
+            setVideoRobot(current);
+            videoRobotRef.current = current;
+          }
         }
         if (current?.sessionStatus === "DISCONNECT_REQUESTED") {
           // ✅ ВИКЛИК МЕТОДУ В VideoViewer
@@ -64,15 +76,20 @@ export default function RobotTable() {
 
     } catch (e) {
       console.error("Failed to load robots", e);
+    } finally {
+      isLoadingRef.current = false;
     }
   }
 
   useEffect(() => {
     videoRobotRef.current = videoRobot;
+  }, [videoRobot]);
+
+  useEffect(() => {
     load();
     const interval = setInterval(load, 3000);
     return () => clearInterval(interval);
-  }, [videoRobot]);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside() {

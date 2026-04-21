@@ -69,7 +69,7 @@ export class WebRTCClient {
         opt.audio.direction = "sendrecv";
         opt.audio.enabled = true;
         opt.video.direction = "recvonly";
-        opt.video.codecMimeType = "video/H264";
+        opt.video.codecMimeType = "video/VP8";
 
         opt.iceServers = [
             { urls: "stun:stun.l.google.com:19302" },

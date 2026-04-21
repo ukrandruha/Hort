@@ -260,20 +260,34 @@ app.delete<{ Params: { id: string } }>(
     '/api/robots/robot-sessions/activateWebrtc',
     { preHandler: [app.auth] },
     async (req, reply) => {
-      const user = req.user as { id?: number; role?: string; email?: string } | undefined;
-      const body = req.body as { robotId: string; operatorId?: number };
-      const operatorId = body.operatorId ?? user?.id;
-
-      if (!Number.isInteger(operatorId) || Number(operatorId) <= 0) {
-        return reply.code(400).send({ message: "operatorId must be a positive integer" });
-      }
-
-      const param = { robotId: body.robotId, operatorId: Number(operatorId) };
-
       try {
+        const user = req.user as { id?: number; role?: string; email?: string } | undefined;
+        const body = (req.body ?? {}) as { robotId?: string; operatorId?: number };
+        const operatorId = body.operatorId ?? user?.id;
+        const robotId = typeof body.robotId === "string" ? body.robotId.trim() : "";
+
+        if (!robotId) {
+          return reply.code(400).send({ message: "robotId is required" });
+        }
+
+        if (!Number.isInteger(operatorId) || Number(operatorId) <= 0) {
+          return reply.code(400).send({ message: "operatorId must be a positive integer" });
+        }
+
+        const param = { robotId, operatorId: Number(operatorId) };
+
         const session = await activateWebrtcSession(param);
         return reply.send(session);
       } catch (err: any) {
+        req.log.error(
+          {
+            err,
+            robotId: (req.body as any)?.robotId,
+            operatorId: (req.body as any)?.operatorId,
+            userId: (req.user as any)?.id,
+          },
+          "activateWebrtc failed"
+        );
         return reply.code(400).send({ message: err.message });
       }
     },

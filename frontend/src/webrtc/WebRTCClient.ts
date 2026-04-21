@@ -86,7 +86,8 @@ export class WebRTCClient {
 
     constructor(private robotId: string, userId: number) {
         this.roomName = robotId;
-        this.userId = userId;
+        const normalizedUserId = Number(userId);
+        this.userId = Number.isInteger(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : -1;
     }
 
     setVideoElement(video: HTMLVideoElement) {
@@ -306,13 +307,17 @@ export class WebRTCClient {
                             this.onVideoConnectionStateChange(pc.connectionState === "connected");
                         }
                         if (pc.connectionState === "connected") {
-                            void this.ensureSessionActivated(this.roomName);
+                            void this.ensureSessionActivated(this.roomName).catch((activationError) => {
+                                console.error("[WebRTC] Session activation failed", activationError);
+                            });
                             this.startPingStats(pc);
                             done(resolve);
                         }
                     };
                     if (pc.connectionState === "connected") {
-                        void this.ensureSessionActivated(this.roomName);
+                        void this.ensureSessionActivated(this.roomName).catch((activationError) => {
+                            console.error("[WebRTC] Session activation failed", activationError);
+                        });
                         this.startPingStats(pc);
                         done(resolve);
                     }
@@ -386,10 +391,12 @@ export class WebRTCClient {
 
     private async activateWebrtcSession(robotId: string) {
         try {
-            await api.post(`/api/robots/robot-sessions/activateWebrtc`, {
-                "robotId": robotId,
-                "operatorId": this.userId,
-            });
+            const payload: { robotId: string; operatorId?: number } = { robotId };
+            if (Number.isInteger(this.userId) && this.userId > 0) {
+                payload.operatorId = this.userId;
+            }
+
+            await api.post(`/api/robots/robot-sessions/activateWebrtc`, payload);
         } catch (e: any) {
             alert("Помилка активації WebRTC");
             console.error("[WebRTC] activateWebrtc failed", {

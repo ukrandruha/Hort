@@ -390,8 +390,8 @@ export async function editRobot(id: string, data:RobotUpdateData) {
   /**
    * Promote session from ACTIVE to ACTIVE_WEBRTC
    */
-  export async function activateWebrtcSession(params: { robotId: string }) {
-    const { robotId } = params;
+  export async function activateWebrtcSession(params: { robotId: string; operatorId: number }) {
+    const { robotId, operatorId } = params;
 
     const session = await prisma.robotSession.findFirst({
       where: {
@@ -412,6 +412,7 @@ export async function editRobot(id: string, data:RobotUpdateData) {
       where: { id: session.id },
       data: {
         status: RobotSessionStatus.ACTIVE_WEBRTC,
+        operatorId,
       },
     });
   }

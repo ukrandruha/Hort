@@ -259,7 +259,9 @@ app.delete<{ Params: { id: string } }>(
   app.post(
     '/api/robots/robot-sessions/activateWebrtc',
     async (req, reply) => {
-      const param = req.body as { robotId: string };
+      const user = req.user as { id: number; role?: string; email?: string };
+      const body = req.body as { robotId: string };
+      const param = { robotId: body.robotId, operatorId: user.id };
 
       try {
         const session = await activateWebrtcSession(param);

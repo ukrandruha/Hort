@@ -22,7 +22,7 @@ export default function TopBar() {
     <div className="flex items-center justify-between px-6 py-4 bg-gray-800 shadow-md">
       <h1 className="flex items-center gap-2 text-xl font-semibold">
         <img src="/favicon.svg" alt="Hort logo" className="h-10 w-10" />
-        <span>Hort Dashboard</span>
+        <span>ХОРТ</span>
       </h1>
 
       <div className="flex items-center gap-3">

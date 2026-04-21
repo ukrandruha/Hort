@@ -387,11 +387,17 @@ export class WebRTCClient {
     private async activateWebrtcSession(robotId: string) {
         try {
             await api.post(`/api/robots/robot-sessions/activateWebrtc`, {
-                "robotId": robotId
+                "robotId": robotId,
+                "operatorId": this.userId,
             });
-        } catch (e) {
+        } catch (e: any) {
             alert("Помилка активації WebRTC");
+            console.error("[WebRTC] activateWebrtc failed", {
+                status: e?.response?.status,
+                data: e?.response?.data,
+            });
             console.error(e);
+            throw e;
         }
     }
 

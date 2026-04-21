@@ -258,10 +258,17 @@ app.delete<{ Params: { id: string } }>(
    */
   app.post(
     '/api/robots/robot-sessions/activateWebrtc',
+    { preHandler: [app.auth] },
     async (req, reply) => {
-      const user = req.user as { id: number; role?: string; email?: string };
-      const body = req.body as { robotId: string };
-      const param = { robotId: body.robotId, operatorId: user.id };
+      const user = req.user as { id?: number; role?: string; email?: string } | undefined;
+      const body = req.body as { robotId: string; operatorId?: number };
+      const operatorId = body.operatorId ?? user?.id;
+
+      if (!Number.isInteger(operatorId) || Number(operatorId) <= 0) {
+        return reply.code(400).send({ message: "operatorId must be a positive integer" });
+      }
+
+      const param = { robotId: body.robotId, operatorId: Number(operatorId) };
 
       try {
         const session = await activateWebrtcSession(param);

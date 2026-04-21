@@ -307,17 +307,13 @@ export class WebRTCClient {
                             this.onVideoConnectionStateChange(pc.connectionState === "connected");
                         }
                         if (pc.connectionState === "connected") {
-                            void this.ensureSessionActivated(this.roomName).catch((activationError) => {
-                                console.error("[WebRTC] Session activation failed", activationError);
-                            });
+                            void this.ensureSessionActivated(this.roomName).catch(() => {});
                             this.startPingStats(pc);
                             done(resolve);
                         }
                     };
                     if (pc.connectionState === "connected") {
-                        void this.ensureSessionActivated(this.roomName).catch((activationError) => {
-                            console.error("[WebRTC] Session activation failed", activationError);
-                        });
+                        void this.ensureSessionActivated(this.roomName).catch(() => {});
                         this.startPingStats(pc);
                         done(resolve);
                     }
@@ -399,11 +395,6 @@ export class WebRTCClient {
             await api.post(`/api/robots/robot-sessions/activateWebrtc`, payload);
         } catch (e: any) {
             alert("Помилка активації WebRTC");
-            console.error("[WebRTC] activateWebrtc failed", {
-                status: e?.response?.status,
-                data: e?.response?.data,
-            });
-            console.error(e);
             throw e;
         }
     }
@@ -629,7 +620,6 @@ export class WebRTCClient {
             });
         } catch (e) {
             alert("Помилка деактивації WebRTC");
-            console.error(e);
         }
     }
 
@@ -656,18 +646,9 @@ export class WebRTCClient {
                     await api.post(`/api/robots/robot-sessions/requestReboot`, payload);
                     return;
                 } catch (retryError) {
-                    console.error("[WebRTC] Failed to request reboot after session auto-create", {
-                        retryError,
-                        message: this.extractApiErrorMessage(retryError),
-                    });
                     return;
                 }
             }
-
-            console.error("[WebRTC] Failed to request reboot after connect error", {
-                error: e,
-                message,
-            });
         }
     }
 

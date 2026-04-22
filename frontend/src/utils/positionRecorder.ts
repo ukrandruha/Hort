@@ -56,7 +56,7 @@ function normalizeSample(sample: PositionRecorderSample): NormalizedSample | nul
     return null;
   }
 
-  if (latitude === 0 && longitude === 0) {
+  if (latitude <= 0 || longitude <= 0) {
     return null;
   }
 

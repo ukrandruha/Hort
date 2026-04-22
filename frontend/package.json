@@ -12,6 +12,7 @@
     "@types/webrtc": "^0.0.47",
     "axios": "^1.6.5",
     "leaflet": "^1.9.4",
+    "mgrs": "^2.1.0",
     "preact": "10.29.1",
     "preact-iso": "2.11.1",
     "react": "^18.2.0",

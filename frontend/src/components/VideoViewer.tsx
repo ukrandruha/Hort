@@ -25,6 +25,11 @@ export type VideoViewerHandle = {
 const VideoViewer = forwardRef<VideoViewerHandle, any>(
   ({ robot, userId, onClose }, ref) => {
 
+    const toDatetimeLocalValue = (date: Date) => {
+      const pad = (n: number) => String(n).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+
     const videoRef = useRef<HTMLVideoElement>(null);
     const clientRef = useRef<WebRTCClient | null>(null);
     const gp = useRef<GamepadReader | null>(null);
@@ -43,6 +48,12 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
     const [mapInMainView, setMapInMainView] = useState(false);
+    const [showRouteDialog, setShowRouteDialog] = useState(false);
+    const [isRouteLoading, setIsRouteLoading] = useState(false);
+    const [routeBegin, setRouteBegin] = useState(() => toDatetimeLocalValue(new Date(Date.now() - 60 * 60 * 1000)));
+    const [routeEnd, setRouteEnd] = useState(() => toDatetimeLocalValue(new Date()));
+    const [historicalRoute, setHistoricalRoute] = useState<[number, number][]>([]);
+    const [historicalRouteFocusKey, setHistoricalRouteFocusKey] = useState(0);
     const [currentRobot, setCurrentRobot] = useState<any>(robot);
     const [savedHomeTarget, setSavedHomeTarget] = useState<[number, number] | null>(null);
     const [backendHomeTarget, setBackendHomeTarget] = useState<[number, number] | null>(null);
@@ -267,11 +278,95 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setSavedHomeTarget(null);
       setBackendHomeTarget(null);
       setShowRthPath(false);
+      setHistoricalRoute([]);
+      setShowRouteDialog(false);
       setOverlayData(null);
       if (robot?.robotId) {
         robotStore.setTelemetry(robot.robotId, null);
       }
     }, [robot?.robotId]);
+
+    const clearHistoricalRoute = () => {
+      setHistoricalRoute([]);
+      setHistoricalRouteFocusKey(0);
+      setShowRouteDialog(false);
+      setIsRouteLoading(false);
+    };
+
+    const handleRouteButtonClick = () => {
+      if (historicalRoute.length > 0) {
+        clearHistoricalRoute();
+        return;
+      }
+
+      setRouteBegin(toDatetimeLocalValue(new Date(Date.now() - 60 * 60 * 1000)));
+      setRouteEnd(toDatetimeLocalValue(new Date()));
+      setShowRouteDialog(true);
+    };
+
+    const loadHistoricalRoute = async () => {
+      if (!robot?.robotId) {
+        alert("Robot is not selected");
+        return;
+      }
+
+      if (!routeBegin || !routeEnd) {
+        alert("Вкажіть початок та кінець періоду");
+        return;
+      }
+
+      const beginDate = new Date(routeBegin);
+      const endDate = new Date(routeEnd);
+
+      if (Number.isNaN(beginDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        alert("Некоректний формат дати/часу");
+        return;
+      }
+
+      if (beginDate >= endDate) {
+        alert("Початок періоду має бути раніше кінця");
+        return;
+      }
+
+      setIsRouteLoading(true);
+      try {
+        const { data } = await api.get(`/api/robots/${robot.robotId}/positions`, {
+          params: {
+            // Keep local wall-clock time from datetime-local input to avoid UTC shift.
+            datetime_begin: routeBegin,
+            datetime_end: routeEnd,
+          },
+        });
+
+        const rows = Array.isArray(data?.positions)
+          ? data.positions
+          : Array.isArray(data)
+            ? data
+            : [];
+
+        // Historical route: render backend points as-is, without frontend filtering.
+        const routePoints = rows.map((row: any) => [
+          Number(row?.latitude ?? row?.lat),
+          Number(row?.longitude ?? row?.lng),
+        ] as [number, number]);
+
+        if (routePoints.length < 2) {
+          alert("Недостатньо точок для побудови маршруту");
+          setHistoricalRoute([]);
+          return;
+        }
+
+        setHistoricalRoute(routePoints);
+        setHistoricalRouteFocusKey(Date.now());
+        setShowRouteDialog(false);
+        setShowMap(true);
+      } catch (e) {
+        console.error("[UI] Failed to load historical route", e);
+        alert("Помилка завантаження маршруту");
+      } finally {
+        setIsRouteLoading(false);
+      }
+    };
 
     useEffect(() => {
       let canceled = false;
@@ -811,7 +906,13 @@ async function stopRecording()
 
           {showMap && mapInMainView && (
             <div className="absolute inset-0 z-10">
-              <DroneMap robot={robot} homeTarget={savedHomeTarget} showRthPath={showRthPath} />
+              <DroneMap
+                robot={robot}
+                homeTarget={savedHomeTarget}
+                showRthPath={showRthPath}
+                historicalRoute={historicalRoute}
+                historicalRouteFocusKey={historicalRouteFocusKey}
+              />
             </div>
           )}
 
@@ -825,7 +926,59 @@ async function stopRecording()
               onClick={() => setMapInMainView(true)}
               title="Show map in main view"
             >
-              <DroneMap robot={robot} homeTarget={savedHomeTarget} showRthPath={showRthPath} />
+              <DroneMap
+                robot={robot}
+                homeTarget={savedHomeTarget}
+                showRthPath={showRthPath}
+                historicalRoute={historicalRoute}
+                historicalRouteFocusKey={historicalRouteFocusKey}
+              />
+            </div>
+          )}
+
+          {showRouteDialog && (
+            <div className="absolute inset-0 z-[1300] flex items-center justify-center bg-black/55">
+              <div className="w-[420px] rounded-lg border border-gray-700 bg-gray-900 p-5 shadow-2xl">
+                <div className="mb-4 text-lg font-semibold text-gray-100">Побудувати маршрут</div>
+                <div className="flex flex-col gap-4">
+                  <label className="text-sm text-gray-300">
+                    Дата та час початку
+                    <input
+                      type="datetime-local"
+                      value={routeBegin}
+                      onChange={(e) => setRouteBegin(e.target.value)}
+                      className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100"
+                    />
+                  </label>
+
+                  <label className="text-sm text-gray-300">
+                    Дата та час кінця
+                    <input
+                      type="datetime-local"
+                      value={routeEnd}
+                      onChange={(e) => setRouteEnd(e.target.value)}
+                      className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-gray-100"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-5 flex items-center justify-end gap-2">
+                  <button
+                    onClick={() => setShowRouteDialog(false)}
+                    disabled={isRouteLoading}
+                    className="rounded border border-gray-700 bg-gray-800 px-4 py-2 text-gray-200 hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Скасувати
+                  </button>
+                  <button
+                    onClick={loadHistoricalRoute}
+                    disabled={isRouteLoading}
+                    className="rounded bg-blue-700 px-4 py-2 text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isRouteLoading ? "Завантаження..." : "Показати маршрут"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -850,6 +1003,18 @@ async function stopRecording()
               aria-label={showMap ? "Hide map" : "Show map"}
             >
               <img src="/map.svg" alt="map icon" className="w-6 h-6 invert" />
+            </button>
+            <button
+              onClick={handleRouteButtonClick}
+              className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg flex items-center justify-center ${
+                historicalRoute.length > 0
+                  ? "bg-green-700/90 border-green-600"
+                  : "bg-gray-900/90 border-gray-700 hover:bg-gray-800"
+              }`}
+              title={historicalRoute.length > 0 ? "Hide historical route" : "Show historical route"}
+              aria-label={historicalRoute.length > 0 ? "Hide historical route" : "Show historical route"}
+            >
+              <img src="/route.svg" alt="route icon" className="w-6 h-6 invert" />
             </button>
             <button
               onClick={toggleAudioEnabled}

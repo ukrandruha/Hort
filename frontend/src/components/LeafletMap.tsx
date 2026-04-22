@@ -3,6 +3,7 @@ import {
   useState,
   useRef,
   useMemo,
+  useCallback,
   type Dispatch,
   type SetStateAction,
   type MutableRefObject,
@@ -17,6 +18,8 @@ import {
 import L from "leaflet";
 import { api } from "../api/api";
 import { useMap } from "react-leaflet";
+import { positionRecorderConfig } from "../config/positionRecorder";
+import { GeoCoordinate, isInvalidTelemetryPoint } from "../utils/coordinates";
 import { robotStore } from "../utils/robotStore";
 
 /** ================= ICONS ================= **/
@@ -40,8 +43,9 @@ function createCircleIcon(color: string) {
   });
 }
 
-function createDroneHeadingIcon(heading: number | null) {
+function createDroneHeadingIcon(heading: number | null, isAlert: boolean) {
   const rotation = Number.isFinite(heading) ? heading ?? 0 : 0;
+  const color = isAlert ? "#eb5757" : "#27ae60";
   // Swallow-tail shape: nose at top (15,1), wings at (29,27) and (1,27),
   // with a tail notch at (15,18) — gives a classic swallow-tail / arrowhead silhouette.
   return L.divIcon({
@@ -57,7 +61,7 @@ function createDroneHeadingIcon(heading: number | null) {
              style="filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));">
           <polygon
             points="15,1 29,27 15,20 1,27"
-            fill="#27ae60"
+            fill="${color}"
             stroke="rgba(0,0,0,0.4)"
             stroke-width="0.8"
           />
@@ -109,6 +113,26 @@ function MapFollower({ target }: { target: [number, number] }) {
   return null;
 }
 
+function HistoricalRouteFocusOnce({
+  route,
+  focusKey,
+}: {
+  route: [number, number][];
+  focusKey: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!focusKey || route.length === 0) return;
+    map.panTo(route[0], {
+      animate: true,
+      duration: 1,
+    });
+  }, [map, route, focusKey]);
+
+  return null;
+}
+
 function StartLineManager({
   pos,
   startPoint,
@@ -141,12 +165,16 @@ function StartLineManager({
 function MovingDrone({
   position,
   heading,
+  isAlert,
+  onClick,
 }: {
   position: [number, number];
   heading: number | null;
+  isAlert: boolean;
+  onClick?: () => void;
 }) {
   const markerRef = useRef<L.Marker | null>(null);
-  const markerIcon = useMemo(() => createDroneHeadingIcon(heading), [heading]);
+  const markerIcon = useMemo(() => createDroneHeadingIcon(heading, isAlert), [heading, isAlert]);
 
   useEffect(() => {
     if (markerRef.current) {
@@ -162,6 +190,7 @@ function MovingDrone({
       position={position}
       icon={markerIcon}
       zIndexOffset={1000}
+      eventHandlers={{ click: onClick }}
     />;
 }
 /* ================= MAIN MAP ================= */
@@ -171,12 +200,17 @@ export default function LeafletMap({
   fullscreen,
   homeTarget = null,
   showRthPath = false,
+  historicalRoute = [],
+  historicalRouteFocusKey = 0,
 }: {
   robotId: string;
   fullscreen: boolean;
   homeTarget?: [number, number] | null;
   showRthPath?: boolean;
+  historicalRoute?: [number, number][];
+  historicalRouteFocusKey?: number;
 }) {
+  const MAX_VALID_SPEED_KMH = positionRecorderConfig.maxSpeedKmh;
   const [pos, setPos] = useState<[number, number]>([
     48.4629585,
     35.0321044,
@@ -184,6 +218,9 @@ export default function LeafletMap({
   const [homePos, setHomePos] = useState<[number, number] | null>(null);
   const [telemetryGpsTarget, setTelemetryGpsTarget] = useState<[number, number] | null>(null);
   const [telemetryHeading, setTelemetryHeading] = useState<number | null>(null);
+  const [isTelemetryInvalid, setIsTelemetryInvalid] = useState(false);
+  const [copyToast, setCopyToast] = useState<string | null>(null);
+  const copyToastTimerRef = useRef<number | null>(null);
 
   const [points, setPoints] = useState<
     { id: number; lat: number; lng: number; order: number }[]
@@ -198,6 +235,7 @@ export default function LeafletMap({
     setHomePos(null);
     setTelemetryGpsTarget(null);
     setTelemetryHeading(null);
+    setIsTelemetryInvalid(false);
     hasReachedStartRef.current = false;
     setShowStartLine(true);
   }, [robotId]);
@@ -206,10 +244,14 @@ export default function LeafletMap({
     if (!robotId) return;
 
     const unsubscribe = robotStore.subscribeTelemetry(robotId, (telemetry) => {
-      const lat = Number(telemetry?.gps?.lat);
-      const lng = Number(telemetry?.gps?.lon);
-      if (Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0)) {
-        setTelemetryGpsTarget([lat, lng]);
+      const coordinate = GeoCoordinate.tryCreate(telemetry?.gps?.lat, telemetry?.gps?.lon);
+      const speed = Number(telemetry?.gps?.speed);
+      const isInvalidTelemetry = isInvalidTelemetryPoint(coordinate, speed, MAX_VALID_SPEED_KMH);
+
+      setIsTelemetryInvalid(isInvalidTelemetry);
+
+      if (coordinate && !coordinate.isZeroPair() && !isInvalidTelemetry) {
+        setTelemetryGpsTarget(coordinate.toTuple());
       }
 
       const nextHeading = Number(telemetry?.gps?.compas);
@@ -219,7 +261,7 @@ export default function LeafletMap({
     });
 
     return unsubscribe;
-  }, [robotId]);
+  }, [robotId, MAX_VALID_SPEED_KMH]);
 
   useEffect(() => {
     async function loadHomePosition() {
@@ -281,6 +323,42 @@ export default function LeafletMap({
     setHomePos([lat, lng]);
   }, [homeTarget]);
 
+  useEffect(() => {
+    return () => {
+      if (copyToastTimerRef.current !== null) {
+        window.clearTimeout(copyToastTimerRef.current);
+      }
+    };
+  }, []);
+
+  const showCopyToast = useCallback((message: string) => {
+    if (copyToastTimerRef.current !== null) {
+      window.clearTimeout(copyToastTimerRef.current);
+    }
+
+    setCopyToast(message);
+    copyToastTimerRef.current = window.setTimeout(() => {
+      setCopyToast(null);
+      copyToastTimerRef.current = null;
+    }, 3000);
+  }, []);
+
+  const handleDroneMarkerClick = useCallback(async () => {
+    const coordinate = GeoCoordinate.tryCreate(pos[0], pos[1]);
+    if (!coordinate) {
+      showCopyToast("Поточні координати недоступні");
+      return;
+    }
+
+    try {
+      const coordsText = `MGRS: ${coordinate.toMGRS()}\nDEC: ${coordinate.toDecimalString()}`;
+      await navigator.clipboard.writeText(coordsText);
+      showCopyToast("Координати скопійовано в буфер");
+    } catch {
+      showCopyToast("Не вдалося скопіювати координати");
+    }
+  }, [pos, showCopyToast]);
+
 
 
 
@@ -326,7 +404,12 @@ export default function LeafletMap({
       <TileLayer url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" />
 
       {/* DRONE */}
-      <MovingDrone position={pos} heading={telemetryHeading} />
+      <MovingDrone
+        position={pos}
+        heading={telemetryHeading}
+        isAlert={isTelemetryInvalid}
+        onClick={handleDroneMarkerClick}
+      />
 
       {/* HOME POSITION */}
       {homePos && (
@@ -364,6 +447,46 @@ export default function LeafletMap({
         />
       )}
 
+      {/* HISTORICAL ROUTE */}
+      {historicalRoute.length > 1 && (
+        <Polyline
+          positions={historicalRoute}
+          pathOptions={{
+            color: "#2f80ed",
+            weight: 4,
+            opacity: 0.95,
+          }}
+        />
+      )}
+
+      {historicalRoute.length > 0 && (
+        <CircleMarker
+          center={historicalRoute[0]}
+          radius={7}
+          pathOptions={{
+            color: "#2f80ed",
+            fillColor: "#2f80ed",
+            fillOpacity: 1,
+            weight: 2,
+          }}
+        />
+      )}
+
+      {historicalRoute.length > 1 && (
+        <CircleMarker
+          center={historicalRoute[historicalRoute.length - 1]}
+          radius={7}
+          pathOptions={{
+            color: "#eb5757",
+            fillColor: "#eb5757",
+            fillOpacity: 1,
+            weight: 2,
+          }}
+        />
+      )}
+
+      <HistoricalRouteFocusOnce route={historicalRoute} focusKey={historicalRouteFocusKey} />
+
       {/* MAIN ROUTE */}
       {!showRthPath && routeLatLngs.length > 1 && (
         <Polyline
@@ -396,6 +519,12 @@ export default function LeafletMap({
           icon={createPointIcon(p.order + 1)}
         />
       ))}
+
+      {copyToast && (
+        <div className="pointer-events-none absolute top-4 left-1/2 z-[1001] -translate-x-1/2 rounded-md bg-black/80 px-4 py-2 text-sm text-white shadow-lg">
+          {copyToast}
+        </div>
+      )}
       
     </LeafletMapBase>
    

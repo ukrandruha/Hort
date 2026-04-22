@@ -6,11 +6,15 @@ export default function DroneMap({
   fullscreen = false,
   homeTarget = null,
   showRthPath = false,
+  historicalRoute = [],
+  historicalRouteFocusKey = 0,
 }: {
   robot: any;
   fullscreen?: boolean;
   homeTarget?: [number, number] | null;
   showRthPath?: boolean;
+  historicalRoute?: [number, number][];
+  historicalRouteFocusKey?: number;
 }) {
   return (
     <LeafletMap
@@ -18,6 +22,8 @@ export default function DroneMap({
       robotId={robot.robotId}
       homeTarget={homeTarget}
       showRthPath={showRthPath}
+      historicalRoute={historicalRoute}
+      historicalRouteFocusKey={historicalRouteFocusKey}
     />
   );
 }

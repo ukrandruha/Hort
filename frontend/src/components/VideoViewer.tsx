@@ -25,6 +25,11 @@ export type VideoViewerHandle = {
 const VideoViewer = forwardRef<VideoViewerHandle, any>(
   ({ robot, userId, onClose }, ref) => {
 
+    const startOfToday = () => {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    };
+
     const toDatetimeLocalValue = (date: Date) => {
       const pad = (n: number) => String(n).padStart(2, "0");
       return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -50,7 +55,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [mapInMainView, setMapInMainView] = useState(false);
     const [showRouteDialog, setShowRouteDialog] = useState(false);
     const [isRouteLoading, setIsRouteLoading] = useState(false);
-    const [routeBegin, setRouteBegin] = useState(() => toDatetimeLocalValue(new Date(Date.now() - 60 * 60 * 1000)));
+    const [routeBegin, setRouteBegin] = useState(() => toDatetimeLocalValue(startOfToday()));
     const [routeEnd, setRouteEnd] = useState(() => toDatetimeLocalValue(new Date()));
     const [historicalRoute, setHistoricalRoute] = useState<[number, number][]>([]);
     const [historicalRouteFocusKey, setHistoricalRouteFocusKey] = useState(0);
@@ -299,7 +304,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         return;
       }
 
-      setRouteBegin(toDatetimeLocalValue(new Date(Date.now() - 60 * 60 * 1000)));
+      setRouteBegin(toDatetimeLocalValue(startOfToday()));
       setRouteEnd(toDatetimeLocalValue(new Date()));
       setShowRouteDialog(true);
     };

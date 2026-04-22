@@ -4,6 +4,7 @@ import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import { GamepadReader, type GamepadState } from "../utils/Gamepad";
 import { haversineKm } from "../utils/math";
+import { PositionRecorder } from "../utils/positionRecorder";
 import { robotStore } from "../utils/robotStore";
 import { useAuth } from "../auth/AuthContext";
 import { api } from "../api/api";
@@ -27,6 +28,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const videoRef = useRef<HTMLVideoElement>(null);
     const clientRef = useRef<WebRTCClient | null>(null);
     const gp = useRef<GamepadReader | null>(null);
+    const positionRecorderRef = useRef<PositionRecorder | null>(null);
 
 
     const [connected, setConnected] = useState(false);
@@ -192,6 +194,28 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       ? ((currentHeadingRaw % 360) + 360) % 360
       : null;
 
+    const queueTelemetryPosition = (telemetry: any) => {
+      if (!positionRecorderRef.current || !robot?.robotId || !hasEnoughSatellites(telemetry?.gps)) return;
+
+      const gps = telemetry.gps;
+      const altitude = Number(gps.altitude ?? gps.alt ?? telemetry?.altitude ?? telemetry?.alt);
+      const speed = Number(gps.speed);
+      const accuracy = Number(gps.accuracy ?? gps.hdop);
+      const heading = Number(gps.compas ?? gps.heading ?? telemetry?.heading);
+      const devicetime = gps.devicetime ?? telemetry?.devicetime ?? Date.now();
+
+      void positionRecorderRef.current?.record({
+        robotId: robot.robotId,
+        devicetime,
+        latitude: Number(gps.lat),
+        longitude: Number(gps.lon),
+        altitude: Number.isFinite(altitude) ? altitude : undefined,
+        speed: Number.isFinite(speed) ? speed : undefined,
+        accuracy: Number.isFinite(accuracy) ? accuracy : undefined,
+        heading: Number.isFinite(heading) ? heading : null,
+      });
+    };
+
     useEffect(() => {
       showJoysticksRef.current = showJoysticks;
     }, [showJoysticks]);
@@ -212,6 +236,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       if (!robot?.robotId) return;
       const unsubscribe = robotStore.subscribeTelemetry(robot.robotId, (telemetry) => {
         setOverlayData(telemetry);
+        queueTelemetryPosition(telemetry);
       });
       return unsubscribe;
     }, [robot?.robotId]);
@@ -368,6 +393,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       };
       try {
         await client.start();
+        positionRecorderRef.current = new PositionRecorder();
+        positionRecorderRef.current.startSession();
         setConnected(true);
         setupGamePadListeners();
       } catch (e) {
@@ -415,6 +442,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     // ============================================
     async function disconnectCamera() {
       console.log("[UI] Disconnecting camera…");
+
+      const activeRecorder = positionRecorderRef.current;
+      positionRecorderRef.current = null;
+      await activeRecorder?.endSession();
 
       if (gp.current) {
         await gp.current.stop();

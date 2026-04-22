@@ -23,6 +23,7 @@ export default function TopBar() {
       <h1 className="flex items-center gap-2 text-xl font-semibold">
         <img src="/favicon.svg" alt="Hort logo" className="h-10 w-10" />
         <span>ХОРТ</span>
+        <span className="text-xs font-normal text-gray-400">v{__APP_VERSION__}</span>
       </h1>
 
       <div className="flex items-center gap-3">

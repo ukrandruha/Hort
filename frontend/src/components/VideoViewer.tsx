@@ -320,6 +320,17 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
             return;
           }
 
+          // Check if WebRTC connection recovered naturally during the delay
+          const client = clientRef.current;
+          if (
+            (client as any).ayameConnectionA?.value &&
+            (client as any).ayameConnectionB?.value
+          ) {
+            console.log("[UI] WebRTC connection recovered naturally, skipping manual reconnect");
+            isReconnecting = false;
+            return;
+          }
+
           isReconnecting = true;
           try {
             console.log("[UI] Starting auto-reconnect...");

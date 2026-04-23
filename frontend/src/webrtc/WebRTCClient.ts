@@ -128,16 +128,67 @@ export class WebRTCClient {
         this.sessionActivated = true;
         this.activationInFlight = null;
         console.log("[WebRTC] Session activated, waiting for robot to be ready...");
-        await new Promise<void>((resolve) => window.setTimeout(resolve, 1000));
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 2000));
 
-        try {
-            await Promise.all([this.connectA(), this.connectB()]);
-        } catch (error) {
-            //await this.requestRebootForWebrtc();
-            throw error;
+        const maxAttempts = 3;
+        let lastError: unknown = null;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                console.log(`[WebRTC] Connect attempt ${attempt}/${maxAttempts}`);
+                await Promise.all([this.connectA(), this.connectB()]);
+                console.log("[WebRTC] Both connections established");
+                return;
+            } catch (error) {
+                lastError = error;
+                console.warn(`[WebRTC] Connect attempt ${attempt} failed`, error);
+
+                await this.cleanupFailedStartAttempt();
+
+                if (attempt < maxAttempts) {
+                    const retryDelayMs = 1000 * attempt;
+                    console.log(`[WebRTC] Retrying in ${retryDelayMs}ms...`);
+                    await new Promise<void>((resolve) => window.setTimeout(resolve, retryDelayMs));
+                }
+            }
         }
 
-        console.log("[WebRTC] Both connections established");
+        //await this.requestRebootForWebrtc();
+        throw lastError ?? new Error("[WebRTC] Failed to establish connections");
+    }
+
+    private async cleanupFailedStartAttempt() {
+        const disconnectWithTimeout = async (conn: Connection | null) => {
+            if (!conn) return;
+            try {
+                await Promise.race([
+                    conn.disconnect(),
+                    new Promise<void>((resolve) => window.setTimeout(resolve, 1500)),
+                ]);
+            } catch {
+                // Best effort cleanup for retry.
+            }
+        };
+
+        await disconnectWithTimeout(this.ayameConnectionA.value);
+        await disconnectWithTimeout(this.ayameConnectionB.value);
+
+        this.ayameConnectionA.value = null;
+        this.ayameConnectionB.value = null;
+        this.dataChannel = null;
+        this.dataChannelTelem = null;
+
+        const localStream = localMediaStream.value;
+        if (localStream) {
+            for (const track of localStream.getTracks()) {
+                track.stop();
+            }
+        }
+        localMediaStream.value = null;
+        remoteMediaStream.value = null;
+
+        if (this.videoElement) {
+            this.videoElement.srcObject = null;
+        }
     }
 
     // =================================================

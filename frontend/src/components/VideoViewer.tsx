@@ -1434,7 +1434,7 @@ async function stopRecording()
                     ? "Connect blocked..."
                     : "Connect camera"}
               </button>
-              {/* <button
+              { <button
                 onClick={forceWebrtcRebootRequest}
                 disabled={isForcingWebrtcReboot}
                 className={`px-4 py-2 rounded ${
@@ -1444,7 +1444,7 @@ async function stopRecording()
                 }`}
               >
                 {isForcingWebrtcReboot ? "Requesting..." : "Reboot WebRTC"}
-              </button> */}
+              </button> }
             </>
           )}
 

@@ -9,12 +9,15 @@ type RobotTelemetry = {
 
 type RobotListener = (robot: RobotSnapshot) => void;
 type TelemetryListener = (telemetry: RobotTelemetry | null) => void;
+type OfflineTransitionListener = (robotId: string) => void;
 
 class RobotStore {
   private robots = new Map<string, RobotSnapshot>();
   private listeners = new Map<string, Set<RobotListener>>();
   private telemetry = new Map<string, RobotTelemetry>();
   private telemetryListeners = new Map<string, Set<TelemetryListener>>();
+  private offlineStates = new Map<string, boolean>(); // Track previous offline state
+  private offlineTransitionListeners = new Map<string, Set<OfflineTransitionListener>>();
 
   setMany(robots: RobotSnapshot[]) {
     for (const robot of robots) {
@@ -26,8 +29,24 @@ class RobotStore {
     if (!robot?.robotId) return;
     const previous = this.robots.get(robot.robotId) ?? { robotId: robot.robotId };
     const next = { ...previous, ...robot };
+    
+    // Check for offline → online transition
+    const wasOffline = this.isRobotOffline(previous);
+    const isNowOffline = this.isRobotOffline(next);
+    
     this.robots.set(robot.robotId, next);
+    
+    // Emit offline transition if robot came back online
+    if (wasOffline && !isNowOffline) {
+      this.emitOfflineTransition(robot.robotId);
+    }
+    
     this.emit(robot.robotId, next);
+  }
+
+  private isRobotOffline(robot: RobotSnapshot): boolean {
+    const lastSeenAt = robot?.updatedAt ? new Date(robot.updatedAt).getTime() : 0;
+    return !lastSeenAt || Date.now() - lastSeenAt > 10000;
   }
 
   get(robotId: string) {
@@ -94,6 +113,24 @@ class RobotStore {
     };
   }
 
+  subscribeToOfflineTransition(robotId: string, listener: OfflineTransitionListener) {
+    if (!this.offlineTransitionListeners.has(robotId)) {
+      this.offlineTransitionListeners.set(robotId, new Set());
+    }
+
+    const set = this.offlineTransitionListeners.get(robotId)!;
+    set.add(listener);
+
+    return () => {
+      const listenersForRobot = this.offlineTransitionListeners.get(robotId);
+      if (!listenersForRobot) return;
+      listenersForRobot.delete(listener);
+      if (listenersForRobot.size === 0) {
+        this.offlineTransitionListeners.delete(robotId);
+      }
+    };
+  }
+
   private emit(robotId: string, robot: RobotSnapshot) {
     const listenersForRobot = this.listeners.get(robotId);
     if (!listenersForRobot) return;
@@ -104,6 +141,12 @@ class RobotStore {
     const listenersForRobot = this.telemetryListeners.get(robotId);
     if (!listenersForRobot) return;
     listenersForRobot.forEach((listener) => listener(telemetry));
+  }
+
+  private emitOfflineTransition(robotId: string) {
+    const listenersForRobot = this.offlineTransitionListeners.get(robotId);
+    if (!listenersForRobot) return;
+    listenersForRobot.forEach((listener) => listener(robotId));
   }
 }
 

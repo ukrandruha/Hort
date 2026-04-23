@@ -291,6 +291,138 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       }
     }, [robot?.robotId]);
 
+    // ============================================
+    // AUTO-RECONNECT WEBRTC WHEN ROBOT COMES ONLINE
+    // ============================================
+    useEffect(() => {
+      if (!robot?.robotId) return;
+
+      let timeoutId: number | null = null;
+      let isReconnecting = false;
+
+      const unsubscribe = robotStore.subscribeToOfflineTransition(robot.robotId, () => {
+        console.log("[UI] Robot came back online, initiating auto-reconnect...");
+        
+        // Prevent multiple reconnect attempts
+        if (isReconnecting) {
+          console.log("[UI] Auto-reconnect already in progress");
+          return;
+        }
+
+        // Clear any pending timeout
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId);
+        }
+
+        // Delay to ensure robot is fully online
+        timeoutId = window.setTimeout(async () => {
+          if (!clientRef.current || isReconnecting) {
+            return;
+          }
+
+          isReconnecting = true;
+          try {
+            console.log("[UI] Starting auto-reconnect...");
+            
+            // Stop current connection properly
+            try {
+              if (gp.current) {
+                await gp.current.stop();
+                gp.current = null;
+              }
+
+              const activeRecorder = positionRecorderRef.current;
+              positionRecorderRef.current = null;
+              if (activeRecorder) {
+                await activeRecorder.endSession();
+              }
+
+              if (clientRef.current) {
+                await clientRef.current.stop();
+              }
+            } catch (cleanupError) {
+              console.warn("[UI] Cleanup error during auto-reconnect", cleanupError);
+            }
+
+            // Reset states
+            clientRef.current = null;
+            setConnected(false);
+            setIsVideoConnected(false);
+            setvideoRecord(false);
+            setPingMs(null);
+            setPacketLoss({ lost: null, received: null, pct: null, fps: null });
+
+            // Wait before reconnecting
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Now reconnect
+            if (!videoRef.current || !robot?.robotId) {
+              console.log("[UI] Auto-reconnect cancelled: missing videoRef or robotId");
+              isReconnecting = false;
+              return;
+            }
+
+            console.log("[UI] Connecting camera (auto-reconnect)…");
+            const client = new WebRTCClient(robot.robotId, userId);
+            clientRef.current = client;
+
+            client.setVideoElement(videoRef.current);
+            client.setConnectionBAudioEnabled(isAudioEnabled);
+            client.onData = (d: any) => {
+              robotStore.setTelemetry(robot.robotId, d);
+            };
+            client.onPing = (ms) => {
+              setPingMs(ms);
+            };
+            client.onStats = (s) => {
+              setPacketLoss({
+                lost: s.packetsLostInterval,
+                received: s.packetsReceivedInterval,
+                pct: s.lossPct,
+                fps: s.fps,
+              });
+            };
+            client.onVideoConnectionStateChange = (isConnectedNow) => {
+              setIsVideoConnected(isConnectedNow);
+            };
+
+            try {
+              await client.start();
+              positionRecorderRef.current = new PositionRecorder();
+              positionRecorderRef.current.startSession();
+              setConnected(true);
+              setupGamePadListeners();
+              console.log("[UI] Auto-reconnect successful ✓");
+            } catch (connectError) {
+              console.error("[UI] Failed to auto-reconnect", connectError);
+              try {
+                if (clientRef.current === client) {
+                  await client.stop();
+                }
+              } catch (stopError) {
+                console.warn("[UI] Stop error after failed reconnect", stopError);
+              }
+              clientRef.current = null;
+              setConnected(false);
+            }
+          } catch (e) {
+            console.error("[UI] Auto-reconnect fatal error", e);
+            clientRef.current = null;
+            setConnected(false);
+          } finally {
+            isReconnecting = false;
+          }
+        }, 1000) as unknown as number;
+      });
+
+      return () => {
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId);
+        }
+        unsubscribe();
+      };
+    }, [robot?.robotId, userId, isAudioEnabled]);
+
     const clearHistoricalRoute = () => {
       setHistoricalRoute([]);
       setHistoricalRouteFocusKey(0);

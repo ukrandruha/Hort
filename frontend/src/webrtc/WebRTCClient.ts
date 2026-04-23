@@ -407,47 +407,57 @@ export class WebRTCClient {
     async stop() {
         console.log("[WebRTC] Stopping...");
 
-        // this.stopConnectionA();
-        // this.stopConnectionB();
+        const disconnectWithTimeout = async (conn: Connection | null, label: string) => {
+            if (!conn) return;
+            try {
+                await Promise.race([
+                    conn.disconnect(),
+                    new Promise<void>((resolve) => {
+                        window.setTimeout(resolve, 2000);
+                    }),
+                ]);
+            } catch (e) {
+                console.warn(`[${label}] Failed to disconnect cleanly`, e);
+            }
+        };
+
         const connA = this.ayameConnectionA.value;
-        if (!connA) {
-        return;
-        }
-        await connA.disconnect();
-
         const connB = this.ayameConnectionB.value;
-        if (!connB) {
-        return;
-        }
-        await connB.disconnect();
 
+        await disconnectWithTimeout(connA, "A");
+        await disconnectWithTimeout(connB, "B");
+
+        this.ayameConnectionA.value = null;
+        this.ayameConnectionB.value = null;
+        this.dataChannel = null;
+        this.dataChannelTelem = null;
 
         this.stopPingStats();
-        if (this.onVideoConnectionStateChange) 
+        if (this.onVideoConnectionStateChange) {
             this.onVideoConnectionStateChange(false);
-
-        // this.connA = null;
-        // this.connB = null;
-        // this.dataChannel = null;
-        // if (this.videoElement) {
-        //     this.videoElement.srcObject = null;
-        // }
-        // const localStream = localMediaStream.value;
-        // if (localStream) {
-        //     for (const track of localStream.getTracks()) {
-        //         track.stop();
-        //     }
-        // }
-        // localMediaStream.value = null;
-        // remoteMediaStream.value = null;
-
-        if (this.sessionActivated || this.activationInFlight) {
-            await this.deactivateWebrtcSession(this.roomName);
-            this.sessionActivated = false;
-            this.activationInFlight = null;
         }
 
-        //this.updateRobotWebRtcConnect(this.roomName, null);
+        const localStream = localMediaStream.value;
+        if (localStream) {
+            for (const track of localStream.getTracks()) {
+                track.stop();
+            }
+        }
+        localMediaStream.value = null;
+        remoteMediaStream.value = null;
+
+        if (this.videoElement) {
+            this.videoElement.srcObject = null;
+        }
+
+        if (this.sessionActivated || this.activationInFlight) {
+            try {
+                await this.deactivateWebrtcSession(this.roomName);
+            } finally {
+                this.sessionActivated = false;
+                this.activationInFlight = null;
+            }
+        }
     }
 
     private startPingStats(pc: RTCPeerConnection) {
@@ -477,7 +487,7 @@ export class WebRTCClient {
                 for (const stat of stats.values()) {
                     if (stat.type !== "inbound-rtp") continue;
                     const inbound = stat as RTCInboundRtpStreamStats;
-                    if (inbound.isRemote) continue;
+                    if ((inbound as any).isRemote) continue;
                     if (inbound.kind !== "video") continue;
 
                     const lost = typeof inbound.packetsLost === "number" ? inbound.packetsLost : 0;

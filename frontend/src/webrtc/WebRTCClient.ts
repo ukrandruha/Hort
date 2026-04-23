@@ -122,6 +122,14 @@ export class WebRTCClient {
         console.log(`[WebRTC] Starting for robot ${this.robotId}`);
         this.validateConfig();
 
+        // Activate session first so the robot initializes its camera
+        // and joins Ayame signaling rooms before we attempt to connect
+        await this.activateWebrtcSession(this.roomName);
+        this.sessionActivated = true;
+        this.activationInFlight = null;
+        console.log("[WebRTC] Session activated, waiting for robot to be ready...");
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 1000));
+
         try {
             await Promise.all([this.connectA(), this.connectB()]);
         } catch (error) {

@@ -855,7 +855,7 @@ async function stopRecording()
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(160px, -50%)' }} className="h-8 w-px bg-gray-700" />
 
           <div className="flex items-center gap-3">
-            {loadingCameras ? (
+            {/* {loadingCameras ? (
               <div className="text-gray-500 text-sm">Loading…</div>
             ) : (
               <select
@@ -880,7 +880,7 @@ async function stopRecording()
                   </option>
                 ))}
               </select>
-            )}
+            )} */}
             <div className="h-6 w-px bg-gray-700" />
             <button
             onClick={() => {
@@ -1266,6 +1266,19 @@ async function stopRecording()
             <div className="text-gray-200/70 text-sm font-mono">
               fps: {packetLoss.fps ?? "—"}
             </div>
+            {overlayData?.starlink && (
+              <div className="mt-2 border-t border-gray-700/50 pt-2">
+                <div className="text-gray-200/70 text-sm font-mono">
+                  Starlink: {overlayData.starlink.state === "CONNECTED" ? "✓" : "✗"}
+                </div>
+                <div className="text-gray-200/70 text-sm font-mono">
+                  {overlayData.starlink.latency_ms ?? "—"} ms / {(overlayData.starlink.drop_rate * 100).toFixed(1)}%
+                </div>
+                <div className="text-gray-200/70 text-sm font-mono">
+                  obs: {(overlayData.starlink.obstruction).toFixed(2)}%
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1289,7 +1302,7 @@ async function stopRecording()
                     ? "Connect blocked..."
                     : "Connect camera"}
               </button>
-              <button
+              {/* <button
                 onClick={forceWebrtcRebootRequest}
                 disabled={isForcingWebrtcReboot}
                 className={`px-4 py-2 rounded ${
@@ -1299,7 +1312,7 @@ async function stopRecording()
                 }`}
               >
                 {isForcingWebrtcReboot ? "Requesting..." : "Reboot WebRTC"}
-              </button>
+              </button> */}
             </>
           )}
 

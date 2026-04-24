@@ -49,7 +49,7 @@ export class GamepadReader {
   constructor(opts: GamepadReaderOptions = {}) {
     this.axisMap = opts.axisMap ?? {  ch1:0,ch2:0,ch3:0,ch4:0, ch5:0,ch6:0,ch7:0,ch8:0};
     this.deadzone = clamp01(opts.deadzone ?? 0.05);
-    this.smooth = clamp01(opts.smooth ?? 0.25);
+    this.smooth = clamp01(opts.smooth ?? 0.5);
     this.updateIntervalMs = opts.updateIntervalMs ?? 16;
 
     if (typeof window !== "undefined") {

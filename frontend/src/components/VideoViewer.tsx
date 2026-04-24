@@ -1407,7 +1407,7 @@ async function stopRecording()
                   {overlayData.starlink.latency_ms ?? "—"} ms / {(overlayData.starlink.drop_rate * 100).toFixed(1)}%
                 </div>
                 <div className="text-gray-200/70 text-sm font-mono">
-                  obs: {(overlayData.starlink.obstruction).toFixed(2)}%
+                  obs: {overlayData.starlink.obstruction}%
                 </div>
               </div>
             )}

@@ -31,16 +31,27 @@ export default function RobotTable() {
   const [editRobot, setEditRobot] = useState<Robot | null>(null);
   const [missionRobot, setSelectFile] = useState<Robot | null>(null);
   const [videoRobot, setVideoRobot] = useState<Robot | null>(null);
+  const [isNetworkOffline, setIsNetworkOffline] = useState(false);
 
   const videoViewerRef = useRef<VideoViewerHandle | null>(null);
   const videoRobotRef = useRef<any>(null);
   const isLoadingRef = useRef(false);
+  const networkErrorLoggedRef = useRef(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const role = getRole();
   const userId = getUserId();
 
   async function load() {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setIsNetworkOffline(true);
+      if (!networkErrorLoggedRef.current) {
+        console.warn("[Robots] Internet connection is offline, polling paused");
+        networkErrorLoggedRef.current = true;
+      }
+      return;
+    }
+
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
 
@@ -48,6 +59,11 @@ export default function RobotTable() {
       const res = await api.get("/api/robots/");
       const data = res.data;
       const currentVideoRobot = videoRobotRef.current;
+
+      if (isNetworkOffline) {
+        setIsNetworkOffline(false);
+      }
+      networkErrorLoggedRef.current = false;
 
       setRobots(data);
       robotStore.setMany(data);
@@ -75,7 +91,20 @@ export default function RobotTable() {
       }
 
     } catch (e) {
-      console.error("Failed to load robots", e);
+      const err = e as any;
+      const code = String(err?.code ?? "");
+      const message = String(err?.message ?? "");
+      const isNetworkError = code === "ERR_NETWORK" || message.includes("Network Error");
+
+      if (isNetworkError) {
+        setIsNetworkOffline(true);
+        if (!networkErrorLoggedRef.current) {
+          console.warn("[Robots] Network error while loading robots", err);
+          networkErrorLoggedRef.current = true;
+        }
+      } else {
+        console.error("Failed to load robots", e);
+      }
     } finally {
       isLoadingRef.current = false;
     }
@@ -86,9 +115,35 @@ export default function RobotTable() {
   }, [videoRobot]);
 
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 3000);
-    return () => clearInterval(interval);
+    if (isNetworkOffline) {
+      return;
+    }
+
+    void load();
+    const interval = window.setInterval(() => {
+      void load();
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, [isNetworkOffline]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsNetworkOffline(false);
+      networkErrorLoggedRef.current = false;
+      void load();
+    };
+
+    const handleOffline = () => {
+      setIsNetworkOffline(true);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
   useEffect(() => {
@@ -245,6 +300,11 @@ async function  parseQgcWaypoints(
 
   return (
     <div className="p-6">
+      {isNetworkOffline && (
+        <div className="mb-4 rounded border border-yellow-700 bg-yellow-900/30 px-4 py-2 text-sm text-yellow-200">
+          Немає інтернет-зʼєднання. Повторимо запит автоматично після відновлення мережі.
+        </div>
+      )}
      
       {editRobot && (
         <EditRobotModal

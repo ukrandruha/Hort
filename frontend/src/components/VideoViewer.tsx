@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Joystick, JoystickShape } from "react-joystick-component";
+import { Joystick } from "react-joystick-component";
 import { WebRTCClient } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import { GamepadReader, type GamepadState } from "../utils/Gamepad";
@@ -127,8 +127,9 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         const x = typeof event.x === "number" ? event.x : 0;
         sendGamepadState({ ch2: x });
       } else {
+        const x = typeof event.x === "number" ? event.x : 0;
         const y = typeof event.y === "number" ? event.y : 0;
-        sendGamepadState({ ch1: y });
+        sendGamepadState({ ch2: x, ch1: y });
       }
     };
 
@@ -136,7 +137,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       if (side === "left") {
         sendGamepadState({ ch2: 0 });
       } else {
-        sendGamepadState({ ch1: 0 });
+        sendGamepadState({ ch2: 0, ch1: 0 });
       }
     };
 
@@ -1400,18 +1401,8 @@ async function stopRecording()
 
           {showJoysticks && (
             <>
-              <div className="absolute bottom-6 left-6 z-40">
-                <Joystick
-                  controlPlaneShape={JoystickShape.AxisX}
-                  start={handleJoystickStart}
-                  throttle={50}
-                  move={handleJoystickMove("left")}
-                  stop={handleJoystickStop("left")}
-                />
-              </div>
               <div className="absolute bottom-6 right-6 z-40">
                 <Joystick
-                  controlPlaneShape={JoystickShape.AxisY}
                   start={handleJoystickStart}
                   throttle={50}
                   move={handleJoystickMove("right")}

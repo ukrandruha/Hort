@@ -401,7 +401,7 @@ export default function LeafletMap({
       attributionControl={false}
       style={{ width: "100%", height: "100%" }}
     >
-      <TileLayer url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" />
+      <TileLayer url="https://mt1.google.com/vt/lyrs=y&hl=uk&gl=ua&x={x}&y={y}&z={z}" />
 
       {/* DRONE */}
       <MovingDrone

@@ -711,21 +711,7 @@ export class WebRTCClient {
         try {
             await api.post(`/api/robots/robot-sessions/requestReboot`, payload);
         } catch (e) {
-            const message = this.extractApiErrorMessage(e);
-            const isSessionNotFound = message.toLowerCase().includes("session not found");
-
-            if (isSessionNotFound && this.userId > 0) {
-                try {
-                    await api.post(`/api/robots/robot-sessions/create`, {
-                        robotId: this.roomName,
-                        operatorId: this.userId,
-                    });
-                    await api.post(`/api/robots/robot-sessions/requestReboot`, payload);
-                    return;
-                } catch (retryError) {
-                    return;
-                }
-            }
+            console.warn("[WebRTC] requestRebootForWebrtc failed", e);
         }
     }
 

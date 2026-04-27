@@ -9,6 +9,8 @@ import { api } from "../api/api";
 export const localMediaStream = signal<MediaStream | null>(null);
 export const remoteMediaStream = signal<MediaStream | null>(null);
 
+export type WebRTCVideoCodec = "video/VP8" | "video/H264";
+
 
 export class WebRTCClient {
     // Optional callback invoked when structured data arrives from robot
@@ -113,6 +115,12 @@ export class WebRTCClient {
                 });
             }
         }
+    }
+
+    public setPreferredVideoCodec(codec: WebRTCVideoCodec) {
+        this.options.video = this.options.video ?? {};
+        this.options.video.codecMimeType = codec;
+        console.log(`[WebRTC] Preferred video codec set to ${codec}`);
     }
 
     // =================================================

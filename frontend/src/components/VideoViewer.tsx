@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Joystick } from "react-joystick-component";
-import { WebRTCClient } from "../webrtc/WebRTCClient";
+import { WebRTCClient, type WebRTCVideoCodec } from "../webrtc/WebRTCClient";
 import DroneMap from "./DroneMap";
 import { GamepadReader, type GamepadState } from "../utils/Gamepad";
 import { haversineKm } from "../utils/math";
@@ -67,6 +67,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [isSavingHome, setIsSavingHome] = useState(false);
     const [showRthPath, setShowRthPath] = useState(false);
     const [isAudioEnabled, setIsAudioEnabled] = useState(false);
+    const [videoCodec, setVideoCodec] = useState<WebRTCVideoCodec>("video/VP8");
     const [pingMs, setPingMs] = useState<number | null>(null);
     const [isVideoConnected, setIsVideoConnected] = useState(false);
     const [isForcingWebrtcReboot, setIsForcingWebrtcReboot] = useState(false);
@@ -353,6 +354,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
           clientRef.current = client;
 
           client.setVideoElement(videoRef.current);
+          client.setPreferredVideoCodec(videoCodec);
           client.setConnectionBAudioEnabled(isAudioEnabled);
           client.onData = (d: any) => {
             robotStore.setTelemetry(robot.robotId, d);
@@ -453,7 +455,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         }
         unsubscribe();
       };
-    }, [robot?.robotId, userId, isAudioEnabled]);
+    }, [robot?.robotId, userId, isAudioEnabled, videoCodec]);
 
     const clearHistoricalRoute = () => {
       setHistoricalRoute([]);
@@ -635,6 +637,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       clientRef.current = client;
 
       client.setVideoElement(videoRef.current);
+      client.setPreferredVideoCodec(videoCodec);
       client.setConnectionBAudioEnabled(isAudioEnabled);
       // receive parsed data from robot and show in header
       client.onData = (d: any) => {
@@ -1021,7 +1024,7 @@ async function stopRecording()
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(160px, -50%)' }} className="h-8 w-px bg-gray-700" />
 
           <div className="flex items-center gap-3">
-            {/* {loadingCameras ? (
+            {loadingCameras ? (
               <div className="text-gray-500 text-sm">Loading…</div>
             ) : (
               <select
@@ -1046,7 +1049,20 @@ async function stopRecording()
                   </option>
                 ))}
               </select>
-            )} */}
+            )}
+            <select
+              value={videoCodec}
+              onChange={(e) => {
+                const codec = e.target.value as WebRTCVideoCodec;
+                setVideoCodec(codec);
+                clientRef.current?.setPreferredVideoCodec(codec);
+              }}
+              className="px-2 py-1 rounded bg-gray-800 text-gray-200 border border-gray-700 w-28"
+              title="WebRTC codec"
+            >
+              <option value="video/VP8">VP8</option>
+              <option value="video/H264">H264</option>
+            </select>
             <div className="h-6 w-px bg-gray-700" />
             <button
             onClick={() => {

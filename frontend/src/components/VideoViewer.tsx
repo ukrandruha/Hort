@@ -71,6 +71,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [pingMs, setPingMs] = useState<number | null>(null);
     const [isVideoConnected, setIsVideoConnected] = useState(false);
     const [isForcingWebrtcReboot, setIsForcingWebrtcReboot] = useState(false);
+    const [isCameraTransitioning, setIsCameraTransitioning] = useState(false);
     const [isDisconnectCooldown, setIsDisconnectCooldown] = useState(false);
     const [packetLoss, setPacketLoss] = useState<{
       lost: number | null;
@@ -627,7 +628,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     // CONNECT CAMERA
     // ============================================
     async function connectCamera() {
-      if (connected || isConnecting) return;
+      if (isConnecting || clientRef.current) return;
       if (!videoRef.current) return;
       setIsConnecting(true);
 
@@ -708,8 +709,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     // ============================================
     // DISCONNECT CAMERA
     // ============================================
-    async function disconnectCamera() {
+    async function disconnectCamera(requestReboot = true, rebootReason = "manual_disconnect") {
       console.log("[UI] Disconnecting camera…");
+
+      const rebootClient = clientRef.current ?? new WebRTCClient(robot.robotId, userId);
 
       const activeRecorder = positionRecorderRef.current;
       positionRecorderRef.current = null;
@@ -742,6 +745,14 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setPacketLoss({ lost: null, received: null, pct: null, fps: null });
       setOverlayData(null);
       robotStore.setTelemetry(robot.robotId, null);
+
+      if (requestReboot) {
+        try {
+          await rebootClient.requestRebootForWebrtc(rebootReason);
+        } catch (rebootError) {
+          console.warn("[UI] Failed to request WebRTC reboot on disconnect", rebootError);
+        }
+      }
 
     }
 
@@ -796,6 +807,35 @@ async function loadCameras() {
     }
   } finally {
     setLoadingCameras(false);
+  }
+}
+
+async function handleCameraSelectionChange(value: string) {
+  setCameraId(value);
+  if (!value) return;
+
+  setIsCameraTransitioning(true);
+  try {
+    await api.post(`/api/robots/${robot.robotId}/cameras/${value}/activate`);
+    await loadCameras();
+
+    const hasActiveCameraSession = Boolean(clientRef.current) || connected || isVideoConnected;
+
+    if (hasActiveCameraSession) {
+      console.log("[UI] Camera changed while active, running disconnect -> reboot -> reconnect...");
+      await disconnectCamera(true, "camera_switch");
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 3000));
+      await connectCamera();
+      return;
+    }
+
+    console.log("[UI] Camera changed while inactive, requesting WebRTC reboot...");
+    await forceWebrtcRebootRequest();
+  } catch (err) {
+    console.error("[UI] Failed to activate camera", err);
+    alert("Failed to activate camera");
+  } finally {
+    setIsCameraTransitioning(false);
   }
 }
 
@@ -875,7 +915,6 @@ async function loadCameras() {
           disconnectCooldownTimerRef.current = null;
         }, 5000) as unknown as number;
 
-        const activeClient = clientRef.current;
         try {
           await disconnectCamera();
         } catch (disconnectError) {
@@ -892,12 +931,6 @@ async function loadCameras() {
           await api.post(`api/robots/robot-sessions/deactivateWebrtc`, disconnectData);
         } catch (deactivateError) {
           console.warn("[UI] Failed to deactivate WebRTC session", deactivateError);
-        }
-
-        try {
-          await activeClient?.requestRebootForWebrtc("manual_disconnect");
-        } catch (rebootError) {
-          console.warn("[UI] Failed to request WebRTC reboot on disconnect", rebootError);
         }
 
       }
@@ -1030,15 +1063,7 @@ async function stopRecording()
               <select
                 value={cameraId}
                 onChange={async (e) => {
-                  const value = e.target.value;
-                  setCameraId(value);
-                  if (!value) return;
-                  try {
-                    await api.post(`/api/robots/${robot.robotId}/cameras/${value}/activate`);
-                    await loadCameras();
-                  } catch (err) {
-                    alert("Failed to activate camera");
-                  }
+                  await handleCameraSelectionChange(e.target.value);
                 }}
                 className="px-2 py-1 rounded bg-gray-800 text-gray-200 border border-gray-700 w-52"
               >
@@ -1461,15 +1486,17 @@ async function stopRecording()
             <>
               <button
                 onClick={connectCamera}
-                disabled={isConnecting || isRobotOffline || isDisconnectCooldown}
+                disabled={isConnecting || isRobotOffline || isDisconnectCooldown || isCameraTransitioning}
                 className={`px-4 py-2 rounded ${
-                  isConnecting || isRobotOffline || isDisconnectCooldown
+                  isConnecting || isRobotOffline || isDisconnectCooldown || isCameraTransitioning
                     ? "bg-blue-900 cursor-not-allowed opacity-60"
                     : "bg-blue-700 hover:bg-blue-800"
                 }`}
               >
                 {isConnecting
                   ? "Connecting..."
+                  : isCameraTransitioning
+                    ? "Switching camera..."
                   : isDisconnectCooldown
                     ? "Connect blocked..."
                     : "Connect camera"}

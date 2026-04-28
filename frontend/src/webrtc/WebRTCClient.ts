@@ -55,6 +55,7 @@ export class WebRTCClient {
     private lastLossSample: { ts: number; lost: number; received: number } | null = null;
     private sessionActivated = false;
     private activationInFlight: Promise<void> | null = null;
+    private isShuttingDown = false;
 
     private  ayameConnectionA = signal<Connection | null>(null);
     private  ayameConnectionB = signal<Connection | null>(null);
@@ -129,6 +130,7 @@ export class WebRTCClient {
     async start() {
         console.log(`[WebRTC] Starting for robot ${this.robotId}`);
         this.validateConfig();
+        this.isShuttingDown = false;
 
         // Activate session first so the robot initializes its camera
         // and joins Ayame signaling rooms before we attempt to connect
@@ -165,6 +167,8 @@ export class WebRTCClient {
     }
 
     private async cleanupFailedStartAttempt() {
+        this.isShuttingDown = true;
+
         const disconnectWithTimeout = async (conn: Connection | null) => {
             if (!conn) return;
             try {
@@ -197,6 +201,8 @@ export class WebRTCClient {
         if (this.videoElement) {
             this.videoElement.srcObject = null;
         }
+
+        this.isShuttingDown = false;
     }
 
     // =================================================
@@ -226,6 +232,10 @@ export class WebRTCClient {
             }, connectTimeoutMs);
 
             conn.on("disconnect", () => {
+                if (this.isShuttingDown) {
+                    done(resolve);
+                    return;
+                }
                 done(() => reject(new Error("[A] Disconnected before data channel opened")));
             });
 
@@ -355,7 +365,9 @@ export class WebRTCClient {
                 localMediaStream.value = null;
                 this.stopPingStats();
                 if (this.onVideoConnectionStateChange) this.onVideoConnectionStateChange(false);
-                if (!settled) {
+                if (!settled && this.isShuttingDown) {
+                    done(resolve);
+                } else if (!settled) {
                     done(() => reject(new Error("[B] Disconnected before connected state")));
                 }
                 remoteMediaStream.value = null;
@@ -473,6 +485,7 @@ export class WebRTCClient {
     // =================================================
     async stop() {
         console.log("[WebRTC] Stopping...");
+        this.isShuttingDown = true;
 
         const disconnectWithTimeout = async (conn: Connection | null, label: string) => {
             if (!conn) return;
@@ -525,6 +538,8 @@ export class WebRTCClient {
                 this.activationInFlight = null;
             }
         }
+
+        this.isShuttingDown = false;
     }
 
     private startPingStats(pc: RTCPeerConnection) {

@@ -1116,6 +1116,20 @@ async function stopRecording()
             title={showMap && mapInMainView ? "Show video in main view" : undefined}
           />
 
+          <div
+            className={`absolute pointer-events-none ${
+              showMap && mapInMainView
+                ? "top-6 left-[49px] w-72 h-56 z-[1201]"
+                : "inset-0 z-20"
+            }`}
+            aria-hidden="true"
+          >
+            <div className="relative w-full h-full">
+              <div className="absolute left-1/2 top-1/2 h-5 w-px -translate-x-1/2 -translate-y-1/2 bg-red-500/90" />
+              <div className="absolute left-1/2 top-1/2 h-px w-5 -translate-x-1/2 -translate-y-1/2 bg-red-500/90" />
+            </div>
+          </div>
+
           {showMap && mapInMainView && (
             <div className="absolute inset-0 z-10">
               <DroneMap

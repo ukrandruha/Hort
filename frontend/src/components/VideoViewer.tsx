@@ -1012,29 +1012,11 @@ async function stopRecording()
             </div>
           </div>
 
-          {/* second section center: Sat + Home distance */}
+          {/* second section center */}
           <div
             className="absolute top-0 h-14 flex items-center justify-center pointer-events-none"
             style={{ left: 0, width: "calc(50% - 160px)" }}
           >
-            <div className="text-gray-300 text-sm text-center whitespace-pre">
-              {overlayData && !overlayData.raw ? (() => {
-                const satellites = overlayData.gps?.satellites_visible ?? "—";
-                const hdop = overlayData.gps?.hdop ?? "—";
-                const homeDist = getHomeDistanceKm(overlayData);
-                const speed = Number(overlayData.gps?.speed);
-                return [
-                  `Sat: ${satellites}`,
-                  `\\ ${hdop}`,
-                  homeDist !== null ? `H-${homeDist.toFixed(2)} km` : null,
-                  Number.isFinite(speed) ? `Speed : ${speed.toFixed(2)} kmh` : null,
-                ].filter(Boolean).join("  ");
-              })() : null}
-            </div>
-          </div>
-
-          {/* center overlay */}
-          <div className="absolute left-0 right-0 top-0 h-14 flex items-center justify-center pointer-events-none">
             <div className="text-gray-300 text-sm text-center whitespace-pre">
               {overlayData ? (
                 overlayData.raw ? String(overlayData.raw) : (
@@ -1043,12 +1025,32 @@ async function stopRecording()
                       `B1: ${overlayData.v}v`,
                       `B2: ${overlayData.v2}v`,
                       `i: ${overlayData.i}`,
-                      //`p: ${overlayData.p}`,
-                      //`wh: ${overlayData.wh}`,
                     ].filter(Boolean).join("  ");
                   })() : JSON.stringify(overlayData)
                 )
               ) : null}
+            </div>
+          </div>
+
+          {/* center overlay */}
+          <div className="absolute left-0 right-0 top-0 h-14 flex items-center justify-center pointer-events-none">
+            <div className="text-gray-300 text-sm text-center whitespace-pre">
+              {overlayData && !overlayData.raw ? (() => {
+                const satellites = overlayData.gps?.satellites_visible ?? "—";
+                const hdop = overlayData.gps?.hdop ?? "—";
+                const homeDist = getHomeDistanceKm(overlayData);
+                const speed = Number(overlayData.gps?.speed);
+                return (
+                  <>
+                    <span>{`Sat: ${satellites}`}</span>
+                    <span className="mx-2">{`\\ ${hdop}`}</span>
+                    {homeDist !== null && <span className="mx-2">{`H-${homeDist.toFixed(2)} km`}</span>}
+                    {Number.isFinite(speed) && (
+                      <span className="mx-2 text-lg font-medium text-gray-100">{`Speed : ${speed} kmh`}</span>
+                    )}
+                  </>
+                );
+              })() : null}
             </div>
           </div>
 
@@ -1524,7 +1526,7 @@ async function stopRecording()
                     : "bg-orange-700 hover:bg-orange-800"
                 }`}
               >
-                {isForcingWebrtcReboot ? "Requesting..." : "Reboot WebRTC"}
+                {isForcingWebrtcReboot ? "Requesting..." : "Reboot video service"}
               </button> }
             </>
           )}

@@ -1125,8 +1125,8 @@ async function stopRecording()
             aria-hidden="true"
           >
             <div className="relative w-full h-full">
-              <div className="absolute left-1/2 top-1/2 h-5 w-px -translate-x-1/2 -translate-y-1/2 bg-red-500/90" />
-              <div className="absolute left-1/2 top-1/2 h-px w-5 -translate-x-1/2 -translate-y-1/2 bg-red-500/90" />
+              <div className="absolute left-1/2 top-1/2 h-5 w-[3px] -translate-x-1/2 -translate-y-1/2 bg-red-500/90" />
+              <div className="absolute left-1/2 top-1/2 h-[3px] w-5 -translate-x-1/2 -translate-y-1/2 bg-red-500/90" />
             </div>
           </div>
 

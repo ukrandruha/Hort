@@ -366,6 +366,7 @@ export default function LeafletMap({
     () => points.map((p) => [p.lat, p.lng] as [number, number]),
     [points]
   );
+  const hasHistoricalRoute = historicalRoute.length > 1;
 
 //  // Симуляція руху дрона 
 //  const [activeIndex, setActiveIndex] = useState(0);
@@ -425,7 +426,7 @@ export default function LeafletMap({
         />
       )}
 
-       <MapFollower target={pos} />
+      {!hasHistoricalRoute && <MapFollower target={pos} />}
       {!showRthPath && (
         <StartLineManager
           pos={pos}
@@ -448,7 +449,7 @@ export default function LeafletMap({
       )}
 
       {/* HISTORICAL ROUTE */}
-      {historicalRoute.length > 1 && (
+      {hasHistoricalRoute && (
         <Polyline
           positions={historicalRoute}
           pathOptions={{

@@ -1002,14 +1002,6 @@ async function stopRecording()
               <span>{currentRobot?.name ?? robot.name}</span>
               <span>{isRobotOffline ? "🔴" : "🟢"}</span>
             </div>
-            <div className="h-6 w-px bg-gray-700" />
-            <div className="text-sm text-gray-300">
-              {videoRecord ? (
-                <span className="font-mono text-sm">🔴 {elapsed}</span>
-              ) : (
-                <span className="text-gray-500">&nbsp;</span>
-              )}
-            </div>
           </div>
 
           {/* second section center */}
@@ -1046,7 +1038,7 @@ async function stopRecording()
                     <span className="mx-2">{`\\ ${hdop}`}</span>
                     {homeDist !== null && <span className="mx-2">{`H-${homeDist.toFixed(2)} km`}</span>}
                     {Number.isFinite(speed) && (
-                      <span className="mx-2 text-lg font-medium text-gray-100">{`Speed : ${speed} kmh`}</span>
+                      <span className="mx-2 text-lg font-medium text-gray-100">{` ${speed} kmh`}</span>
                     )}
                   </>
                 );
@@ -1481,7 +1473,11 @@ async function stopRecording()
             </div>
             {overlayData?.starlink && (
               <div className="mt-2 border-t border-gray-700/50 pt-2">
-                <div className="text-gray-200/70 text-sm font-mono">
+                <div
+                  className={`text-sm font-mono ${
+                    overlayData.starlink.state === "CONNECTED" ? "text-gray-200/70" : "text-red-500"
+                  }`}
+                >
                   Starlink: {overlayData.starlink.state === "CONNECTED" ? "✓" : "✗"}
                 </div>
                 <div className="text-gray-200/70 text-sm font-mono">
@@ -1556,7 +1552,7 @@ async function stopRecording()
               onClick={stopRecording}
               className="px-4 py-2 bg-gray-400 rounded hover:bg-yellow-700"
             >
-             🔴 Stop 
+             🔴 Stop {elapsed}
             </button>
           )}
 

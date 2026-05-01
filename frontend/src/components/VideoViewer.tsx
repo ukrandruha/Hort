@@ -989,6 +989,7 @@ async function stopRecording()
 
     const lastSeenAt = currentRobot?.updatedAt ? new Date(currentRobot.updatedAt).getTime() : 0;
     const isRobotOffline = !lastSeenAt || Date.now() - lastSeenAt > 10000;
+    const isLedOn = Number(overlayData?.led) === 1;
    
 
 
@@ -1026,8 +1027,14 @@ async function stopRecording()
 
           {/* center overlay */}
           <div className="absolute left-0 right-0 top-0 h-14 flex items-center justify-center pointer-events-none">
-            <div className="text-gray-300 text-sm text-center whitespace-pre">
-              {overlayData && !overlayData.raw ? (() => {
+            <div className="text-gray-300 text-sm text-center whitespace-pre flex items-center gap-2">
+              {overlayData && !overlayData.raw && (
+                <span
+                  className={`inline-block h-2 w-2 rounded-full ${isLedOn ? "bg-yellow-400" : "bg-gray-500"}`}
+                />
+              )}
+              <span>
+                {overlayData && !overlayData.raw ? (() => {
                 const satellites = overlayData.gps?.satellites_visible ?? "—";
                 const hdop = overlayData.gps?.hdop ?? "—";
                 const homeDist = getHomeDistanceKm(overlayData);
@@ -1043,6 +1050,12 @@ async function stopRecording()
                   </>
                 );
               })() : null}
+              </span>
+              {overlayData && !overlayData.raw && (
+                <span
+                  className={`inline-block h-2 w-2 rounded-full ${isLedOn ? "bg-yellow-400" : "bg-gray-500"}`}
+                />
+              )}
             </div>
           </div>
 

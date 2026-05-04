@@ -1045,7 +1045,15 @@ async function stopRecording()
                     <span className="mx-2">{`\\ ${hdop}`}</span>
                     {homeDist !== null && <span className="mx-2">{`H-${homeDist.toFixed(2)} km`}</span>}
                     {Number.isFinite(speed) && (
-                      <span className="mx-2 text-lg font-medium text-gray-100">{` ${speed} kmh`}</span>
+                      <span className="mx-2 inline-flex items-center gap-1.5 align-middle font-mono text-[#39d98a] drop-shadow-[0_0_2px_rgba(57,217,138,0.55)]">
+                        <span className="flex flex-col justify-center leading-[0.9] text-[10px] uppercase tracking-wide opacity-90">
+                          <span className="block">SPD</span>
+                          <span className="block">km/h</span>
+                        </span>
+                        <span className="text-2xl font-bold leading-none tabular-nums align-middle">
+                          {speed.toFixed(1).replace(".", ",")}
+                        </span>
+                      </span>
                     )}
                   </>
                 );
@@ -1132,8 +1140,18 @@ async function stopRecording()
             aria-hidden="true"
           >
             <div className="relative w-full h-full">
-              <div className="absolute left-1/2 top-1/2 h-5 w-[3px] -translate-x-1/2 -translate-y-1/2 bg-red-500/90" />
-              <div className="absolute left-1/2 top-1/2 h-[3px] w-5 -translate-x-1/2 -translate-y-1/2 bg-red-500/90" />
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <svg
+                  viewBox="0 0 32 32"
+                  className="w-9 h-9 text-red-500/90 drop-shadow-[0_0_2px_rgba(0,0,0,0.7)]"
+                  aria-hidden="true"
+                >
+                  <line x1="16" y1="2" x2="16" y2="10.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="16" y1="21.5" x2="16" y2="30" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="2" y1="16" x2="10.5" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <line x1="21.5" y1="16" x2="30" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
             </div>
           </div>
 

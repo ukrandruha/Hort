@@ -1141,16 +1141,7 @@ async function stopRecording()
           >
             <div className="relative w-full h-full">
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                <svg
-                  viewBox="0 0 32 32"
-                  className="w-9 h-9 text-red-500/90 drop-shadow-[0_0_2px_rgba(0,0,0,0.7)]"
-                  aria-hidden="true"
-                >
-                  <line x1="16" y1="2" x2="16" y2="10.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <line x1="16" y1="21.5" x2="16" y2="30" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <line x1="2" y1="16" x2="10.5" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <line x1="21.5" y1="16" x2="30" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
+                <img src="/hrest-30-opacity.svg" alt="crosshair" className="w-9 h-9 drop-shadow-[0_0_2px_rgba(0,0,0,0.7)]" />
               </div>
             </div>
           </div>

@@ -1146,6 +1146,10 @@ async function stopRecording()
             </div>
           </div>
 
+          <div className="absolute left-4 bottom-4 z-30 pointer-events-none" aria-hidden="true">
+            <img src="/hort-logo.svg" alt="Hort logo" className="w-24 h-auto opacity-90" />
+          </div>
+
           {showMap && mapInMainView && (
             <div className="absolute inset-0 z-10">
               <DroneMap

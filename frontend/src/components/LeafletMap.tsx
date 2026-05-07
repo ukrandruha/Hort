@@ -99,6 +99,52 @@ function createPointIcon(number: number) {
   });
 }
 
+function calculateBearingDegrees(
+  from: [number, number],
+  to: [number, number]
+): number | null {
+  const [fromLat, fromLng] = from;
+  const [toLat, toLng] = to;
+
+  if (fromLat === toLat && fromLng === toLng) {
+    return null;
+  }
+
+  const fromLatRad = (fromLat * Math.PI) / 180;
+  const toLatRad = (toLat * Math.PI) / 180;
+  const deltaLngRad = ((toLng - fromLng) * Math.PI) / 180;
+
+  const y = Math.sin(deltaLngRad) * Math.cos(toLatRad);
+  const x =
+    Math.cos(fromLatRad) * Math.sin(toLatRad) -
+    Math.sin(fromLatRad) * Math.cos(toLatRad) * Math.cos(deltaLngRad);
+
+  const bearing = (Math.atan2(y, x) * 180) / Math.PI;
+  return (bearing + 360) % 360;
+}
+
+function calculateDistanceMeters(
+  from: [number, number],
+  to: [number, number]
+): number {
+  const [fromLat, fromLng] = from;
+  const [toLat, toLng] = to;
+
+  const earthRadiusMeters = 6371000;
+  const fromLatRad = (fromLat * Math.PI) / 180;
+  const toLatRad = (toLat * Math.PI) / 180;
+  const deltaLatRad = ((toLat - fromLat) * Math.PI) / 180;
+  const deltaLngRad = ((toLng - fromLng) * Math.PI) / 180;
+
+  const a =
+    Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
+    Math.cos(fromLatRad) * Math.cos(toLatRad) *
+      Math.sin(deltaLngRad / 2) * Math.sin(deltaLngRad / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusMeters * c;
+}
+
 /* ================= COMPONENTS ================= */
 function MapFollower({ target }: { target: [number, number] }) {
   const map = useMap();
@@ -211,6 +257,7 @@ export default function LeafletMap({
   historicalRouteFocusKey?: number;
 }) {
   const MAX_VALID_SPEED_KMH = positionRecorderConfig.maxSpeedKmh;
+  const MIN_HEADING_DISTANCE_METERS = 1;
   const [pos, setPos] = useState<[number, number]>([
     48.4629585,
     35.0321044,
@@ -229,6 +276,7 @@ export default function LeafletMap({
 
   const [showStartLine, setShowStartLine] = useState(true);
   const hasReachedStartRef = useRef(false);
+  const previousTelemetryCoordinateRef = useRef<[number, number] | null>(null);
  
   useEffect(() => {
     setStartPoint(null);
@@ -237,6 +285,7 @@ export default function LeafletMap({
     setTelemetryHeading(null);
     setIsTelemetryInvalid(false);
     hasReachedStartRef.current = false;
+    previousTelemetryCoordinateRef.current = null;
     setShowStartLine(true);
   }, [robotId]);
 
@@ -251,12 +300,22 @@ export default function LeafletMap({
       setIsTelemetryInvalid(isInvalidTelemetry);
 
       if (coordinate && !coordinate.isZeroPair() && !isInvalidTelemetry) {
-        setTelemetryGpsTarget(coordinate.toTuple());
-      }
+        const currentCoordinate = coordinate.toTuple();
+        setTelemetryGpsTarget(currentCoordinate);
 
-      const nextHeading = Number(telemetry?.gps?.compas);
-      if (Number.isFinite(nextHeading)) {
-        setTelemetryHeading(((nextHeading % 360) + 360) % 360);
+        const previousCoordinate = previousTelemetryCoordinateRef.current;
+        if (previousCoordinate) {
+          const distanceMeters = calculateDistanceMeters(previousCoordinate, currentCoordinate);
+          if (distanceMeters >= MIN_HEADING_DISTANCE_METERS) {
+            const movementHeading = calculateBearingDegrees(previousCoordinate, currentCoordinate);
+            if (movementHeading !== null) {
+              setTelemetryHeading(movementHeading);
+            }
+            previousTelemetryCoordinateRef.current = currentCoordinate;
+          }
+        } else {
+          previousTelemetryCoordinateRef.current = currentCoordinate;
+        }
       }
     });
 

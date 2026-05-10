@@ -36,6 +36,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     };
 
     const videoRef = useRef<HTMLVideoElement>(null);
+    const rearVideoRef = useRef<HTMLVideoElement>(null);
     const clientRef = useRef<WebRTCClient | null>(null);
     const gp = useRef<GamepadReader | null>(null);
     const positionRecorderRef = useRef<PositionRecorder | null>(null);
@@ -355,6 +356,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
           clientRef.current = client;
 
           client.setVideoElement(videoRef.current);
+          client.setRearVideoElement(rearVideoRef.current);
           client.setPreferredVideoCodec(videoCodec);
           client.setConnectionBAudioEnabled(isAudioEnabled);
           client.onData = (d: any) => {
@@ -638,6 +640,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       clientRef.current = client;
 
       client.setVideoElement(videoRef.current);
+      client.setRearVideoElement(rearVideoRef.current);
       client.setPreferredVideoCodec(videoCodec);
       client.setConnectionBAudioEnabled(isAudioEnabled);
       // receive parsed data from robot and show in header
@@ -1162,23 +1165,32 @@ async function stopRecording()
             </div>
           )}
 
-          {/* MAP PIP */}
+          {/* MAP + REAR CAMERA PIP */}
           {showMap && !mapInMainView && (
-            <div
-              className="
-              absolute top-6 left-[49px] 
-              w-72 h-56 rounded-lg overflow-hidden shadow-xl 
-              border border-gray-700 bg-gray-900 z-30 cursor-pointer"
-              onClick={() => setMapInMainView(true)}
-              title="Show map in main view"
-            >
-              <DroneMap
-                robot={robot}
-                homeTarget={savedHomeTarget}
-                showRthPath={showRthPath}
-                historicalRoute={historicalRoute}
-                historicalRouteFocusKey={historicalRouteFocusKey}
-              />
+            <div className="absolute top-6 left-[49px] z-30 flex flex-col gap-3">
+              <div
+                className="w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 cursor-pointer"
+                onClick={() => setMapInMainView(true)}
+                title="Show map in main view"
+              >
+                <DroneMap
+                  robot={robot}
+                  homeTarget={savedHomeTarget}
+                  showRthPath={showRthPath}
+                  historicalRoute={historicalRoute}
+                  historicalRouteFocusKey={historicalRouteFocusKey}
+                />
+              </div>
+
+              <div className="w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900" title="Rear camera">
+                <video
+                  ref={rearVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
           )}
 

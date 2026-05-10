@@ -28,6 +28,7 @@ export class WebRTCClient {
     }) => void) | null = null;
 
     private videoElement: HTMLVideoElement | null = null;
+    private rearVideoElement: HTMLVideoElement | null = null;
 
     private signalingUrl = (import.meta.env.VITE_WEBRTC_SIGNALING_URL as string | undefined) ?? "";
     private roomIdPrefix = "ukrandruha@";
@@ -59,6 +60,7 @@ export class WebRTCClient {
 
     private  ayameConnectionA = signal<Connection | null>(null);
     private  ayameConnectionB = signal<Connection | null>(null);
+    private  ayameConnectionC = signal<Connection | null>(null);
 
     // ================= OPTIONS ======================
     private options = (() => {
@@ -93,8 +95,12 @@ export class WebRTCClient {
         this.userId = Number.isInteger(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : -1;
     }
 
-    setVideoElement(video: HTMLVideoElement) {
+    setVideoElement(video: HTMLVideoElement | null) {
         this.videoElement = video;
+    }
+
+    setRearVideoElement(video: HTMLVideoElement | null) {
+        this.rearVideoElement = video;
     }
 
     public setConnectionBAudioEnabled(enabled: boolean) {
@@ -145,8 +151,14 @@ export class WebRTCClient {
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 console.log(`[WebRTC] Connect attempt ${attempt}/${maxAttempts}`);
-                await Promise.all([this.connectA(), this.connectB()]);
-                console.log("[WebRTC] Both connections established");
+                await Promise.all([
+                    this.connectA(),
+                    this.connectB(),
+                    this.connectC().catch((rearError) => {
+                        console.warn("[WebRTC] Rear camera connection failed", rearError);
+                    }),
+                ]);
+                console.log("[WebRTC] Primary connections established");
                 return;
             } catch (error) {
                 lastError = error;
@@ -183,9 +195,11 @@ export class WebRTCClient {
 
         await disconnectWithTimeout(this.ayameConnectionA.value);
         await disconnectWithTimeout(this.ayameConnectionB.value);
+        await disconnectWithTimeout(this.ayameConnectionC.value);
 
         this.ayameConnectionA.value = null;
         this.ayameConnectionB.value = null;
+        this.ayameConnectionC.value = null;
         this.dataChannel = null;
         this.dataChannelTelem = null;
 
@@ -304,7 +318,7 @@ export class WebRTCClient {
     // CONNECTION B — Video Stream VIDEO,telemetry
     // =================================================
     private connectB = async () => {
-        //this.stopConnectionB();
+        //this.stopConnectionB(); 
         const roomId = `${this.roomIdPrefix}${this.roomName}-VideoA`;
         const connectTimeoutMs = 30_000;
 
@@ -451,6 +465,109 @@ export class WebRTCClient {
                 await connected;
     };
 
+    // =================================================
+    // CONNECTION C — Rear camera video
+    // =================================================
+    private connectC = async () => {
+        const roomId = `${this.roomIdPrefix}${this.roomName}-VideoB`;
+        const connectTimeoutMs = 30_000;
+
+        const conn = createConnection(
+            this.signalingUrl,
+            roomId,
+            {
+                ...this.options,
+                audio: {
+                    ...(this.options.audio ?? {}),
+                    direction: "recvonly",
+                    enabled: false,
+                },
+                video: {
+                    ...(this.options.video ?? {}),
+                    direction: "recvonly",
+                    codecMimeType: this.options.video?.codecMimeType ?? "video/VP8",
+                },
+            },
+            this.debug
+        );
+
+        try {
+            conn.on("addstream", (event: AyameAddStreamEvent) => {
+                if (this.rearVideoElement) {
+                    this.rearVideoElement.srcObject = event.stream;
+                    this.rearVideoElement.muted = true;
+                    this.rearVideoElement.playsInline = true;
+                    void this.rearVideoElement.play().catch((playError) => {
+                        console.warn("[WebRTC] Rear media autoplay blocked", playError);
+                    });
+                }
+            });
+
+            const connected = new Promise<void>((resolve, reject) => {
+                let settled = false;
+                const done = (fn: () => void) => {
+                    if (settled) return;
+                    settled = true;
+                    window.clearTimeout(timeoutId);
+                    fn();
+                };
+                const timeoutId = window.setTimeout(() => {
+                    done(() => reject(new Error("[C] Timed out while connecting rear camera stream")));
+                }, connectTimeoutMs);
+
+                conn.on("disconnect", () => {
+                    console.warn("[C] Disconnected");
+
+                    if (this.rearVideoElement) {
+                        this.rearVideoElement.srcObject = null;
+                    }
+
+                    if (!settled && this.isShuttingDown) {
+                        done(resolve);
+                    } else if (!settled) {
+                        done(() => reject(new Error("[C] Disconnected before connected state")));
+                    }
+                });
+
+                conn.on("open", async () => {
+                    if (!conn) return;
+                    const pc = conn.peerConnection;
+                    if (pc) {
+                        pc.onconnectionstatechange = () => {
+                            console.log("[C] state:", pc.connectionState);
+                        };
+                        if (pc.connectionState === "connected") {
+                            done(resolve);
+                        }
+                    } else {
+                        done(() => reject(new Error("[C] PeerConnection not available after open")));
+                        return;
+                    }
+
+                    done(resolve);
+                });
+            });
+
+            await conn.connect(null);
+            this.ayameConnectionC.value = conn;
+            await connected;
+        } catch (error) {
+            try {
+                await Promise.race([
+                    conn.disconnect(),
+                    new Promise<void>((resolve) => window.setTimeout(resolve, 1500)),
+                ]);
+            } catch {
+                // Best effort cleanup for the optional rear camera connection.
+            }
+            if (this.rearVideoElement) {
+                this.rearVideoElement.srcObject = null;
+            }
+            this.ayameConnectionC.value = null;
+            throw error;
+        }
+    };
+
     private async ensureSessionActivated(robotId: string) {
         if (this.sessionActivated) return;
         if (this.activationInFlight) return this.activationInFlight;
@@ -503,12 +620,15 @@ export class WebRTCClient {
 
         const connA = this.ayameConnectionA.value;
         const connB = this.ayameConnectionB.value;
+        const connC = this.ayameConnectionC.value;
 
         await disconnectWithTimeout(connA, "A");
         await disconnectWithTimeout(connB, "B");
+        await disconnectWithTimeout(connC, "C");
 
         this.ayameConnectionA.value = null;
         this.ayameConnectionB.value = null;
+        this.ayameConnectionC.value = null;
         this.dataChannel = null;
         this.dataChannelTelem = null;
 
@@ -528,6 +648,9 @@ export class WebRTCClient {
 
         if (this.videoElement) {
             this.videoElement.srcObject = null;
+        }
+        if (this.rearVideoElement) {
+            this.rearVideoElement.srcObject = null;
         }
 
         if (this.sessionActivated || this.activationInFlight) {
@@ -555,36 +678,37 @@ export class WebRTCClient {
                 let packetsReceivedInterval: number | null = null;
                 let fps: number | null = null;
 
-                for (const stat of stats.values()) {
-                    if (stat.type !== "candidate-pair") continue;
-                    const pair = stat as RTCIceCandidatePairStats;
-                    const isSelected = (pair as any).selected || (pair as any).nominated;
-                    if (!isSelected || pair.state !== "succeeded") continue;
-                    if (typeof pair.currentRoundTripTime === "number") {
-                        rttMs = Math.round(pair.currentRoundTripTime * 1000);
+                stats.forEach((stat) => {
+                    if (stat.type === "candidate-pair") {
+                        const pair = stat as RTCIceCandidatePairStats;
+                        const isSelected = (pair as any).selected || (pair as any).nominated;
+                        if (isSelected && pair.state === "succeeded" && typeof pair.currentRoundTripTime === "number") {
+                            rttMs = Math.round(pair.currentRoundTripTime * 1000);
+                        }
                     }
-                    break;
-                }
+                });
 
-                for (const stat of stats.values()) {
-                    if (stat.type !== "inbound-rtp") continue;
-                    const inbound = stat as RTCInboundRtpStreamStats;
-                    if ((inbound as any).isRemote) continue;
-                    if (inbound.kind !== "video") continue;
+                stats.forEach((stat) => {
+                    if (stat.type === "inbound-rtp") {
+                        const inbound = stat as RTCInboundRtpStreamStats;
+                        if ((inbound as any).isRemote || inbound.kind !== "video") {
+                            return;
+                        }
 
-                    const lost = typeof inbound.packetsLost === "number" ? inbound.packetsLost : 0;
-                    const received = typeof inbound.packetsReceived === "number" ? inbound.packetsReceived : 0;
-                    const inboundFps =
-                        typeof (inbound as any).framesPerSecond === "number"
-                            ? (inbound as any).framesPerSecond
-                            : null;
+                        const lost = typeof inbound.packetsLost === "number" ? inbound.packetsLost : 0;
+                        const received = typeof inbound.packetsReceived === "number" ? inbound.packetsReceived : 0;
+                        const inboundFps =
+                            typeof (inbound as any).framesPerSecond === "number"
+                                ? (inbound as any).framesPerSecond
+                                : null;
 
-                    packetsLost = (packetsLost ?? 0) + lost;
-                    packetsReceived = (packetsReceived ?? 0) + received;
-                    if (inboundFps !== null) {
-                        fps = fps === null ? inboundFps : Math.max(fps, inboundFps);
+                        packetsLost = (packetsLost ?? 0) + lost;
+                        packetsReceived = (packetsReceived ?? 0) + received;
+                        if (inboundFps !== null) {
+                            fps = fps === null ? inboundFps : Math.max(fps, inboundFps);
+                        }
                     }
-                }
+                });
 
                 if (packetsLost !== null || packetsReceived !== null) {
                     const total = (packetsLost ?? 0) + (packetsReceived ?? 0);

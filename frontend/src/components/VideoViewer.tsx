@@ -764,6 +764,12 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     // CLEANUP ON CLOSE
     // ============================================
     useEffect(() => {
+      if (clientRef.current && rearVideoRef.current) {
+        clientRef.current.setRearVideoElement(rearVideoRef.current);
+      }
+    }, []);
+
+    useEffect(() => {
       return () => {
         operatorDisconnect();
         //disconnectCamera();
@@ -1184,22 +1190,22 @@ async function stopRecording()
           )}
 
           {/* REAR CAMERA PIP */}
-          {showRearCamera && !mapInMainView && (
-            <div
-              className={`absolute left-[49px] z-30 w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 ${
-                showMap ? "top-[17rem]" : "top-6"
-              }`}
-              title="Rear camera"
-            >
-              <video
-                ref={rearVideoRef}
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-full object-contain"
-              />
-            </div>
-          )}
+          <div
+            className={`absolute left-[49px] z-30 w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 transition-opacity duration-200 ${
+              showRearCamera
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            } ${showMap && !mapInMainView ? "top-[17rem]" : "top-6"}`}
+            title="Rear camera"
+          >
+            <video
+              ref={rearVideoRef}
+              autoPlay
+              muted
+              playsInline
+              className="w-full h-full object-contain"
+            />
+          </div>
 
           {showRouteDialog && (
             <div className="absolute inset-0 z-[1300] flex items-center justify-center bg-black/55">

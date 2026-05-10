@@ -53,6 +53,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [cameraId, setCameraId] = useState<string>("");
     const [loadingCameras, setLoadingCameras] = useState(false);
     const [showMap, setShowMap] = useState(false);
+    const [showRearCamera, setShowRearCamera] = useState(false);
     const [mapInMainView, setMapInMainView] = useState(false);
     const [showRouteDialog, setShowRouteDialog] = useState(false);
     const [isRouteLoading, setIsRouteLoading] = useState(false);
@@ -1165,32 +1166,38 @@ async function stopRecording()
             </div>
           )}
 
-          {/* MAP + REAR CAMERA PIP */}
+          {/* MAP PIP */}
           {showMap && !mapInMainView && (
-            <div className="absolute top-6 left-[49px] z-30 flex flex-col gap-3">
-              <div
-                className="w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 cursor-pointer"
-                onClick={() => setMapInMainView(true)}
-                title="Show map in main view"
-              >
-                <DroneMap
-                  robot={robot}
-                  homeTarget={savedHomeTarget}
-                  showRthPath={showRthPath}
-                  historicalRoute={historicalRoute}
-                  historicalRouteFocusKey={historicalRouteFocusKey}
-                />
-              </div>
+            <div
+              className="absolute top-6 left-[49px] z-30 w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 cursor-pointer"
+              onClick={() => setMapInMainView(true)}
+              title="Show map in main view"
+            >
+              <DroneMap
+                robot={robot}
+                homeTarget={savedHomeTarget}
+                showRthPath={showRthPath}
+                historicalRoute={historicalRoute}
+                historicalRouteFocusKey={historicalRouteFocusKey}
+              />
+            </div>
+          )}
 
-              <div className="w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900" title="Rear camera">
-                <video
-                  ref={rearVideoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="w-full h-full object-contain"
-                />
-              </div>
+          {/* REAR CAMERA PIP */}
+          {showRearCamera && !mapInMainView && (
+            <div
+              className={`absolute left-[49px] z-30 w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 ${
+                showMap ? "top-[17rem]" : "top-6"
+              }`}
+              title="Rear camera"
+            >
+              <video
+                ref={rearVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-contain"
+              />
             </div>
           )}
 
@@ -1261,6 +1268,18 @@ async function stopRecording()
               aria-label={showMap ? "Hide map" : "Show map"}
             >
               <img src="/map.svg" alt="map icon" className="w-6 h-6 invert" />
+            </button>
+            <button
+              onClick={() => setShowRearCamera((prev) => !prev)}
+              className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg flex items-center justify-center ${
+                showRearCamera
+                  ? "bg-green-700/90 border-green-600"
+                  : "bg-gray-900/90 border-gray-700 hover:bg-gray-800"
+              }`}
+              title={showRearCamera ? "Hide rear camera" : "Show rear camera"}
+              aria-label={showRearCamera ? "Hide rear camera" : "Show rear camera"}
+            >
+              <img src="/backcam.svg" alt="rear camera icon" className="w-6 h-6 invert" />
             </button>
             <button
               onClick={handleRouteButtonClick}

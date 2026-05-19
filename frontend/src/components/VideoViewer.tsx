@@ -55,6 +55,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [showMap, setShowMap] = useState(false);
     const [showRearCamera, setShowRearCamera] = useState(false);
     const [mapInMainView, setMapInMainView] = useState(false);
+    const [rearInMainView, setRearInMainView] = useState(false);
     const [showRouteDialog, setShowRouteDialog] = useState(false);
     const [isRouteLoading, setIsRouteLoading] = useState(false);
     const [routeBegin, setRouteBegin] = useState(() => toDatetimeLocalValue(startOfToday()));
@@ -744,6 +745,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       setSavedHomeTarget(null);
       setShowRthPath(false);
       setMapInMainView(false);
+      setRearInMainView(false);
       setPingMs(null);
       fpsRef.current = null;
       setPacketLoss({ lost: null, received: null, pct: null, fps: null });
@@ -1133,12 +1135,14 @@ async function stopRecording()
             autoPlay
             playsInline
             className={`absolute object-contain ${
-              showMap && mapInMainView
-                ? "top-6 left-[49px] w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 z-[1200] cursor-pointer"
+              (showMap && mapInMainView) || rearInMainView
+                ? `left-[49px] w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 z-[1200] cursor-pointer ${
+                    rearInMainView && showMap && !mapInMainView ? "top-[17rem]" : "top-6"
+                  }`
                 : "inset-0 w-full h-full"
             }`}
-            onClick={showMap && mapInMainView ? () => setMapInMainView(false) : undefined}
-            title={showMap && mapInMainView ? "Show video in main view" : undefined}
+            onClick={(showMap && mapInMainView) || rearInMainView ? () => { setMapInMainView(false); setRearInMainView(false); } : undefined}
+            title={(showMap && mapInMainView) || rearInMainView ? "Show video in main view" : undefined}
           />
 
           <div
@@ -1176,7 +1180,7 @@ async function stopRecording()
           {showMap && !mapInMainView && (
             <div
               className="absolute top-6 left-[49px] z-30 w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 cursor-pointer"
-              onClick={() => setMapInMainView(true)}
+              onClick={() => { setMapInMainView(true); setRearInMainView(false); }}
               title="Show map in main view"
             >
               <DroneMap
@@ -1189,14 +1193,19 @@ async function stopRecording()
             </div>
           )}
 
-          {/* REAR CAMERA PIP */}
+          {/* REAR CAMERA — PIP or main view */}
           <div
-            className={`absolute left-[49px] z-30 w-72 h-56 rounded-lg overflow-hidden shadow-xl border border-gray-700 bg-gray-900 transition-opacity duration-200 ${
-              showRearCamera
-                ? "opacity-100 pointer-events-auto"
-                : "opacity-0 pointer-events-none"
-            } ${showMap && !mapInMainView ? "top-[17rem]" : "top-6"}`}
-            title="Rear camera"
+            className={`absolute overflow-hidden ${
+              rearInMainView
+                ? "inset-0 z-10 bg-black"
+                : `left-[49px] z-30 w-72 h-56 rounded-lg shadow-xl border border-gray-700 bg-gray-900 transition-opacity duration-200 ${
+                    showRearCamera
+                      ? "opacity-100 pointer-events-auto cursor-pointer"
+                      : "opacity-0 pointer-events-none"
+                  } ${showMap && !mapInMainView ? "top-[17rem]" : "top-6"}`
+            }`}
+            onClick={!rearInMainView && showRearCamera ? () => { setRearInMainView(true); setMapInMainView(false); } : undefined}
+            title={!rearInMainView && showRearCamera ? "Show rear camera in main view" : undefined}
           >
             <video
               ref={rearVideoRef}
@@ -1276,7 +1285,15 @@ async function stopRecording()
               <img src="/map.svg" alt="map icon" className="w-6 h-6 invert" />
             </button>
             <button
-              onClick={() => setShowRearCamera((prev) => !prev)}
+              onClick={() =>
+                setShowRearCamera((prev) => {
+                  const next = !prev;
+                  if (!next) {
+                    setRearInMainView(false);
+                  }
+                  return next;
+                })
+              }
               className={`w-12 h-12 rounded-full border text-gray-200 shadow-lg flex items-center justify-center ${
                 showRearCamera
                   ? "bg-green-700/90 border-green-600"

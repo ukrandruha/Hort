@@ -154,11 +154,9 @@ export class WebRTCClient {
                 await Promise.all([
                     this.connectA(),
                     this.connectB(),
-                    this.connectC().catch((rearError) => {
-                        console.warn("[WebRTC] Rear camera connection failed", rearError);
-                    }),
                 ]);
                 console.log("[WebRTC] Primary connections established");
+                void this.connectRearCameraInBackground();
                 return;
             } catch (error) {
                 lastError = error;
@@ -176,6 +174,28 @@ export class WebRTCClient {
 
         //await this.requestRebootForWebrtc();
         throw lastError ?? new Error("[WebRTC] Failed to establish connections");
+    }
+
+    private async connectRearCameraInBackground() {
+        const maxRearAttempts = 2;
+
+        for (let attempt = 1; attempt <= maxRearAttempts; attempt++) {
+            if (this.isShuttingDown) return;
+
+            try {
+                console.log(`[WebRTC] Rear camera connect attempt ${attempt}/${maxRearAttempts}`);
+                await this.connectC();
+                console.log("[WebRTC] Rear camera connected");
+                return;
+            } catch (rearError) {
+                console.warn(`[WebRTC] Rear camera connect attempt ${attempt} failed`, rearError);
+                if (attempt < maxRearAttempts) {
+                    await new Promise<void>((resolve) => window.setTimeout(resolve, 1000 * attempt));
+                }
+            }
+        }
+
+        console.warn("[WebRTC] Rear camera unavailable. Continuing with primary stream only.");
     }
 
     private async cleanupFailedStartAttempt() {

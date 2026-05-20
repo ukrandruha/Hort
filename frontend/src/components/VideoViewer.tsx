@@ -52,8 +52,8 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     const [cameras, setCameras] = useState<any[]>([]);
     const [cameraId, setCameraId] = useState<string>("");
     const [loadingCameras, setLoadingCameras] = useState(false);
-    const [showMap, setShowMap] = useState(false);
-    const [showRearCamera, setShowRearCamera] = useState(false);
+    const [showMap, setShowMap] = useState(true);
+    const [showRearCamera, setShowRearCamera] = useState(true);
     const [mapInMainView, setMapInMainView] = useState(false);
     const [rearInMainView, setRearInMainView] = useState(false);
     const [showRouteDialog, setShowRouteDialog] = useState(false);
@@ -1145,6 +1145,18 @@ async function stopRecording()
             title={(showMap && mapInMainView) || rearInMainView ? "Show video in main view" : undefined}
           />
 
+          {((showMap && mapInMainView) || rearInMainView) && (
+            <div
+              className={`absolute left-[49px] w-72 h-56 pointer-events-none z-[1202] ${
+                rearInMainView && showMap && !mapInMainView ? "top-[17rem]" : "top-6"
+              }`}
+            >
+              <span className="absolute top-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                Main
+              </span>
+            </div>
+          )}
+
           <div
             className={`absolute pointer-events-none ${
               showMap && mapInMainView
@@ -1190,6 +1202,9 @@ async function stopRecording()
                 historicalRoute={historicalRoute}
                 historicalRouteFocusKey={historicalRouteFocusKey}
               />
+              <span className="absolute top-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white pointer-events-none">
+                Map
+              </span>
             </div>
           )}
 
@@ -1214,6 +1229,11 @@ async function stopRecording()
               playsInline
               className="w-full h-full object-contain"
             />
+            {!rearInMainView && showRearCamera && (
+              <span className="absolute top-1 right-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white pointer-events-none">
+                Rear
+              </span>
+            )}
           </div>
 
           {showRouteDialog && (

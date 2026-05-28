@@ -928,10 +928,18 @@ async function handleCameraSelectionChange(value: string) {
         }, 5000) as unknown as number;
 
         try {
-          await disconnectCamera();
+          await disconnectCamera(false);
         } catch (disconnectError) {
           console.warn("[UI] Disconnect camera failed", disconnectError);
         }
+
+        try {
+          const rebootClient = new WebRTCClient(robot.robotId, userId);
+          await rebootClient.requestRebootForWebrtc("operator_disconnect");
+        } catch (rebootError) {
+          console.warn("[UI] Failed to request WebRTC reboot on operator disconnect", rebootError);
+        }
+
         // "robotId": "1000000012a168a1","reason":"", "disconnectedBy": "4" , "force":false}
         const disconnectData = {
           "robotId": robot.robotId,

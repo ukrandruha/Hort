@@ -1038,6 +1038,8 @@ async function stopRecording()
                       `B1: ${overlayData.v}v`,
                       `B2: ${overlayData.v2}v`,
                       `i: ${overlayData.i}`,
+                      `t: ${overlayData.temp_motor}°C`,
+                      `t2: ${overlayData.temp_motor2}°C`,
                     ].filter(Boolean).join("  ");
                   })() : JSON.stringify(overlayData)
                 )

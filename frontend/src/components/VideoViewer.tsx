@@ -941,17 +941,18 @@ async function handleCameraSelectionChange(value: string) {
         }
 
         // "robotId": "1000000012a168a1","reason":"", "disconnectedBy": "4" , "force":false}
-        const disconnectData = {
-          "robotId": robot.robotId,
-          "reason": "",
-          "disconnectedBy": userId.toString(),
-          "force": false
-        };
-        try {
-          await api.post(`api/robots/robot-sessions/deactivateWebrtc`, disconnectData);
-        } catch (deactivateError) {
-          console.warn("[UI] Failed to deactivate WebRTC session", deactivateError);
-        }
+  //03.07.2026 попередньо викликається requestRebootForWebrtc і він повинен потушити сессію 
+        // const disconnectData = {
+        //   "robotId": robot.robotId,
+        //   "reason": "",
+        //   "disconnectedBy": userId.toString(),
+        //   "force": false
+        // };
+        // try {
+        //   await api.post(`api/robots/robot-sessions/deactivateWebrtc`, disconnectData);
+        // } catch (deactivateError) {
+        //   console.warn("[UI] Failed to deactivate WebRTC session", deactivateError);
+        // }
 
       }
     }

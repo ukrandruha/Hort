@@ -114,6 +114,15 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
       b4: -1,
     });
 
+    //трансформуємо передачу каналів для WebRTC, щоб кнопки не були нульовими (WebRTC не передає нулі)
+    const normalizeButtonsForWebrtc = (state: GamepadState): GamepadState => ({
+      ...state,
+      b1: state.b1 === 0 ? 1 : state.b1,
+      b2: state.b2 === 0 ? 1 : state.b2,
+      b3: state.b3 === 0 ? 1 : state.b3,
+      b4: state.b4 === 0 ? 1 : state.b4,
+    });
+
     const sendGamepadState = (partial: Partial<GamepadState>) => {
       const next = {
         ...lastGamepadStateRef.current,
@@ -121,7 +130,7 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
         ...partial,
       };
       lastGamepadStateRef.current = next;
-      clientRef.current?.SetDataGamePad(next);
+      clientRef.current?.SetDataGamePad(normalizeButtonsForWebrtc(next));
     };
 
     const handleJoystickStart = () => {};
@@ -878,7 +887,7 @@ async function handleCameraSelectionChange(value: string) {
           return;
         }
         lastGamepadStateRef.current = s;
-        clientRef.current?.SetDataGamePad(s);
+        clientRef.current?.SetDataGamePad(normalizeButtonsForWebrtc(s));
 
 
       };

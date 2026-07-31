@@ -117,10 +117,10 @@ const VideoViewer = forwardRef<VideoViewerHandle, any>(
     //трансформуємо передачу каналів для WebRTC, щоб кнопки не були нульовими (WebRTC не передає нулі)
     const normalizeButtonsForWebrtc = (state: GamepadState): GamepadState => ({
       ...state,
-      b1: state.b1 === 0 ? 1 : state.b1,
-      b2: state.b2 === 0 ? 1 : state.b2,
-      b3: state.b3 === 0 ? 1 : state.b3,
-      b4: state.b4 === 0 ? 1 : state.b4,
+      b1: state.b1 === 0 ? -1 : state.b1,
+      b2: state.b2 === 0 ? -1 : state.b2,
+      b3: state.b3 === 0 ? -1 : state.b3,
+      b4: state.b4 === 0 ? -1 : state.b4,
     });
 
     const sendGamepadState = (partial: Partial<GamepadState>) => {

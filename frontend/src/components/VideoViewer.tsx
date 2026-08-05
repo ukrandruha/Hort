@@ -1044,12 +1044,14 @@ async function stopRecording()
               {overlayData ? (
                 overlayData.raw ? String(overlayData.raw) : (
                   overlayData.v !== undefined ? (() => {
+                    const humidity = Number(overlayData.humidity ?? overlayData.h);
                     return [
                       `B1: ${overlayData.v}v`,
                       `B2: ${overlayData.v2}v`,
                       `i: ${overlayData.i}`,
                       `t: ${overlayData.temp_motor}°C`,
                       `t2: ${overlayData.temp_motor2}°C`,
+                      Number.isFinite(humidity) ? `h: ${humidity}%` : null,
                     ].filter(Boolean).join("  ");
                   })() : JSON.stringify(overlayData)
                 )

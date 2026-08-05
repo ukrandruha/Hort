@@ -9,6 +9,7 @@
   memory?: number;
   disk?: number;
   temperature?: number;
+  humidity?: number;
   webrtclient?: number;
   position?: {
     lat: number;

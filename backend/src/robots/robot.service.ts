@@ -95,6 +95,7 @@ export async function updateRobotStatus(data:RobotUpdateData) {
       memory: data.memory ?? undefined,
       disk: data.disk ?? undefined,
       temperature: data.temperature ?? undefined,
+      humidity: data.humidity ?? undefined,
     },
     create: {
       robotId: data.robotId,
@@ -106,6 +107,7 @@ export async function updateRobotStatus(data:RobotUpdateData) {
       memory: data.memory,
       disk: data.disk,
       temperature: data.temperature,
+      humidity: data.humidity,
     },
   });
 }

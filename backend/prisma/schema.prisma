@@ -42,6 +42,7 @@ model Robot {
   memory      Int?
   disk        Int?
   temperature Int?
+  humidity    Int?
   lat         Float?
   lng         Float?
   webrtclient Int?

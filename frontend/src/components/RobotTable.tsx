@@ -18,6 +18,7 @@ interface Robot {
   memory: number | null;
   disk: number | null;
   temperature: number | null;
+  humidity: number | null;
   lat: number | null;
   lng: number | null;
   updatedAt: string;
@@ -370,6 +371,7 @@ async function  parseQgcWaypoints(
             <th className="py-3 px-4">Memory</th>
             <th className="py-3 px-4">Disk</th>
             <th className="py-3 px-4">Temp</th>
+            <th className="py-3 px-4">Humidity</th>
             <th className="py-3 px-4">Last Seen</th>
             <th className="py-3 px-4">User</th>
             <th className="py-3 px-4">Actions</th>
@@ -409,6 +411,9 @@ async function  parseQgcWaypoints(
                 </td>
                 <td className={`py-2 px-4 ${getStatusColor(r.temperature ?? 0)}`}>
                   {r.temperature ?? "-"}°
+                </td>
+                <td className={`py-2 px-4 ${getStatusColor(r.humidity ?? 0)}`}>
+                  {r.humidity ?? "-"}%
                 </td>
 
 
